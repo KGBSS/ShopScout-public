@@ -1,0 +1,457 @@
+@using ShopScout.SharedLib.Models
+@using ShopScout.SharedLib.Services
+@inject IAdminService AdminService
+
+<div class="product-editor">
+    @if (Product == null)
+    {
+        <p>Loading...</p>
+    }
+    else
+    {
+        <h2>Edit Product: @Product.ProductName</h2>
+        
+        <EditForm Model="@Product" OnValidSubmit="HandleSave">
+            <DataAnnotationsValidator />
+            
+            <!-- Basic Properties -->
+            <div class="section">
+                <h3>Basic Information</h3>
+                
+                <div class="form-group">
+                    <label>Code:</label>
+                    <InputText @bind-Value="Product.Code" class="form-control" />
+                    <ValidationMessage For="@(() => Product.Code)" />
+                </div>
+                
+                <div class="form-group">
+                    <label>Product Name:</label>
+                    <InputText @bind-Value="Product.ProductName" class="form-control" />
+                    <ValidationMessage For="@(() => Product.ProductName)" />
+                </div>
+                
+                <div class="form-group">
+                    <label>Description:</label>
+                    <InputTextArea @bind-Value="Product.Description" class="form-control" rows="3" />
+                    <ValidationMessage For="@(() => Product.Description)" />
+                </div>
+                
+                <div class="form-group">
+                    <label>
+                        <InputCheckbox @bind-Value="Product.FromArfigyelo" />
+                        From Arfigyelo
+                    </label>
+                </div>
+            </div>
+
+            <!-- Product Details -->
+            @if (Product.Details != null)
+            {
+                <div class="section">
+                    <h3>Product Details</h3>
+                    
+                    <div class="form-group">
+                        <label>Quantity:</label>
+                        <InputText @bind-Value="Product.Details.Quantity" class="form-control" />
+                    </div>
+                    
+                    <div class="form-group">
+                        <label>Ingredients Text:</label>
+                        <InputTextArea @bind-Value="Product.Details.IngredientsText" class="form-control" rows="3" />
+                    </div>
+                    
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="form-group">
+                                <label>NutriScore:</label>
+                                <InputSelect @bind-Value="Product.Details.NutriScore" class="form-control">
+                                    @foreach (var value in Enum.GetValues<NutriScore>())
+                                    {
+                                        <option value="@value">@value</option>
+                                    }
+                                </InputSelect>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="form-group">
+                                <label>Nova Group:</label>
+                                <InputNumber @bind-Value="Product.Details.NovaGroup" class="form-control" />
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="form-group">
+                                <label>Energy (kcal):</label>
+                                <InputNumber @bind-Value="Product.Details.EnergyKcal" class="form-control" />
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="form-group">
+                                <label>Fat:</label>
+                                <InputNumber @bind-Value="Product.Details.Fat" class="form-control" />
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="form-group">
+                                <label>Saturated Fat:</label>
+                                <InputNumber @bind-Value="Product.Details.SaturatedFat" class="form-control" />
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="form-group">
+                                <label>Carbohydrates:</label>
+                                <InputNumber @bind-Value="Product.Details.Carbohydrates" class="form-control" />
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="form-group">
+                                <label>Sugars:</label>
+                                <InputNumber @bind-Value="Product.Details.Sugars" class="form-control" />
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="form-group">
+                                <label>Proteins:</label>
+                                <InputNumber @bind-Value="Product.Details.Proteins" class="form-control" />
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="form-group">
+                                <label>Salt:</label>
+                                <InputNumber @bind-Value="Product.Details.Salt" class="form-control" />
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="form-group">
+                                <label>Serving Size:</label>
+                                <InputText @bind-Value="Product.Details.ServingSize" class="form-control" />
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            }
+
+            <!-- Allergens -->
+            <div class="section">
+                <h3>Allergens</h3>
+                <AutocompleteMultiSelect 
+                    TItem="ProductAllergen"
+                    Items="@availableAllergens"
+                    SelectedItems="@Product.Allergens"
+                    DisplayProperty="@(item => item.Name)"
+                    OnSelectionChanged="@((items) => Product.Allergens = items.ToList())"
+                    CreateNewEntity="@(name => new ProductAllergen { Name = name })"
+                    OnNewItemCreated="@(async item => await CreateNewItem(item))"
+                    Placeholder="Search allergens..." />
+            </div>
+
+            <!-- Additives -->
+            <div class="section">
+                <h3>Additives</h3>
+                <AutocompleteMultiSelect 
+                    TItem="ProductAdditive"
+                    Items="@availableAdditives"
+                    SelectedItems="@Product.Additives"
+                    DisplayProperty="@(item => item.Name)"
+                    OnSelectionChanged="@((items) => Product.Additives = items.ToList())"
+                    CreateNewEntity="@(name => new ProductAdditive { Name = name })"
+                    OnNewItemCreated="@(async item => await CreateNewItem(item))"
+                    Placeholder="Search additives..." />
+            </div>
+
+            <!-- Labels -->
+            <div class="section">
+                <h3>Labels</h3>
+                <AutocompleteMultiSelect 
+                    TItem="ProductLabel"
+                    Items="@availableLabels"
+                    SelectedItems="@Product.Labels"
+                    DisplayProperty="@(item => item.Name)"
+                    OnSelectionChanged="@((items) => Product.Labels = items.ToList())"
+                    CreateNewEntity="@(name => new ProductLabel { Name = name })"
+                    OnNewItemCreated="@(async item => await CreateNewItem(item))"
+                    Placeholder="Search labels..." />
+            </div>
+
+            <!-- Attributes -->
+            <div class="section">
+                <h3>Attributes</h3>
+                <AutocompleteMultiSelect 
+                    TItem="ProductAttribute"
+                    Items="@availableAttributes"
+                    SelectedItems="@Product.Attributes"
+                    DisplayProperty="@(item => item.Name)"
+                    OnSelectionChanged="@((items) => Product.Attributes = items.ToList())"
+                    CreateNewEntity="@(name => new ProductAttribute { Name = name })"
+                    OnNewItemCreated="@(async item => await CreateNewItem(item))"
+                    Placeholder="Search attributes..." />
+            </div>
+
+            <!-- Brands -->
+            <div class="section">
+                <h3>Brands</h3>
+                <AutocompleteMultiSelect 
+                    TItem="ProductBrand"
+                    Items="@availableBrands"
+                    SelectedItems="@Product.Brands"
+                    DisplayProperty="@(item => item.Name)"
+                    OnSelectionChanged="@((items) => Product.Brands = items.ToList())"
+                    CreateNewEntity="@(name => new ProductBrand { Name = name })"
+                    OnNewItemCreated="@(async item => await CreateNewItem(item))"
+                    Placeholder="Search brands..." />
+            </div>
+
+            <!-- Countries -->
+            <div class="section">
+                <h3>Countries</h3>
+                <AutocompleteMultiSelect 
+                    TItem="ProductCountry"
+                    Items="@availableCountries"
+                    SelectedItems="@Product.Countries"
+                    DisplayProperty="@(item => item.Name)"
+                    OnSelectionChanged="@((items) => Product.Countries = items.ToList())"
+                    CreateNewEntity="@(name => new ProductCountry { Name = name })"
+                    OnNewItemCreated="@(async item => await CreateNewItem(item))"
+                    Placeholder="Search countries..." />
+            </div>
+
+            <!-- Categories -->
+            <div class="section">
+                <h3>Categories</h3>
+                <AutocompleteMultiSelect 
+                    TItem="ProductCategory"
+                    Items="@availableCategories"
+                    SelectedItems="@Product.Categories"
+                    DisplayProperty="@(item => item.Name)"
+                    OnSelectionChanged="@((items) => Product.Categories = items.ToList())"
+                    CreateNewEntity="@(name => new ProductCategory { Name = name })"
+                    OnNewItemCreated="@(async item => await CreateNewItem(item))"
+                    Placeholder="Search categories..." />
+            </div>
+
+            <!-- Packaging -->
+            <div class="section">
+                <h3>Packaging</h3>
+                <AutocompleteMultiSelect 
+                    TItem="ProductPackaging"
+                    Items="@availablePackaging"
+                    SelectedItems="@Product.Packaging"
+                    DisplayProperty="@(item => $"{item.Part?.Name ?? "Unknown"} - {item.Material?.Name ?? "Unknown"}")"
+                    OnSelectionChanged="@((items) => Product.Packaging = items.ToList())"
+                    Placeholder="Search packaging..." />
+            </div>
+
+            <!-- Ingredients -->
+            <div class="section">
+                <h3>Ingredients</h3>
+                <div class="ingredients-list">
+                    @foreach (var ingredient in Product.ProductIngredients)
+                    {
+                        <div class="ingredient-item">
+                            <span class="ingredient-name">@ingredient.Ingredient?.Name</span>
+                            <input type="number" 
+                                   @bind="ingredient.PercentEstimate" 
+                                   class="form-control percent-input" 
+                                   placeholder="%" 
+                                   step="0.01"
+                                   min="0"
+                                   max="100" />
+                            <button type="button" @onclick="() => RemoveIngredient(ingredient)" class="btn-remove">
+                                <span>×</span>
+                            </button>
+                        </div>
+                    }
+                </div>
+                <div class="add-ingredient-section">
+                    <AutocompleteSingleWithCreate 
+                        TItem="ProductIngredient"
+                        Items="@availableIngredients"
+                        DisplayProperty="@(item => item.Name)"
+                        OnItemSelected="@((ingredient) => selectedIngredientToAdd = ingredient)"
+                        CreateNewEntity="@(name => new ProductIngredient { Name = name })"
+                        OnNewItemCreated="@(async item => await CreateNewIngredient(item))"
+                        Placeholder="Add ingredient..." />
+                    <input type="number" 
+                           @bind="percentageToAdd" 
+                           class="form-control percent-input" 
+                           placeholder="% (optional)" 
+                           step="0.01"
+                           min="0"
+                           max="100" />
+                    <button type="button" @onclick="AddIngredientWithPercent" class="btn btn-secondary">Add</button>
+                </div>
+            </div>
+
+            <!-- Product Images -->
+            <div class="section">
+                <h3>Images</h3>
+                <div class="images-list">
+                    @foreach (var image in Product.ProductImages)
+                    {
+                        <div class="image-item">
+                            <select @bind="image.ImageType" class="form-control image-type-select">
+                                @foreach (var type in Enum.GetValues<ProductImageType>())
+                                {
+                                    <option value="@type">@type</option>
+                                }
+                            </select>
+                            <input type="text" @bind="image.URL" class="form-control" placeholder="Image URL" />
+                            <button type="button" @onclick="() => Product.ProductImages.Remove(image)" class="btn-remove">
+                                <span>×</span>
+                            </button>
+                        </div>
+                    }
+                </div>
+                <button type="button" @onclick="AddImage" class="btn btn-secondary">Add Image</button>
+            </div>
+
+            <div class="form-actions">
+                <button type="submit" class="btn btn-primary" disabled="@isSaving">
+                    @if (isSaving)
+                    {
+                        <span>Saving...</span>
+                    }
+                    else
+                    {
+                        <span>Save Product</span>
+                    }
+                </button>
+            </div>
+        </EditForm>
+    }
+</div>
+
+@code {
+    [Parameter, EditorRequired]
+    public Product Product { get; set; } = null!;
+
+    private bool isSaving = false;
+
+    // Available items for autocomplete
+    private List<ProductAllergen> availableAllergens = new();
+    private List<ProductAdditive> availableAdditives = new();
+    private List<ProductLabel> availableLabels = new();
+    private List<ProductAttribute> availableAttributes = new();
+    private List<ProductBrand> availableBrands = new();
+    private List<ProductCountry> availableCountries = new();
+    private List<ProductCategory> availableCategories = new();
+    private List<ProductPackaging> availablePackaging = new();
+    private List<ProductIngredient> availableIngredients = new();
+    
+    private ProductIngredient? selectedIngredientToAdd;
+    private double? percentageToAdd;
+
+    protected override async Task OnInitializedAsync()
+    {
+        await LoadAvailableItems();
+    }
+
+    private async Task LoadAvailableItems()
+    {
+        try
+        {
+            availableAllergens = await AdminService.GetAllAsync<ProductAllergen>();
+            availableAdditives = await AdminService.GetAllAsync<ProductAdditive>();
+            availableLabels = await AdminService.GetAllAsync<ProductLabel>();
+            availableAttributes = await AdminService.GetAllAsync<ProductAttribute>();
+            availableBrands = await AdminService.GetAllAsync<ProductBrand>();
+            availableCountries = await AdminService.GetAllAsync<ProductCountry>();
+            availableCategories = await AdminService.GetAllAsync<ProductCategory>();
+            availablePackaging = await AdminService.GetAllAsync<ProductPackaging>();
+            availableIngredients = await AdminService.GetAllAsync<ProductIngredient>();
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"Error loading available items: {ex.Message}");
+        }
+    }
+
+    private async Task HandleSave()
+    {
+        isSaving = true;
+        try
+        {
+            await AdminService.SaveProductAsync(Product);
+            
+            // Show success message
+            Console.WriteLine("Product saved successfully!");
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"Error saving product: {ex.Message}");
+        }
+        finally
+        {
+            isSaving = false;
+        }
+    }
+
+    private void AddIngredientWithPercent()
+    {
+        if (selectedIngredientToAdd != null && !Product.ProductIngredients.Any(pi => pi.IngredientId == selectedIngredientToAdd.Id))
+        {
+            Product.ProductIngredients.Add(new ProductProductIngredient
+            {
+                ProductId = Product.Id,
+                IngredientId = selectedIngredientToAdd.Id,
+                Ingredient = selectedIngredientToAdd,
+                PercentEstimate = percentageToAdd
+            });
+            
+            // Reset
+            selectedIngredientToAdd = null;
+            percentageToAdd = null;
+        }
+    }
+
+    private void RemoveIngredient(ProductProductIngredient ingredient)
+    {
+        Product.ProductIngredients.Remove(ingredient);
+    }
+
+    private void AddImage()
+    {
+        Product.ProductImages.Add(new ProductImage
+        {
+            Product = Product,
+            ImageType = ProductImageType.Primary
+        });
+    }
+    
+    private async Task CreateNewItem<T>(T item) where T : class
+    {
+        try
+        {
+            var createdItem = await AdminService.CreateNewAsync(item);
+            Console.WriteLine($"Created new item: {createdItem}");
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"Error creating new item: {ex.Message}");
+        }
+    }
+    
+    private async Task CreateNewIngredient(ProductIngredient item)
+    {
+        try
+        {
+            var createdItem = await AdminService.CreateNewAsync(item);
+            Console.WriteLine($"Created new ingredient: {createdItem.Name}");
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"Error creating new ingredient: {ex.Message}");
+        }
+    }
+}

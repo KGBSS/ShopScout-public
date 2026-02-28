@@ -1,0 +1,28 @@
+﻿@using ShopScout.Components.Account.Shared
+@inherits LayoutComponentBase
+
+<HeadContent>
+    <link rel="stylesheet" href="/css/account/account.css" />
+</HeadContent>
+
+<header class="top-bar">
+    <AccountNavbar />
+</header>
+
+<div class="page">
+    <main>
+        <article class="content">
+            @Body
+        </article>
+    </main>
+</div>
+
+<div class="bottom-bar">
+    <NavMenu />
+</div>
+
+<div id="blazor-error-ui" data-nosnippet>
+    Váratlan hiba történt. Ha a hiba továbbra is fennáll, kérjük, vegye fel velünk a kapcsolatot!
+    <a href="." class="reload">Újratöltés</a>
+    <span class="dismiss">🗙</span>
+</div>

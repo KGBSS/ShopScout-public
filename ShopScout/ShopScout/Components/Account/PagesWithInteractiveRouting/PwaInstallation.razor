@@ -1,0 +1,146 @@
+﻿@page "/Account/Manage/Pwa-installation"
+@layout AccountLayout
+
+@using ShopScout.Components.Layout
+@using ShopScout.Services
+
+@inject AccountNavbarService NavBarService
+
+<div class="content-wrapper">
+    <h3 class="page-title">App letöltése</h3>
+    <p class="intro-text">Töltsd le az appot, hogy jobb legyen a felhasználási élményed! Kövesd az alábbi lépéseket a telepítéshez:</p>
+
+    <!-- iOS Safari Instructions -->
+    <h4 class="platform-title">
+        <svg class="platform-icon-svg" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor">
+            <path d="M17.05 20.28c-.98.95-2.05.88-3.08.4-1.09-.5-2.08-.48-3.24 0-1.44.62-2.2.44-3.06-.4C2.79 15.25 3.51 7.59 9.05 7.31c1.35.07 2.29.74 3.08.8 1.18-.24 2.31-.93 3.57-.84 1.51.12 2.65.72 3.4 1.8-3.12 1.87-2.38 5.98.48 7.13-.57 1.5-1.31 2.99-2.54 4.09l.01-.01zM12.03 7.25c-.15-2.23 1.66-4.07 3.74-4.25.29 2.58-2.34 4.5-3.74 4.25z" />
+        </svg>
+        iPhone / iPad (Safari böngésző)
+    </h4>
+
+    <ol class="steps-list">
+        <li class="step-item">
+            <div class="step-content">
+                <p>Nyisd meg ezt az oldalt a <strong>Safari böngészőben</strong></p>
+            </div>
+        </li>
+
+        <li class="step-item">
+            <div class="step-content">
+                <p>Nyomj a <strong>Megosztás</strong> gombra a képernyő alján (négyzet felfelé mutató nyíllal)</p>
+                <div class="screenshot">
+                    <img src="/img/pwa/install/0.jpg" alt="Safari megosztás gomb" class="screenshot-img" />
+                </div>
+            </div>
+        </li>
+
+        <li class="step-item">
+            <div class="step-content">
+                <p>Nyomj a jobb oldali gombra</p>
+                <div class="screenshot">
+                    <img src="/img/pwa/install/1.jpg" alt="More gomb" class="screenshot-img" />
+                </div>
+            </div>
+        </li>
+
+        <li class="step-item">
+            <div class="step-content">
+                <p>Görgess lefelé és válaszd a <strong>"Hozzáadás a kezdőképernyőhöz"</strong> opciót (angolul <strong>"Add to Home Screen"</strong>)</p>
+                <div class="screenshot">
+                    <img src="/img/pwa/install/2.jpg" alt="Hozzáadás a kezdőképernyőhöz gomb" class="screenshot-img" />
+                </div>
+            </div>
+        </li>
+
+        <li class="step-item">
+            <div class="step-content">
+                <p>Nyomj a <strong>"Hozzáadás"</strong> gombra a jobb felső sarokban (angolul <strong>"Add"</strong>)</p>
+                <div class="screenshot">
+                    <img src="/img/pwa/install/3.jpg" alt="Hozzáadás gomb" class="screenshot-img" />
+                </div>
+            </div>
+        </li>
+
+        <li class="step-item">
+            <div class="step-content">
+                <p>Az app ikon megjelenik a kezdőképernyődön! 🎉</p>
+            </div>
+        </li>
+    </ol>
+
+    <!-- Other Browsers/Platforms -->
+    <h4 class="platform-title platform-title-spacing">
+        <svg class="platform-icon-svg" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor">
+            <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-2 15l-5-5 1.41-1.41L10 14.17l7.59-7.59L19 8l-9 9z" />
+        </svg>
+        Más eszközök és böngészők
+    </h4>
+
+    <div class="alert-warning-custom pwa-alert-spacing">
+        <div class="alert-icon-wrapper">
+            <svg class="alert-icon" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor">
+                <path d="M1 21h22L12 2 1 21zm12-3h-2v-2h2v2zm0-4h-2v-4h2v4z" />
+            </svg>
+            <strong>Fontos információ iOS felhasználóknak</strong>
+        </div>
+        <p class="alert-text">
+            iOS-en (iPhone, iPad) <strong>csak a Safari böngésző</strong> támogatja az appok telepítését a kezdőképernyőre.
+            Ez egy Apple korlátozás, nem a mi appunk hibája. Ha más böngészőt használsz (Chrome, Firefox, Edge, stb.),
+            másold ki az oldal címét, nyisd meg Safari-ban, és kövesd a fenti lépéseket.
+        </p>
+    </div>
+
+    <ol class="steps-list">
+        <li class="step-item">
+            <div class="step-content">
+                <p><strong>Android eszközökön</strong> (Chrome böngésző):</p>
+                <ul class="info-list">
+                    <li><span class="bullet-neutral">•</span> Nyisd meg az oldalt Chrome böngészőben</li>
+                    <li><span class="bullet-neutral">•</span> Kattints a három pontra (⋮) a jobb felső sarokban</li>
+                    <li><span class="bullet-neutral">•</span> Válaszd a "Hozzáadás a kezdőképernyőhöz" vagy "Telepítés" opciót</li>
+                    <li><span class="bullet-neutral">•</span> Erősítsd meg a telepítést</li>
+                </ul>
+            </div>
+        </li>
+
+        <li class="step-item">
+            <div class="step-content">
+                <p><strong>Windows PC-n</strong> (Chrome, Edge böngésző):</p>
+                <ul class="info-list">
+                    <li><span class="bullet-neutral">•</span> Nyisd meg az oldalt támogatott böngészőben</li>
+                    <li><span class="bullet-neutral">•</span> Keresd a "Telepítés" ikont a címsorban (általában egy monitor ikon vagy plusz jel)</li>
+                    <li><span class="bullet-neutral">•</span> Kattints rá és erősítsd meg a telepítést</li>
+                    <li><span class="bullet-neutral">•</span> Az app elérhető lesz az Indítás menüből és az asztalról</li>
+                </ul>
+            </div>
+        </li>
+
+        <li class="step-item">
+            <div class="step-content">
+                <p><strong>Mac számítógépen</strong> (Chrome, Edge, Safari böngésző):</p>
+                <ul class="info-list">
+                    <li><span class="bullet-neutral">•</span> Nyisd meg az oldalt támogatott böngészőben</li>
+                    <li><span class="bullet-neutral">•</span> Chrome/Edge: Keresd a "Telepítés" ikont a címsorban</li>
+                    <li><span class="bullet-neutral">•</span> Safari: használd a Fájl → Hozzáadás a Dockhoz opciót</li>
+                    <li><span class="bullet-neutral">•</span> Az app elérhető lesz az alkalmazások között</li>
+                </ul>
+            </div>
+        </li>
+    </ol>
+
+    <!-- Help Section -->
+    <div class="tip-card tip-card-spacing">
+        <p class="tip-text">
+            <strong>Nem találod a telepítés opciót?</strong> Bizonyosodj meg róla, hogy támogatott böngészőt használsz.
+            iOS-en csak Safari működik, Androidon Chrome vagy Samsung Internet, PC-n pedig Chrome vagy Edge böngésző ajánlott.
+            Ha továbbra is problémád van, írj nekünk a támogatási oldalon!
+        </p>
+    </div>
+</div>
+
+@code {
+    protected override void OnInitialized()
+    {
+        NavBarService.SetNavBar("Applikáció letöltése", "/account/manage/application");
+    }
+}

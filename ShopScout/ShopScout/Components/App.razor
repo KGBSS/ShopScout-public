@@ -1,0 +1,103 @@
+﻿<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="utf-8" />
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, minimum-scale=1, user-scalable=no"  />
+
+    <meta name="description" content="Alakítsa át vásárlási élményét a ShopScout-tal. Termékfelderítés, azonnali vonalkód-beolvasás és intelligens áruházi navigáció. 50K+ termék, 200+ üzlet, 99.9% pontosság.">
+    <meta name="keywords" content="vásárlás, áruház navigáció, vonalkód olvasó, termék keresés, okos vásárlás, asszisztens, ShopScout, bevásárlás, termék információ">
+    <meta name="author" content="ShopScout">
+    <meta name="robots" content="index, follow">
+
+    <!-- Open Graph / Facebook -->
+    <meta property="og:type" content="website">
+    <meta property="og:url" content="https://app.shopscout.hu/">
+    <meta property="og:title" content="ShopScout - Okos Vásárlási Asszisztens | Áruházi Navigáció">
+    <meta property="og:description" content="Alakítsa át vásárlási élményét a ShopScout-tal. Termékfelderítés, azonnali vonalkód-beolvasás és intelligens áruházi navigáció.">
+    <meta property="og:image" content="https://app.shopscout.hu/img/favicons/meta-image.png">
+    <meta property="og:locale" content="hu_HU">
+    <meta property="og:site_name" content="ShopScout">
+
+    <!-- Twitter -->
+    <meta name="twitter:card" content="summary_large_image">
+    <meta name="twitter:url" content="https://app.shopscout.hu/">
+    <meta name="twitter:title" content="ShopScout - Okos Vásárlási Asszisztens | Áruházi Navigáció">
+    <meta name="twitter:description" content="Alakítsa át vásárlási élményét a ShopScout-tal. Termékfelderítés, azonnali vonalkód-beolvasás és intelligens áruházi navigáció.">
+    <meta name="twitter:image" content="https://app.shopscout.hu/img/favicons/meta-image.png">
+
+    <!-- Structured Data / JSON-LD -->
+    <script type="application/ld+json">
+        {
+            "@@context": "https://schema.org",
+            "@@type": "WebApplication",
+            "name": "ShopScout",
+            "applicationCategory": "ShoppingApplication",
+            "operatingSystem": "Web",
+            "description": "Okos vásárlási asszisztens alkalmazás áruházi navigációval és vonalkód-beolvasással",
+            "url": "https://app.shopscout.hu"
+        }
+    </script>
+
+    <base href="/" />
+    <link rel="canonical" href="https://app.shopscout.hu/">
+    <link rel="stylesheet" href="/lib/bootstrap/bootstrap-icons/bootstrap-icons.min.css" />
+    <link rel="stylesheet" href="@Assets["lib/bootstrap/dist/css/bootstrap.min.css"]" />
+    <link rel="stylesheet" href="@Assets["app.css"]" />
+    <link rel="stylesheet" href="@Assets["ShopScout.styles.css"]" />
+
+    <link rel="icon" type="image/png" href="/img/favicons/favicon-96x96.png" sizes="96x96" />
+    <link rel="icon" type="image/svg+xml" href="/img/favicons/favicon.svg" />
+    <link rel="shortcut icon" href="/img/favicons/favicon.ico" />
+    <link rel="apple-touch-icon" sizes="180x180" href="/img/favicons/apple-touch-icon.png" />
+    <meta name="apple-mobile-web-app-title" content="ShopScout" />
+
+    <title>ShopScout - Okos Vásárlási Asszisztens | Áruházi Navigáció</title>
+    <link rel="manifest" href="/manifest.webmanifest" />
+    <meta name="theme-color" content="#09a473" />
+
+    <ImportMap />
+    <link rel="stylesheet" href="/css/nav.css" />
+    <HeadOutlet />
+</head>
+
+<body>
+    <Routes />
+    <script src="_framework/blazor.web.js"></script>
+    <script src="@Assets["lib/bootstrap/dist/js/bootstrap.bundle.min.js"]"></script>
+    <script>
+        (function () {
+            const errorUi = document.getElementById('blazor-error-ui');
+
+            if (!errorUi) return;
+
+            const observer = new MutationObserver((mutations) => {
+                for (const mutation of mutations) {
+                    // Check if Blazor has unhidden the error UI
+                    if (mutation.type === 'attributes' &&
+                        mutation.attributeName === 'style' &&
+                        errorUi.style.display === 'block') {
+
+                        const lastReload = sessionStorage.getItem('blazor-auto-reload-timestamp');
+                        const now = Date.now();
+                        const threshold = 10000; // 10 seconds cooldown
+
+                        if (!lastReload || (now - parseInt(lastReload)) > threshold) {
+                            sessionStorage.setItem('blazor-auto-reload-timestamp', now);
+                            console.warn("Unhandled error detected. Auto-reloading...");
+                            location.reload();
+                        } else {
+                            console.error("Critical error loop detected. Automatic reload stopped to prevent infinite looping.");
+                        }
+                    }
+                }
+            });
+
+            observer.observe(errorUi, { attributes: true });
+        })();
+    </script>
+    <script src="/js/account.js"></script>
+    <script src="/js/pwa.js"></script>
+</body>
+</html>

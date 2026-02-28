@@ -1,0 +1,102 @@
+﻿@namespace ShopScout.Client.Components
+@using ShopScout.SharedLib.Models
+@inject NavigationManager NavigationManager
+
+<div class="product-preview @Class" @onclick="() => HandleClick()">
+    <div class="row-container">
+        <div class="image-container">
+            @{
+                var image = productF.ProductImages.FirstOrDefault(x => x.ImageType == ProductImageType.Primary)?.URL ?? "no_image.jpg";
+            }
+            <img src="@image" alt="@productF.ProductName" class="product-image" />
+
+            @if (productF.FromArfigyelo)
+            {
+                <VerifiedBadge />
+            }
+        </div>
+
+        <div class="text-container">
+            <div class="product-header">
+                <span class="product-name">@productF.ProductName</span>
+            </div>
+            @if (!HideDetails)
+            {
+                <div class="product-meta-row">
+                    @if (productF.Brands.Any())
+                    {
+                        <span class="product-brand">@productF.Brands.First().Name</span>
+                    }
+
+                    <div class="product-info-tags">
+                        @if (productF.Categories.Any())
+                        {
+                            <span class="info-tag">@productF.Categories.First().Name</span>
+                        }
+                        @if (productF.Details?.Quantity != null)
+                        {
+                            <span class="info-tag">@productF.Details.Quantity</span>
+                        }
+                    </div>
+                </div>
+                @if (ProductPerStore != null && ProductPerStore.ShelfId != null)
+                {
+                    <button class="show-in-store-btn" @onclick:stopPropagation="true" @onclick="() => OnOpenRenderer.InvokeAsync(ProductPerStore)">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                            <path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"></path>
+                            <polyline points="9 22 9 12 15 12 15 22"></polyline>
+                        </svg>
+                        Megjelenítés boltban
+                    </button>
+                }
+            }
+
+            @if (Price.HasValue && !HideDetails)
+            {
+                <div class="product-pricing">
+                    @if (DiscountedPrice.HasValue)
+                    {
+                        <span class="price-main has-discount">@DiscountedPrice.Value Ft</span>
+                        <span class="price-original">@Price.Value Ft</span>
+                        <span class="discount-percent">-@(Math.Round((decimal)(Price.Value - DiscountedPrice.Value) / Price.Value * 100))%</span>
+                    }
+                    else
+                    {
+                        <span class="price-main">@Price.Value Ft</span>
+                    }
+                </div>
+            }
+        </div>
+    </div>
+</div>
+
+@code {
+    [Parameter] public Product? Product { get; set; } = default!;
+    [Parameter] public ProductPerStore? ProductPerStore { get; set; } = default!;
+    [Parameter] public EventCallback<ProductPerStore> OnClick { get; set; }
+    [Parameter] public EventCallback<Product> OnClickProduct { get; set; }
+    [Parameter] public EventCallback<ProductPerStore> OnOpenRenderer { get; set; }
+    [Parameter] public bool HideDetails { get; set; } = false;
+    [Parameter] public string? Class { get; set; }
+    [Parameter] public bool StopOpenAction { get; set; } = false;
+
+    private Product productF => ProductPerStore?.Product ?? Product!;
+    private int? Price => ProductPerStore?.Price;
+    private int? DiscountedPrice => ProductPerStore?.DiscountedPrice;
+
+    private void HandleClick()
+    {
+        if (Product == null)
+        {
+            OnClick.InvokeAsync(ProductPerStore);
+            if (!StopOpenAction)
+                NavigationManager.NavigateTo($"/product/{productF.Code}");
+        }
+        else
+        {
+            OnClickProduct.InvokeAsync(Product);
+            if (!StopOpenAction)
+                NavigationManager.NavigateTo($"/product/{Product.Code}");
+        }
+    }
+}

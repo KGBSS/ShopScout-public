@@ -1,0 +1,580 @@
+﻿@page "/layout-editor/{id:int}"
+@attribute [Microsoft.AspNetCore.Authorization.Authorize]
+
+@using System.ComponentModel.DataAnnotations
+@* @rendermode @(new InteractiveAutoRenderMode(prerender: false)) *@
+@rendermode InteractiveAuto
+@attribute [StreamRendering]
+@inject IJSRuntime JS
+@implements IAsyncDisposable
+@inject IStoreLayoutService StoreLayoutService
+@inject IStoreService StoreService
+@inject NavigationManager NavigationManager
+@layout EmptyLayout
+
+<PageTitle>
+    Bolt Alaprajz Szerkesztő
+</PageTitle>
+
+<div class="editor-layout @(loaded ? "loaded" : "")">
+	@if (shopNotFound)
+	{
+		<div class="d-flex justify-content-center align-items-center flex-fill position-absolute icon-container flex-column">
+			<img src="/svg/store-location-icon.svg" class="icon" />
+			<p class="missing-msg">A keresett bolt nem található!</p>
+			<a class="btn scout-btn scout-gradient" href="/">Vissza a főmenübe</a>
+		</div>
+    }
+	else
+	{
+        <Loader Visible="isLoading" />
+		@if (errorMessage != null)
+		{
+			<Error OnCleared="ClearError">
+				@errorMessage
+			</Error>
+		}
+
+        <Modal @ref="modal" />
+
+		<!-- Left Toolbar -->
+		<Toolbar @bind-CurrentEditorMode="editorMode" @bind-SelectedTool="selectedTool" @bind-CurrentShelfType="shelfType" @bind-ActiveGroup="activeGroup" Class="@(CurrentShelf != null ? "slide-out" : "")" ShakeState="ShakeState" DisableShelves="IsLayoutInit" />
+
+		<!-- Main Canvas Area -->
+		<div class="main-area">
+			<!-- Top Bar -->
+			<div class="top-bar">
+				<div>
+					<h1 class="@(editorMode != EditorMode.ReadOnly ? "mobile-hidden" : "")">ShopScout Alaprajz Szerkesztő</h1>
+					<p class="mobile-hidden">Tervezd meg boltod alaprajzát. Rajzold be a falakat és polcokat.</p>
+				</div>
+				<div class="top-bar-actions">
+					<button class="action-button floating @(activeGroup != null ? "mobile-hidden" : "")" @onclick="FitToScreen">
+						<svg class="icon" version="1.1" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" x="0px" y="0px" viewBox="0 0 240 242.455" enable-background="new 0 0 240 242.455" xml:space="preserve"><g><path d="M15.26,242.455c-4.202,0-8.019-1.715-10.782-4.477C1.715,235.215,0,231.398,0,227.195V15.26 c0-4.203,1.715-8.019,4.478-10.782C7.241,1.714,11.058,0,15.26,0h209.479c4.203,0,8.019,1.716,10.781,4.479 C238.284,7.243,240,11.061,240,15.26v211.935c0,4.199-1.716,8.018-4.479,10.781c-2.764,2.762-6.579,4.479-10.781,4.479H15.26 L15.26,242.455z M65.622,123.273c0,2.346-1.903,4.25-4.25,4.25c-2.348,0-4.25-1.904-4.25-4.25V89.494c0-2.347,1.902-4.25,4.25-4.25 h34.319c2.347,0,4.25,1.903,4.25,4.25s-1.903,4.25-4.25,4.25H71.643l23.633,23.544c1.66,1.65,1.667,4.334,0.017,5.993 c-1.65,1.66-4.334,1.668-5.994,0.018L65.622,99.71V123.273L65.622,123.273z M141.583,90.477c-2.348,0-4.25-1.902-4.25-4.25 c0-2.347,1.902-4.25,4.25-4.25h33.777c2.348,0,4.25,1.903,4.25,4.25v34.32c0,2.348-1.902,4.25-4.25,4.25 c-2.347,0-4.25-1.902-4.25-4.25V96.498l-23.544,23.633c-1.65,1.66-4.334,1.667-5.993,0.017c-1.659-1.65-1.667-4.334-0.017-5.993 l23.588-23.678H141.583L141.583,90.477z M174.378,156.129c0-2.346,1.902-4.25,4.25-4.25c2.347,0,4.25,1.904,4.25,4.25v33.779 c0,2.346-1.903,4.25-4.25,4.25h-34.319c-2.348,0-4.25-1.904-4.25-4.25c0-2.348,1.902-4.25,4.25-4.25h24.048l-23.633-23.545 c-1.659-1.65-1.667-4.334-0.017-5.994c1.65-1.658,4.334-1.666,5.993-0.016l23.678,23.588V156.129L174.378,156.129z M98.417,188.924 c2.347,0,4.25,1.904,4.25,4.25c0,2.348-1.903,4.25-4.25,4.25H64.639c-2.347,0-4.25-1.902-4.25-4.25v-34.318 c0-2.348,1.903-4.25,4.25-4.25s4.25,1.902,4.25,4.25v24.049l23.544-23.633c1.65-1.66,4.333-1.668,5.993-0.018 s1.667,4.334,0.017,5.994l-23.588,23.676H98.417L98.417,188.924z M229.479,46.68H10.52v180.515c0,1.299,0.535,2.482,1.396,3.344 s2.046,1.396,3.344,1.396h209.479c1.297,0,2.48-0.535,3.343-1.398c0.862-0.861,1.397-2.045,1.397-3.342V46.68L229.479,46.68z" /></g></svg>
+                        Méretezés a képernyőhöz
+					</button>
+					@if (editorMode != EditorMode.ReadOnly)
+					{
+						<button class="action-button" @onclick="Discard">
+                            <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                <path d="M9 14L4 9l5-5" />
+                                <path d="M20 20v-7a4 4 0 0 0-4-4H4" />
+                            </svg>
+							Elvet
+						</button>
+
+                        <button class="action-button" @onclick="Save">
+                            <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                <path d="M17.3 3.3L21 7v13a1 1 0 0 1-1 1H4a1 1 0 0 1-1-1V4a1 1 0 0 1 1-1h12.6a1 1 0 0 1 .7.3z" />
+                                <rect x="7" y="13" width="10" height="8" />
+                                <rect x="8" y="3" width="8" height="5" />
+                            </svg>
+                            Mentés
+                        </button>
+					}
+				</div>
+			</div>
+
+			<!-- Mobile back button -->
+			<button class="back-to-shop-mobile" @onclick="GoBackToShop">
+				<svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+					<line x1="19" y1="12" x2="5" y2="12"></line>
+					<polyline points="12 19 5 12 12 5"></polyline>
+				</svg>
+				<span>Vissza</span>
+			</button>
+
+			<!-- Canvas -->
+			<div class="canvas-wrapper d-flex position-relative">
+				@if(layout == null && errorMessage == null && !shopNotFound)
+				{
+					<div class= "d-flex justify-content-center align-items-center flex-fill">
+						<div class= "spinner-border text-primary pre-animate" role = "status">
+							<span class= "visually-hidden"> Loading...</span>
+						</div>
+					</div>
+				}
+				else if (loaded)
+				{
+					if (IsLayoutInit)
+					{
+						<div class="d-flex justify-content-center align-items-center flex-fill position-absolute icon-container flex-column">
+							<svg class="icon" xmlns="http://www.w3.org/2000/svg" shape-rendering="geometricPrecision" text-rendering="geometricPrecision" image-rendering="optimizeQuality" fill-rule="evenodd" clip-rule="evenodd" viewBox="0 0 512 489.435"><path fill="#1A1A1A" fill-rule="nonzero" d="M109.524 317.184c6.788 0 12.29 5.502 12.29 12.29 0 6.788-5.502 12.291-12.29 12.291H71.37L33.265 464.853h444.623l-41.373-123.088H407.93c-6.788 0-12.291-5.503-12.291-12.291s5.503-12.29 12.291-12.29h46.171L512 489.435H0l53.325-172.251h56.199zM235.89 189.162c0-1.749-.019-3.502-.019-5.252a80.87 80.87 0 011.779-16.793A27.72 27.72 0 01242.941 156c4.888-5.793 10.569-8.671 16.306-13.285 7.492-5.755 11.679-17.97 1.311-23.267a13.563 13.563 0 00-6.006-1.263c-4.871 0-9.284 2.393-11.795 6.596a13.933 13.933 0 00-1.765 6.787c0 .75-31.634.397-34.966.397a43.395 43.395 0 016.823-25.164 38.973 38.973 0 0117.713-14.235c15.79-6.302 34.448-5.866 50.281.004a39.69 39.69 0 0118.072 13.236c7.342 10.397 8.674 25.281 3.75 37.048a35.112 35.112 0 01-7.814 11.159c-6.52 6.398-13.659 9.306-19.922 15.09a20.821 20.821 0 00-5.063 7.138 24.317 24.317 0 00-1.764 9.083l.003.314v3.345l-32.215.179zm16.626 47.349l-.382.001a18.084 18.084 0 01-13.169-5.696 19.012 19.012 0 01-5.568-13.44c0-.186.006-.38.01-.562v-.268a18.67 18.67 0 015.558-13.286 18.562 18.562 0 0126.743 0 18.92 18.92 0 015.876 13.554 19.45 19.45 0 01-2.801 9.984 21 21 0 01-6.958 7.09 17.546 17.546 0 01-9.221 2.623h-.133.045z" /><path fill="#EF4147" d="M266.131 425.009c-3.121 2.276-7.359 2.59-10.837.357-37.51-23.86-69.044-52.541-93.797-83.672-34.164-42.861-55.708-90.406-63.066-136.169-7.493-46.427-.492-91.073 22.612-127.381 9.098-14.36 20.739-27.428 34.923-38.714C188.57 13.428 225.81-.263 262.875.004c35.726.268 70.96 13.601 101.422 41.39 10.707 9.723 19.715 20.872 27.075 32.96 24.843 40.898 30.195 93.083 19.269 145.981-17.047 82.829-71.772 160.521-144.51 204.674zM255.789 37.251c69.041 0 125.006 55.965 125.006 125.005 0 69.041-55.965 125.006-125.006 125.006-69.04 0-125.005-55.965-125.005-125.006 0-69.04 55.965-125.005 125.005-125.005z" /></svg>
+							<p class="missing-msg">Még nem adtak hozzá alaprajzot.</p>
+							<button class="btn scout-btn scout-gradient d-flex flex-row align-items-center gap-2" @onclick="@(() => editorMode = EditorMode.WallEditor)">
+								<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none"
+									 stroke-width="2" stroke-linecap="round" stroke-linejoin="round"
+									 aria-hidden="true" class="icon">
+									<!-- Pencil body -->
+									<path d="M12 20h9" />
+									<path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4 12.5-12.5z" />
+								</svg>
+								<p class="m-0">Hozzáadom most</p>
+							</button>
+						</div>
+					}
+					<EditorCanvas editorMode="editorMode"/>
+				}
+			</div>
+		</div>		
+	}
+	<!-- Right Properties Panel -->
+    <PropertiesPanel @bind-Shelf="CurrentShelf" onsave="SavePropertiesPanel" @ref="propertiesPanel" store="store" OnProductSelected="PropertiesPanelAddProduct" OnProductDeleted="PropertiesPanelDeleteProduct" ShelfEf="CurrentShelfEf" />
+</div>
+
+@code {
+    [Parameter]
+    public int id { get; set; }
+
+    private PropertiesPanel propertiesPanel = null!;
+
+    private ShakeButtonState ShakeState = new();
+
+    private DotNetObjectReference<LayoutEditor>? objRef;
+
+    protected override void OnInitialized()
+    {
+        objRef = DotNetObjectReference.Create(this);
+    }
+
+    private Modal modal;
+    private bool shopNotFound = false;
+    private IJSObjectReference? module;
+    private string? errorMessage;
+    private PolyPoint[]? layoutPoints;
+    private bool loaded = false;
+    private EditorMode _editorMode = EditorMode.ReadOnly;
+    private EditorMode editorMode {
+        get => _editorMode;
+        set
+        {
+            _ = OnEditorModeChanged(_editorMode, value);
+            _editorMode = value;
+        }
+    }
+
+    private Tool _selectedTool = Tool.None;
+    private Tool selectedTool
+    {
+        get => _selectedTool;
+        set
+        {
+            if (_selectedTool == value) return;
+
+            if (editorMode == EditorMode.ProductEditor && value != Tool.Product || editorMode == EditorMode.EntranceEditor && value != Tool.Entrance )
+            {
+                ShakeState.Reject(value);
+                return;
+            }
+
+            if (value == Tool.Draw)
+            {
+                if (editorMode == EditorMode.ReadOnly)
+                {
+                    ShakeState.Reject(value);
+                    return;
+                }
+                value = (Tool)Enum.Parse(typeof(Tool), editorMode.ToString().Split("Editor")[0]);
+            }
+            if (editorMode == EditorMode.ReadOnly && value != Tool.None) {
+                ShakeState.Reject(value);
+                return;
+            }
+            _selectedTool = value;
+            ToolUpdated(value);
+        }
+    }
+
+    private ShelfType? _shelfType = null;
+    private ShelfType? shelfType
+    {
+        get => _shelfType;
+        set
+        {
+            if (value != null && (layout == null || layout.Walls == null))
+            {
+                ShakeState.Reject(value);
+                return;
+            }
+            if (value != null || editorMode != EditorMode.ShelfEditor) editorMode = EditorMode.ShelfEditor;
+            _shelfType = value;
+            if (selectedTool != Tool.Shelf) selectedTool = Tool.Shelf;
+            ToolUpdated(Tool.Shelf, value);
+        }
+    }
+
+    private string? activeGroup = null;
+
+    private ShelfDto? CurrentShelf { get; set; }
+
+    private bool IsLayoutInit
+    {
+        get => layout != null && (layout.Walls == null || layout.Walls.Count == 0) && editorMode == EditorMode.ReadOnly;
+    }
+
+    private LayoutObject? layout;
+    private Store? store;
+
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (firstRender)
+        {
+            store = await StoreLayoutService.GetStoreAsync(id);
+            if (store != null) layout = store.Layout ?? new LayoutObject();
+            if (layout == null || store == null)
+            {
+                shopNotFound = true;
+                errorMessage = "A keresett bolt nem található!";
+            }
+            else loaded = true;
+            StateHasChanged();
+            module = await JS.InvokeAsync<IJSObjectReference>("import", "./Pages/LayoutEditor.razor.js");
+            if (layout != null && module != null)
+            {
+                await module.InvokeVoidAsync("drawWalls", JsonSerializer.Serialize(layout.ToDto()), objRef, true, editorMode.ToString().ToLower());
+                layoutPoints = await module.InvokeAsync<PolyPoint[]>("getPoly");
+            }
+        }
+    }
+
+    private Shelf? CurrentShelfEf => store?.Layout?.Shelves.Where(x => int.TryParse(CurrentShelf?.Id, out var id) && x.Id == id).FirstOrDefault() ?? null;
+
+    private ProductPerStore? pendingProductUpdateData;
+    private ShelfDto? pendingPropertiesPanelData;
+    private bool isLoading = false;
+
+    private async Task<bool> ShowModal(string title, string body, string falseText, string trueText)
+    {
+        if (modal != null)
+        {
+            return await modal.Show(title, body, falseText, trueText);
+        }
+        return false;
+    }
+
+    private async Task ToolUpdated(Tool tool, ShelfType? shelfType = null)
+    {
+        if (module == null) return;
+        if (shelfType != null)
+            await module.InvokeVoidAsync("setTool", tool.ToString(), shelfType);
+        else
+            await module.InvokeVoidAsync("setTool", tool.ToString());
+    }
+
+    public async ValueTask DisposeAsync()
+    {
+        if (module is not null)
+        {
+            try
+            {
+                await module.DisposeAsync();
+            }
+            catch (JSDisconnectedException)
+            {
+                //
+            }
+        }
+    }
+
+    private async Task FitToScreen(MouseEventArgs args)
+    {
+        if (module != null)
+        {
+            await module.InvokeVoidAsync("fitToScreen");
+        }
+    }
+
+    private void GoBackToShop()
+    {
+        NavigationManager.NavigateTo($"/shop/{id}");
+    }
+
+    private async Task SetTool(Tool tool)
+    {
+        if (module != null)
+        {
+            selectedTool = tool;
+        }
+    }
+
+    private async Task Save(MouseEventArgs args)
+    {
+        if (editorMode == EditorMode.ReadOnly) return;
+
+        if (module != null)
+        {
+            layoutPoints = await module.InvokeAsync<PolyPoint[]>("getPoly");
+
+            if (layoutPoints != null)
+            {
+                if (editorMode == EditorMode.WallEditor)
+                {
+                    editorMode = EditorMode.EntranceEditor;
+                    await module.InvokeVoidAsync("drawPoly", (object)layoutPoints);
+                }
+                else if (editorMode == EditorMode.ShelfEditor)
+                {
+                    await SaveShelves();
+                }
+            } else
+            {
+                ShowError("Error your layout is incomplete!");
+            }
+        }
+
+        return;
+    }
+
+    private async Task Discard(MouseEventArgs args)
+    {
+        if (editorMode == EditorMode.ReadOnly) return;
+
+        if (module != null)
+        {
+            if (layout == null)
+            {
+                ShowError("Error your layout is incomplete!");
+                return;
+            }
+            _shelfType = null;
+            _editorMode = EditorMode.ReadOnly;
+            selectedTool = Tool.None;
+            if (propertiesPanel != null) await propertiesPanel.ItemsLoaded();
+            StateHasChanged();
+            await module.InvokeVoidAsync("drawWalls", JsonSerializer.Serialize(layout.ToDto()), objRef, true, editorMode.ToString().ToLower());
+        }
+
+        return;
+    }
+
+    private async void ShowError(string message)
+    {
+        errorMessage = message;
+        StateHasChanged();
+    }
+
+    private void ClearError()
+    {
+        errorMessage = null;
+        StateHasChanged();
+    }
+
+    private async Task OnEditorModeChanged(EditorMode oldMode, EditorMode newMode)
+    {
+        if (module == null) return;
+        // If the user is switching from a non-readonly mode to another mode, check for unsaved changes
+        if (oldMode != EditorMode.ReadOnly && newMode != EditorMode.EntranceEditor && newMode != EditorMode.ReadOnly && newMode != EditorMode.ProductEditor && oldMode != newMode)
+        {
+            var layoutDto = await module.InvokeAsync<LayoutDto>("getData");
+            var currentDto = layout.ToDto();
+
+            bool areEqual = JsonSerializer.Serialize(currentDto) == JsonSerializer.Serialize(layoutDto);
+
+            if (!areEqual && !await ShowModal("Nem mentett változtatások", "A szerkesztőmód váltása előtt szeretné menteni a változtatásokat? A nem mentett adatok elvesznek.", "Mégse", "Módot váltok"))
+            {
+                _editorMode = oldMode;
+                newMode = oldMode;
+            }
+
+            StateHasChanged();
+        }
+
+        //If the user is switching to shelf editor, but the layout is not initialized, show error
+        if (newMode == EditorMode.ShelfEditor && (layoutPoints == null || IsLayoutInit))
+        {
+            ShowError("Please define the shop boundaries first!");
+            ShakeState.Reject(newMode);
+            _editorMode = oldMode;
+            StateHasChanged();
+            return;
+        }
+
+        if (newMode != EditorMode.ShelfEditor)
+        {
+            _shelfType = null;
+        }
+
+        if (oldMode != newMode)
+        {
+            // If the user is switching from entrance editor to wall editor, go back to wall editor
+            if (oldMode == EditorMode.EntranceEditor && newMode == EditorMode.WallEditor)
+            {
+                await module.InvokeVoidAsync("drawWalls", -1);
+            } else if (newMode == EditorMode.WallEditor)
+            {
+                await module.InvokeVoidAsync("drawWalls", JsonSerializer.Serialize(layout.ToDto()), objRef, false, newMode.ToString().ToLower());
+            } else if (newMode == EditorMode.ShelfEditor)
+            {
+                await module.InvokeVoidAsync("drawWalls", JsonSerializer.Serialize(layout.ToDto()), objRef, false, newMode.ToString().ToLower());
+            } else if (newMode == EditorMode.ProductEditor)
+            {
+                pendingPropertiesPanelData = CurrentShelf;
+                await propertiesPanel.ClosePanel();
+                CurrentShelf = null;
+                var obj = new { shelfId = pendingPropertiesPanelData!.Id, imageUrl = pendingProductUpdateData!.Product.ProductImages.First().URL };
+                await module.InvokeVoidAsync("drawWalls", JsonSerializer.Serialize(layout.ToDto()), objRef, true, newMode.ToString().ToLower(), obj);
+            }
+        }
+
+        if (newMode == EditorMode.WallEditor) selectedTool = Tool.Wall;
+        else if (newMode == EditorMode.ShelfEditor) _selectedTool = Tool.Shelf;
+        else if (newMode == EditorMode.EntranceEditor) selectedTool = Tool.Entrance;
+        else if (newMode == EditorMode.ProductEditor) selectedTool = Tool.Product;
+        else if (newMode == EditorMode.ReadOnly) selectedTool = Tool.None;
+        else selectedTool = Tool.Move;
+        StateHasChanged();
+    }
+
+    public async Task SaveShelves()
+    {
+        isLoading = true;
+        StateHasChanged();
+        editorMode = EditorMode.ReadOnly;
+
+        var layoutDto = await module.InvokeAsync<LayoutDto>("getData");
+
+        if (layoutDto.Wall.Count == 0) return;
+
+        store = await StoreLayoutService.StoreWalls(layoutDto, id);
+        layout = store.Layout;
+
+        selectedTool = Tool.None;
+
+        if (module != null && objRef != null)
+        {
+            await module.InvokeVoidAsync("drawWalls", JsonSerializer.Serialize(layout.ToDto()), objRef, true);
+        }
+        isLoading = false;
+        StateHasChanged();
+    }
+
+    private async Task SavePropertiesPanel(ShelfDto updatedShelf)
+    {
+        if (layout == null) return;
+        CurrentShelf = updatedShelf;
+        if (editorMode == EditorMode.ReadOnly)
+        {
+            if (int.TryParse(updatedShelf?.Id, out _) == false)
+            {
+                CurrentShelf = updatedShelf;
+            } else
+            {
+                Shelf response;
+                try
+                {
+                    response = await StoreLayoutService.UpdateShelf(updatedShelf, id);
+                } catch (Exception ex)
+                {
+                    ShowError("Hiba a polc mentése során: " + ex.Message);
+                    return;
+                }
+                CurrentShelf = response.ToDto();
+                layout.Shelves.First(s => s.Id.ToString() == CurrentShelf.Id).UpdateFromDto(CurrentShelf);
+            }
+        }
+
+        if (module != null)
+        {
+            await module.InvokeVoidAsync("updateShelf", JsonSerializer.Serialize(CurrentShelf));
+        }
+        await propertiesPanel.ClosePanel();
+        CurrentShelf = null;
+        StateHasChanged();
+    }
+
+    private async Task PropertiesPanelAddProduct(ProductPerStore productPerStore)
+    {
+        if (CurrentShelf == null || CurrentShelfEf == null) return;
+        try
+        {
+            pendingProductUpdateData = productPerStore;
+            editorMode = EditorMode.ProductEditor;
+        }
+        catch (Exception ex)
+        {
+            ShowError("Hiba a termék polchoz adása során: " + ex.Message);
+        }
+    }
+
+    private async Task PropertiesPanelDeleteProduct(ProductPerStore productPerStore)
+    {
+        if (CurrentShelf == null || CurrentShelfEf == null) return;
+        try
+        {
+            var response = await StoreLayoutService.RemoveProductFromShelf(productPerStore, CurrentShelfEf.Id);
+            CurrentShelf = response.shelf;
+            store = response.store;
+            propertiesPanel.ItemsLoaded();
+        }
+        catch (Exception ex)
+        {
+            ShowError("Hiba a termék polcról való eltávolítása során: " + ex.Message);
+        }
+    }
+
+    private async Task ClearAll()
+    {
+
+    }
+
+    [JSInvokable]
+    public async Task EntrancePlaced(EntranceDto entrance, WallDto[] walls, ShelfDto[] shelves)
+    {
+        isLoading = true;
+        StateHasChanged();
+        editorMode = EditorMode.ReadOnly;
+
+        if (walls.Length == 0) return;
+
+        LayoutDto layoutDto = new LayoutDto()
+        {
+            Wall = walls.ToList(),
+            Entrance = new EntranceDto
+            {
+                X1 = entrance.X1,
+                Y1 = entrance.Y1,
+                X2 = entrance.X2,
+                Y2 = entrance.Y2,
+            },
+            Shelf = shelves.ToList()
+        };
+
+        store = await StoreLayoutService.StoreWalls(layoutDto, id);
+        layout = store.Layout;
+
+        selectedTool = Tool.None;
+
+        if (module != null && objRef != null)
+        {
+            await module.InvokeVoidAsync("drawWalls", JsonSerializer.Serialize(layout.ToDto()), objRef, true);
+        }
+        isLoading = false;
+        StateHasChanged();
+    }
+
+    [JSInvokable]
+    public async void ProductPlaced(float d)
+    {
+        isLoading = true;
+        StateHasChanged();
+        editorMode = EditorMode.ReadOnly;
+        selectedTool = Tool.None;
+        if (pendingProductUpdateData == null) return;
+        CurrentShelf = pendingPropertiesPanelData;
+        if (CurrentShelfEf == null) return;
+        var response = await StoreLayoutService.AddProductToShelf(pendingProductUpdateData, CurrentShelfEf.Id, d);
+        CurrentShelf!.Products = response.shelf.Products;
+        store = response.store;
+        await module.InvokeVoidAsync("drawWalls", JsonSerializer.Serialize(layout.ToDto()), objRef, true, editorMode.ToString().ToLower());
+        propertiesPanel.ItemsLoaded();
+        isLoading = false;
+        StateHasChanged();
+    }
+
+    [JSInvokable]
+    public async void ShelfClicked(ShelfDto? shelf)
+    {
+        CurrentShelf = shelf;
+        StateHasChanged();
+    }
+}

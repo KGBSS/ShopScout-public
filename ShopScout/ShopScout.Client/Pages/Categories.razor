@@ -1,0 +1,324 @@
+﻿@page "/categories"
+@page "/categories/{CategoryId:int}"
+
+@rendermode @(new InteractiveServerRenderMode(prerender: false))
+@attribute [StreamRendering]
+
+@using System.Text
+@using System.Globalization
+@using System.Text.RegularExpressions
+
+@inject ICategoryService CategoryService
+
+<div class="categories-section">
+    @if (CategoryId != null)
+    {
+        <button class="back-btn" @onclick="SetCategoryId">
+            <span>←</span> @backButtonDisplayName
+        </button>
+    }
+    else
+    {
+        <a class="back-btn" href="/">
+            <span>←</span> Vissza a főoldalra
+        </a>
+    }
+    <h3>@CategoryDisplayName</h3>
+    <div class="search-bar">
+        <span class="bi bi-search"></span>
+        <input @bind="SearchText" @bind:event="oninput" type="text" placeholder="Keress a kategóriák között..." class="product-search-input" />
+    </div>
+
+    @if ((CategoryId == null || (Category != null && Category.SubCategories.Count != 0)) && AllCategories != null)
+    {
+        <div class="categories-flex">
+            @if (noSearchResult)
+            {
+                <p>Nem talalhato ilyen kategória</p>
+            }
+            else if (CategoriesWithRelevance.Count > 0)
+            {
+                @foreach (var categoryWithRelevance in CategoriesWithRelevance.Take(20))
+                {
+                    <CategoryPreview Click="SetCategoryId" Category="categoryWithRelevance.category" />
+                }
+            }
+            else
+            {
+                @foreach (var category in AllCategories.Where(x => x.Verified).Take(80))
+                {
+                    <CategoryPreview Click="SetCategoryId" Category="category" />
+                }
+            }
+        </div>
+    }
+    else if (Category != null)
+    {
+
+        <div class="categories-flex justify-content-center">
+            @if (noSearchResult)
+            {
+                <p>Nem talalhato ilyen termek</p>
+            }
+            else if (ProductsWithRelevance.Count > 0)
+            {
+                @foreach (var productWithRelevance in ProductsWithRelevance.Take(20))
+                {
+                    <ProductPreview Product="productWithRelevance.product" />
+                }
+            }
+            else
+            {
+                @foreach (var product in Category.Products.Take(20))
+                {
+                    <ProductPreview Product="product" />
+                }
+            }
+        </div>
+    }
+    else
+    {
+        <p>betöltés...</p>
+    }
+</div>
+
+
+
+@code {
+    [Parameter] public int? CategoryId { get; set; }
+    private ProductCategory Category { get; set; }
+    private List<(int relevance, Product product)> ProductsWithRelevance = new();
+
+    private List<ProductCategory> AllCategories;
+    private List<(int relevance, ProductCategory category)> CategoriesWithRelevance = new();
+    private bool noSearchResult = false;
+    private string searchText = string.Empty;
+    private Action SearchMethod;
+    private string CategoryDisplayName;
+    private string backButtonDisplayName;
+
+    public string SearchText
+    {
+        get => searchText;
+        set
+        {
+            if (searchText == value)
+            {
+                return;
+            }
+
+            searchText = value ?? string.Empty;
+            noSearchResult = false;
+
+            _ = InvokeAsync(async () =>
+            {
+                if (string.IsNullOrWhiteSpace(searchText))
+                {
+                    ProductsWithRelevance.Clear();
+                    CategoriesWithRelevance.Clear();
+                }
+                else
+                {
+                    SearchMethod();
+                }
+
+                StateHasChanged();
+            });
+        }
+    }
+
+    protected override async Task OnParametersSetAsync()
+    {
+        await Init();
+    }
+
+    private async Task Init()
+    {
+        SearchText = "";
+        if (CategoryId == null)
+        {
+            SearchMethod = SearchCategories;
+            AllCategories = await CategoryService.GetAll();
+            CategoryDisplayName = "Kategóriák";
+        }
+        else
+        {
+            SearchMethod = SearchProducts;
+            Category = await CategoryService.GetById(CategoryId.Value);
+            if (Category == null)
+            {
+                CategoryId = null;
+                await SetCategoryId(null);
+                return;
+            }
+            CategoryDisplayName = Category.Name;
+            backButtonDisplayName = Category?.ParentCategory?.Id == null ? "Összes kategória" : $"Vissza";
+
+            if (Category.Products.Count == 0)
+            {
+                AllCategories = Category.SubCategories.ToList();
+            }
+        }
+
+        StateHasChanged();
+    }
+
+
+    private async Task SetCategoryId(MouseEventArgs args)
+    {
+        CategoryId = Category?.ParentCategory?.Id == null ? null : Category.ParentCategory.Id;
+        Category = null;
+        await Init();
+    }
+
+    private async Task SetCategoryId(int id)
+    {
+        Category = null;
+        CategoryId = id;
+        await Init();
+    }
+
+    private void SearchCategories()
+    {
+        CategoriesWithRelevance.Clear();
+
+        var normalizedSearch = RemoveDiacritics(searchText.ToLowerInvariant());
+        var searchTokens = normalizedSearch
+            .Split(new[] { ' ', ',', '-' }, StringSplitOptions.RemoveEmptyEntries)
+            .Where(t => t.Length > 0)
+            .ToArray();
+
+        foreach (var category in AllCategories)
+        {
+            var normailizedName = RemoveDiacritics(category.Name.ToLowerInvariant());
+            int score = CalculateProductRelevanceScore(normailizedName, searchTokens, normalizedSearch);
+
+            if (score > 0)
+            {
+                CategoriesWithRelevance.Add((score, category));
+            }
+        }
+
+        // Sort by score descending so the best matches appear first
+        CategoriesWithRelevance.Sort((x, y) => y.Item1.CompareTo(x.Item1));
+
+        if (CategoriesWithRelevance.Count == 0) noSearchResult = true;
+    }
+
+    private void SearchProducts()
+    {
+        ProductsWithRelevance.Clear();
+
+        var normalizedSearch = RemoveDiacritics(searchText.ToLowerInvariant());
+        var searchTokens = normalizedSearch
+            .Split(new[] { ' ', ',', '-' }, StringSplitOptions.RemoveEmptyEntries)
+            .Where(t => t.Length > 0)
+            .ToArray();
+
+        foreach (var product in Category.Products)
+        {
+            var normailizedName = RemoveDiacritics(product.ProductName.ToLowerInvariant());
+            int score = CalculateProductRelevanceScore(normailizedName, searchTokens, normalizedSearch);
+
+            if (score > 0)
+            {
+                ProductsWithRelevance.Add((score, product));
+            }
+        }
+
+        ProductsWithRelevance.Sort((x, y) => y.Item1.CompareTo(x.Item1));
+
+        if (ProductsWithRelevance.Count == 0) noSearchResult = true;
+    }
+
+    private string RemoveDiacritics(string text)
+    {
+        if (string.IsNullOrWhiteSpace(text))
+            return text;
+
+        var normalizedString = text.Normalize(NormalizationForm.FormD);
+        var stringBuilder = new StringBuilder();
+
+        foreach (var c in normalizedString)
+        {
+            var unicodeCategory = CharUnicodeInfo.GetUnicodeCategory(c);
+            if (unicodeCategory != UnicodeCategory.NonSpacingMark)
+            {
+                stringBuilder.Append(c);
+            }
+        }
+
+        return stringBuilder.ToString().Normalize(NormalizationForm.FormC);
+    }
+
+    private int CalculateProductRelevanceScore(
+        string name,
+        string[] searchTokens,
+        string originalSearch)
+    {
+        int score = 0;
+
+        // Exact match - highest priority
+        if (name == originalSearch)
+        {
+            score += 1000;
+        }
+
+        // Full search phrase matching
+        if (name.StartsWith(originalSearch))
+        {
+            score += 700;
+        }
+
+        if (name.Contains(originalSearch))
+        {
+            score += 400;
+        }
+
+        // Individual token matching
+        foreach (var token in searchTokens)
+        {
+            // Token at start of product name
+            if (name.StartsWith(token))
+            {
+                score += 150;
+            }
+            // Token anywhere in product name
+            else if (name.Contains(token))
+            {
+                score += 80;
+            }
+
+            // Bonus for word boundary matches (token matches a whole word)
+            if (IsWordBoundaryMatch(name, token))
+            {
+                score += 50;
+            }
+        }
+
+        // Count how many tokens matched
+        int matchedTokens = searchTokens.Count(token => name.Contains(token));
+        score += matchedTokens * 25;
+
+        // Bonus if ALL tokens are present (complete match)
+        if (searchTokens.Length > 0 && searchTokens.All(token => name.Contains(token)))
+        {
+            score += 250;
+        }
+
+        // Penalty for very long product names (diluted relevance)
+        if (name.Length > originalSearch.Length * 3)
+        {
+            score -= 50;
+        }
+
+        return score;
+    }
+
+    // Helper method to check if token matches a complete word
+    private bool IsWordBoundaryMatch(string text, string token)
+    {
+        string pattern = $@"\b{Regex.Escape(token)}\b";
+        return Regex.IsMatch(text, pattern, RegexOptions.IgnoreCase);
+    }
+}

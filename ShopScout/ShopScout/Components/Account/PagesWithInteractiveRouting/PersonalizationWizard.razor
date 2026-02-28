@@ -1,0 +1,674 @@
+﻿@page "/Account/Personalization"
+@using ShopScout.Client.Layout
+@using ShopScout.Components.Account.Shared
+@using ShopScout.Data
+@using Microsoft.AspNetCore.Identity
+@using Microsoft.EntityFrameworkCore
+@using ShopScout.SharedLib.Models
+
+@inject NavigationManager Navigation
+@inject UserManager<ApplicationUser> UserManager
+@inject ApplicationDbContext DbContext
+@inject AuthenticationStateProvider AuthenticationStateProvider
+@inject SignInManager<ApplicationUser> SignInManager
+@inject IJSRuntime JS
+@implements IDisposable
+
+@rendermode @(new InteractiveServerRenderMode(prerender: false))
+@layout EmptyLayout
+
+<PageTitle>Üdvözlünk a ShopScout-ban</PageTitle>
+
+<div class="wizard-container">
+    <!-- Progress Bar -->
+    <div class="wizard-progress-bar">
+        @for (int i = 0; i < totalSteps; i++)
+        {
+            var stepIndex = i;
+            var isActive = currentStep == stepIndex;
+            var isCompleted = currentStep > stepIndex;
+
+            <div class="wizard-progress-step @(isActive ? "active" : "") @(isCompleted ? "completed" : "")"
+                 @onclick='() => GoToStep(stepIndex)'
+                 style="cursor: pointer;">
+                <div class="wizard-step-circle">@(stepIndex + 1)</div>
+                <span class="wizard-step-label">@GetStepLabel(stepIndex)</span>
+            </div>
+
+            @if (i < totalSteps - 1)
+            {
+                <div class="wizard-progress-line"></div>
+            }
+        }
+    </div>
+
+    <!-- Step 0: Welcome -->
+    @if (currentStep == 0)
+    {
+        <div class="wizard-step active">
+            <div class="step-content">
+                <div class="welcome-icon">
+                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path>
+                        <circle cx="12" cy="7" r="4"></circle>
+                    </svg>
+                </div>
+                <h1 class="step-title">Üdvözlünk a ShopScout-ban!</h1>
+                <p class="step-description">Állítsd be a fiókod néhány egyszerű lépésben, hogy a legtöbbet hozd ki az élményből.</p>
+            </div>
+        </div>
+    }
+
+    <!-- Step 1: Language & Country -->
+    @if (currentStep == 1)
+    {
+        <div class="wizard-step active">
+            <div class="step-content">
+                <h2 class="step-title">Nyelv és ország</h2>
+                <p class="step-description">Válaszd ki a preferált nyelvedet és országodat.</p>
+
+                <div class="wizard-form-group">
+                    <label class="wizard-form-label">Nyelv</label>
+                    <select class="wizard-form-select" @bind="languageCode">
+                        <option value="hu">Magyar</option>
+                    </select>
+                </div>
+
+                <div class="wizard-form-group">
+                    <label class="wizard-form-label">Ország</label>
+                    <select class="wizard-form-select" @bind="countryCode">
+                        <option value="hu">Magyarország</option>
+                    </select>
+                </div>
+            </div>
+        </div>
+    }
+
+    <!-- Step 2: Profile Information -->
+    @if (currentStep == 2)
+    {
+        <div class="wizard-step active">
+            <div class="step-content">
+                <h2 class="step-title">Profil információk</h2>
+                <p class="step-description">Add meg az alapvető profil adataidat.</p>
+
+                <div class="profile-picture-section">
+                    <div class="profile-avatar">@GetInitial()</div>
+                    <p class="profile-picture-note">A profilképet később állíthatod be</p>
+                </div>
+
+                <div class="wizard-form-group">
+                    <label class="wizard-form-label" for="username">Felhasználónév</label>
+                    <input type="text" class="wizard-form-input @(!userNameAvailable ? "unavailable" : "")" id="username" @bind="username" @bind:event="oninput" placeholder="felhasznalo">
+                    <SimpleValidationMessage Message="@userNameAvailabilityMessage" />
+                </div>
+
+                <div class="wizard-checkbox-group">
+                    <div class="checkbox-container">
+                        <input id="checkbox" type="checkbox" @bind="isAnonymous" name="Input.RememberMe" class="valid" value="True" style="position: absolute; opacity: 0; pointer-events: none;">
+                        <button role="checkbox" type="button" class="checkbox @(isAnonymous ? "checked" : "")" id="customCheckbox" @onclick="() => isAnonymous = !isAnonymous"><svg viewBox="0 0 24 24"><path d="M20 6 9 17l-5-5"></path></svg></button>
+                        <label for="checkbox" style="cursor: pointer;">
+                            Mások ne lássák a nevem
+                        </label>
+                    </div>
+                    <p>Ha bejelölöd, minden tevékenységednél az „anonymus" név jelenik meg</p>
+                </div>
+            </div>
+        </div>
+    }
+
+    <!-- Step 3: Favorites -->
+    @if (currentStep == 3)
+    {
+        <div class="wizard-step active" @onclick="CloseAllDropdowns">
+            <div class="step-content">
+                <h2 class="step-title">Kedvenc helyek</h2>
+                <p class="step-description">Ezek nem lesznek láthatóak mások számára</p>
+
+                <!-- Cities -->
+                <div class="wizard-form-group" @onclick:stopPropagation>
+                    <label class="wizard-form-label">Kedvenc városok</label>
+                    <div class="wizard-search-dropdown">
+                        <input type="text" class="wizard-form-input" @bind="citySearch" @bind:event="oninput"
+                               @onfocus='() => ShowDropdown("city")' placeholder="Keress várost...">
+                        @if (showCityDropdown && filteredCities.Any())
+                        {
+                            <div class="wizard-dropdown-list">
+                                @foreach (var city in filteredCities.Take(10))
+                                {
+                                    <div class="wizard-dropdown-item" @onclick='() => AddCity(city)'>@city.Name</div>
+                                }
+                            </div>
+                        }
+                    </div>
+                    <div class="wizard-tags-container">
+                        @foreach (var city in selectedCities)
+                        {
+                            var currentCity = city;
+                            <div class="wizard-tag">
+                                @city.Name
+                                <button class="wizard-tag-remove" @onclick='() => RemoveCity(currentCity)'>
+                                    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                        <line x1="18" y1="6" x2="6" y2="18"></line>
+                                        <line x1="6" y1="6" x2="18" y2="18"></line>
+                                    </svg>
+                                </button>
+                            </div>
+                        }
+                    </div>
+                </div>
+
+                <!-- Categories -->
+                <div class="wizard-form-group" @onclick:stopPropagation>
+                    <label class="wizard-form-label">Kedvenc kategóriák</label>
+                    <div class="wizard-search-dropdown">
+                        <input type="text" class="wizard-form-input" @bind="categorySearch" @bind:event="oninput"
+                               @onfocus='() => ShowDropdown("category")' placeholder="Keress kategóriát...">
+                        @if (showCategoryDropdown && filteredCategories.Any())
+                        {
+                            <div class="wizard-dropdown-list">
+                                @foreach (var category in filteredCategories.Take(10))
+                                {
+                                    <div class="wizard-dropdown-item" @onclick='() => AddCategory(category)'>@category.Name</div>
+                                }
+                            </div>
+                        }
+                    </div>
+                    <div class="wizard-tags-container">
+                        @foreach (var category in selectedCategories)
+                        {
+                            var currentCategory = category;
+                            <div class="wizard-tag">
+                                @category.Name
+                                <button class="wizard-tag-remove" @onclick='() => RemoveCategory(currentCategory)'>
+                                    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                        <line x1="18" y1="6" x2="6" y2="18"></line>
+                                        <line x1="6" y1="6" x2="18" y2="18"></line>
+                                    </svg>
+                                </button>
+                            </div>
+                        }
+                    </div>
+                </div>
+
+                <!-- Stores -->
+                <div class="wizard-form-group" @onclick:stopPropagation>
+                    <label class="wizard-form-label">Kedvenc boltok</label>
+                    <div class="wizard-search-dropdown">
+                        <input type="text" class="wizard-form-input" @bind="storeSearch" @bind:event="oninput"
+                               @onfocus='() => ShowDropdown("store")' placeholder="Keress boltot...">
+                        @* @if (showStoreDropdown && filteredStores.Any())
+                        {
+                            <div class="wizard-dropdown-list">
+                                @foreach (var store in filteredStores.Take(10))
+                                {
+                                    <div class="wizard-dropdown-item" @onclick='() => AddStore(store)'>@store.Id</div>
+                                }
+                            </div>
+                        } *@
+                    </div>
+                    <div class="wizard-tags-container">
+                        @foreach (var store in selectedStores)
+                        {
+                            var currentStore = store;
+                            <div class="wizard-tag">
+                                @store.Id
+                                <button class="wizard-tag-remove" @onclick='() => RemoveStore(currentStore)'>
+                                    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                        <line x1="18" y1="6" x2="6" y2="18"></line>
+                                        <line x1="6" y1="6" x2="18" y2="18"></line>
+                                    </svg>
+                                </button>
+                            </div>
+                        }
+                    </div>
+                </div>
+            </div>
+        </div>
+    }
+
+    <!-- Step 4: Notifications -->
+    @if (currentStep == 4)
+    {
+        <div class="wizard-step active">
+            <div class="step-content">
+                <h2 class="step-title">Értesítési beállítások</h2>
+                <p class="step-description">Válaszd ki, hogy milyen értesítéseket szeretnél kapni.</p>
+
+                <div class="wizard-notification-group">
+                    <div class="wizard-notification-header">
+                        <div class="wizard-notification-icon">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                <path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"></path>
+                                <path d="M13.73 21a2 2 0 0 1-3.46 0"></path>
+                            </svg>
+                        </div>
+                        <div>
+                            <h3 class="wizard-notification-title">Kedvenc termékek</h3>
+                            <p class="wizard-notification-desc">Értesítés kedvenc termékek akciójáról</p>
+                        </div>
+                    </div>
+                    <div class="wizard-toggle-group">
+                        <label class="wizard-toggle-label">
+                            <span>Push értesítés</span>
+                            <label class="wizard-toggle-switch">
+                                <input type="checkbox" @bind="favProductPush">
+                                <span class="wizard-toggle-slider"></span>
+                            </label>
+                        </label>
+                    </div>
+                </div>
+
+                <div class="wizard-notification-group">
+                    <div class="wizard-notification-header">
+                        <div class="wizard-notification-icon">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"></path>
+                            </svg>
+                        </div>
+                        <div>
+                            <h3 class="wizard-notification-title">Alkalmazás frissítések</h3>
+                            <p class="wizard-notification-desc">Új funkciók és frissítések</p>
+                        </div>
+                    </div>
+                    <div class="wizard-toggle-group">
+                        <label class="wizard-toggle-label">
+                            <span>Push értesítés</span>
+                            <label class="wizard-toggle-switch">
+                                <input type="checkbox" @bind="updatePush">
+                                <span class="wizard-toggle-slider"></span>
+                            </label>
+                        </label>
+                        <label class="wizard-toggle-label">
+                            <span>E-mail</span>
+                            <label class="wizard-toggle-switch">
+                                <input type="checkbox" @bind="updateEmail">
+                                <span class="wizard-toggle-slider"></span>
+                            </label>
+                        </label>
+                    </div>
+                </div>
+            </div>
+        </div>
+    }
+    @if (currentStep == 5)
+    {
+        <div class="wizard-step active">
+            <div class="step-content">
+                <h2 class="step-title">Engedélyek</h2>
+                <p class="step-description">Engedélyezd az alkalmazásnak a következő hozzáféréseket a jobb élményért.</p>
+
+                <div class="wizard-permission-card">
+                    <div class="wizard-permission-icon">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                            <path d="M20 10c0 6-8 12-8 12s-8-6-8-12a8 8 0 0 1 16 0Z"></path>
+                            <circle cx="12" cy="10" r="3"></circle>
+                        </svg>
+                    </div>
+                    <div class="wizard-permission-content">
+                        <h3 class="wizard-permission-title">Helymeghatározás (GPS)</h3>
+                        <p class="wizard-permission-desc">Közeli akciók és boltok megjelenítéséhez szükséges</p>
+                        <button class="wizard-btn-permission" @onclick="RequestLocationPermission">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                <polyline points="20 6 9 17 4 12"></polyline>
+                            </svg>
+                            @(locationGranted ? "Engedélyezve" : "Engedélyezés")
+                        </button>
+                    </div>
+                </div>
+
+                <div class="wizard-info-card">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <circle cx="12" cy="12" r="10"></circle>
+                        <line x1="12" y1="16" x2="12" y2="12"></line>
+                        <line x1="12" y1="8" x2="12.01" y2="8"></line>
+                    </svg>
+                    <p>Ezeket az engedélyeket bármikor módosíthatod a beállításokban.</p>
+                </div>
+            </div>
+        </div>
+    }
+
+    <div>
+        @* redundant wizard actions div: needed for animation *@
+            @if (currentStep == 0)
+            {
+                <div class="wizard-actions">
+                    <button class="btn-primary" @onclick="NextStep">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                            <path d="M5 12h14"></path>
+                            <path d="m12 5 7 7-7 7"></path>
+                        </svg>
+                        Kezdjük el a beállítást
+                    </button>
+                </div>
+            }
+            else if(currentStep == 5)
+            {
+                <div class="wizard-actions">
+                    <button class="btn-secondary" @onclick="PrevStep">Vissza</button>
+                    <button class="btn-primary" @onclick="CompleteOnboarding">Befejezés</button>
+                </div>
+            }
+            else
+            {
+                <div class="wizard-actions">
+                    <button class="btn-secondary" @onclick="PrevStep">Vissza</button>
+                    <button class="btn-primary" @onclick="NextStep">Tovább</button>
+                </div>
+            }
+    </div>
+</div>
+
+@code {
+    private Timer? _debounceTimer;
+    private string? _username;
+
+    // State
+    private int currentStep = 0;
+    private int totalSteps = 6;
+
+    private ApplicationUser? currentUser;
+
+    // Step 1: Language & Country
+    private string languageCode = "hu";
+    private string countryCode = "hu";
+
+    // Step 2: Profile
+    private string? username
+    {
+        get => _username;
+        set
+        {
+            _username = value;
+            if (currentUser == null || username == currentUser.UserName)
+            {
+                userNameAvailable = true;
+                userNameAvailabilityMessage = null;
+                StateHasChanged();
+                return;
+            }
+
+            _debounceTimer?.Dispose();
+            if(!IsValidUsernameFormat(_username ?? ""))
+            {
+                userNameAvailable = false;
+                userNameAvailabilityMessage = "err: A felhasználónév csak betűket, számokat, pontot és aláhúzást tartalmazhat, és betűvel kell kezdődnie.";
+                StateHasChanged();
+                return;
+            }
+            _debounceTimer = new Timer(async _ =>
+            {
+                await InvokeAsync(async () =>
+                {
+                    await CheckUsernameAvailability();
+                    StateHasChanged();
+                });
+            }, null, 500, Timeout.Infinite);
+        }
+    }
+    private string? userNameAvailabilityMessage;
+
+    private bool IsValidUsernameFormat(string username) =>
+        System.Text.RegularExpressions.Regex.IsMatch(username, @"^[a-zA-Z0-9][a-zA-Z0-9._]*$");
+
+    private bool isAnonymous = false;
+    private bool userNameAvailable;
+
+    // Step 3: Favorites - DB data
+    private List<City> allCities = new();
+    private List<ProductCategory> allCategories = new();
+    private List<Store> allStores = new();
+
+    private string citySearch = "";
+    private string categorySearch = "";
+    private string storeSearch = "";
+
+    private bool showCityDropdown = false;
+    private bool showCategoryDropdown = false;
+    private bool showStoreDropdown = false;
+
+    private bool locationGranted = false;
+
+    private List<City> selectedCities = new();
+    private List<ProductCategory> selectedCategories = new();
+    private List<Store> selectedStores = new();
+
+    private List<City> filteredCities => string.IsNullOrWhiteSpace(citySearch)
+        ? new List<City>()
+        : allCities
+            .Where(c => c.Name.Contains(citySearch, StringComparison.OrdinalIgnoreCase)
+                     && !selectedCities.Any(sc => sc.Id == c.Id))
+            .ToList();
+
+    private List<ProductCategory> filteredCategories => string.IsNullOrWhiteSpace(categorySearch)
+        ? new List<ProductCategory>()
+        : allCategories
+            .Where(c => c.Name.Contains(categorySearch, StringComparison.OrdinalIgnoreCase)
+                     && !selectedCategories.Any(sc => sc.Id == c.Id))
+            .ToList();
+
+    // Step 4: Notifications
+    private bool favProductPush = true;
+    private bool updatePush = true;
+    private bool updateEmail = false;
+
+    protected override async Task OnInitializedAsync()
+    {
+        // Get current user
+        var authState = await AuthenticationStateProvider.GetAuthenticationStateAsync();
+        var user = authState.User;
+
+        if (user.Identity?.IsAuthenticated == true)
+        {
+            currentUser = await UserManager.Users
+                .Include(u => u.FavoriteCities)
+                .Include(u => u.FavoriteCategories)
+                // .Include(u => u.FavoriteStores)
+                .FirstOrDefaultAsync(u => u.UserName == user.Identity.Name);
+
+            if (currentUser != null)
+            {
+                // Load existing data
+                languageCode = currentUser.LanguageCode;
+                countryCode = currentUser.CountryCode;
+                username = currentUser.UserName!;
+                isAnonymous = currentUser.IsAnonymous;
+
+                selectedCities = currentUser.FavoriteCities.ToList();
+                selectedCategories = currentUser.FavoriteCategories.ToList();
+                // selectedStores = currentUser.FavoriteStores.ToList();
+            }
+            else
+            {
+                Navigation.NavigateTo("/");
+            }
+        }
+
+        // Load all data from DB for dropdowns
+        allCities = await DbContext.Cities.OrderBy(c => c.Name).ToListAsync();
+        allCategories = await DbContext.ProductCategories.OrderBy(c => c.Name).ToListAsync();
+    }
+
+    private void RequestLocationPermission()
+    {
+        // navigator.permissions.query({ name: 'geolocation' }).then((result) =>
+        // {
+        //     console.log(result.state); // 'granted', 'prompt', or 'denied'
+        // });
+    }
+
+    private string GetStepLabel(int step)
+    {
+        return step switch
+        {
+            0 => "Kezdés",
+            1 => "Nyelv",
+            2 => "Profil",
+            3 => "Kedvencek",
+            4 => "Értesítések",
+            5 => "Engedélyek",
+            _ => ""
+        };
+    }
+
+    private string GetInitial()
+    {
+        if (!string.IsNullOrWhiteSpace(username))
+        {
+            return username.Trim()[0].ToString().ToUpper();
+        }
+        return "U";
+    }
+
+    private void NextStep()
+    {
+        if (currentStep < totalSteps - 1)
+        {
+            currentStep++;
+        }
+    }
+
+    private void PrevStep()
+    {
+        if (currentStep > 0)
+        {
+            currentStep--;
+        }
+    }
+
+    private void GoToStep(int stepIndex)
+    {
+        currentStep = stepIndex;
+    }
+
+    private void ShowDropdown(string type)
+    {
+        showCityDropdown = type == "city";
+        showCategoryDropdown = type == "category";
+        showStoreDropdown = type == "store";
+    }
+
+    private void CloseAllDropdowns()
+    {
+        showCityDropdown = false;
+        showCategoryDropdown = false;
+        showStoreDropdown = false;
+    }
+
+    // City methods
+    private void AddCity(City city)
+    {
+        if (!selectedCities.Any(c => c.Id == city.Id))
+        {
+            selectedCities.Add(city);
+            citySearch = "";
+            showCityDropdown = false;
+        }
+    }
+
+    private void RemoveCity(City city)
+    {
+        selectedCities.Remove(city);
+    }
+
+    // Category methods
+    private void AddCategory(ProductCategory category)
+    {
+        if (!selectedCategories.Any(c => c.Id == category.Id))
+        {
+            selectedCategories.Add(category);
+            categorySearch = "";
+            showCategoryDropdown = false;
+        }
+    }
+
+    private void RemoveCategory(ProductCategory category)
+    {
+        selectedCategories.Remove(category);
+    }
+
+    // Store methods
+    private void AddStore(Store store)
+    {
+        if (!selectedStores.Any(s => s.Id == store.Id))
+        {
+            selectedStores.Add(store);
+            storeSearch = "";
+            showStoreDropdown = false;
+        }
+    }
+
+    private void RemoveStore(Store store)
+    {
+        selectedStores.Remove(store);
+    }
+
+    private void SkipOnboarding()
+    {
+        Navigation.NavigateTo("/");
+    }
+
+    private async Task CheckUsernameAvailability()
+    {
+        userNameAvailable = !await UserManager.Users.AnyAsync(u => u.UserName == username);
+        userNameAvailabilityMessage = userNameAvailable ? "A felhasználónév elérhető." : "err: A felhasználónév már foglalt.";
+    }
+
+    private async Task CompleteOnboarding()
+    {
+        if (currentUser == null) return;
+
+        try
+        {
+            // Update user profile
+            currentUser.LanguageCode = languageCode;
+            currentUser.CountryCode = countryCode;
+            currentUser.IsAnonymous = isAnonymous;
+
+            // Update favorites
+            currentUser.FavoriteCities.Clear();
+            foreach (var city in selectedCities)
+            {
+                currentUser.FavoriteCities.Add(city);
+            }
+
+            currentUser.FavoriteCategories.Clear();
+            foreach (var category in selectedCategories)
+            {
+                currentUser.FavoriteCategories.Add(category);
+            }
+
+            // currentUser.FavoriteStores.Clear();
+            // foreach (var store in selectedStores)
+            // {
+            //     currentUser.FavoriteStores.Add(store);
+            // }
+
+
+            await UserManager.UpdateAsync(currentUser);
+
+            if (userNameAvailable && currentUser.UserName != username)
+            {
+                var result = await UserManager.SetUserNameAsync(currentUser, username!);
+                if (result.Succeeded)
+                {
+                    Navigation.NavigateTo("/Account/RefreshLogin");
+                }
+            }
+            else
+            {
+                Navigation.NavigateTo("/");
+            }
+        }
+        catch
+        {
+            Navigation.NavigateTo("/");
+        }
+    }
+
+    public void Dispose()
+    {
+        _debounceTimer?.Dispose();
+    }
+}

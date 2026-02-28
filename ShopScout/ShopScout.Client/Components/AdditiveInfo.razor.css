@@ -1,0 +1,66 @@
+﻿.additive-item {
+    display: grid;
+    grid-template-columns: auto 1fr auto;
+    align-items: center;
+    gap: 1rem;
+    background: #f8f9fa;
+    padding: 1rem;
+    border-radius: 8px;
+    border-left: 4px solid #e1e5e9;
+    width: 100%;
+}
+
+.additive-item.risk-Low {
+    border-left-color: #22c55e;
+}
+
+.additive-item.risk-Medium {
+    border-left-color: #f59e0b;
+}
+
+.additive-item.risk-High {
+    border-left-color: #ef4444;
+}
+
+.additive-code {
+    font-family: monospace;
+    font-weight: bold;
+    color: #10b981;
+    background: white;
+    padding: 0.25rem 0.5rem;
+    border-radius: 4px;
+}
+
+.additive-details {
+    display: flex;
+    flex-direction: column;
+    gap: 0.25rem;
+}
+
+.additive-name {
+    font-weight: 500;
+    color: #374151;
+}
+
+.additive-function {
+    font-size: 0.85rem;
+    color: #6b7280;
+}
+
+.risk-indicator {
+    width: 12px;
+    height: 12px;
+    border-radius: 50%;
+}
+
+.risk-indicator.risk-low {
+    background: #22c55e;
+}
+
+.risk-indicator.risk-moderate {
+    background: #f59e0b;
+}
+
+.risk-indicator.risk-high {
+    background: #ef4444;
+}

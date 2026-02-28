@@ -1,0 +1,869 @@
+﻿@page "/"
+@page "/search/{searchtextparameter?}"
+@using Microsoft.EntityFrameworkCore;
+@using ShopScout.SharedLib.Models
+@inject IJSRuntime JS
+@inject IUserAccessor UserAccessor
+@inject NavigationManager NavigationManager
+@inject LocationService LocationService
+@inject StorageService LocalStorageService
+@inject IStoreService StoreService
+@inject IProductService ProductService
+@rendermode @(new InteractiveAutoRenderMode(prerender: false))
+@* @rendermode InteractiveServer *@
+@attribute [StreamRendering]
+@implements IAsyncDisposable
+
+<PageTitle>Search</PageTitle>
+
+<div class="outer-container">
+    <h1>Termékek és Boltok keresése</h1>
+
+    <div class="search-bar">
+        <span class="bi bi-search"></span>
+        <input @bind="SearchText" @oninput="OnInputHandle" type="text" placeholder="Keress egy terméket vagy boltot..." class="search-input"/>
+        <button class="clear-btn @(!string.IsNullOrEmpty(SearchText) ? "visible" : "")"
+                @onclick="ClearSearch"
+                tabindex="-1"
+                aria-label="Törlés">
+            <i class="bi bi-x"></i>
+        </button>
+    </div>
+
+    <div class="action-bar">
+        <!-- Toggle: Product / Shop search mode -->
+        <div class="mode-toggle">
+            <button class="toggle-option @(searchMode == "product" ? "active" : "")"
+                    @onclick='() => SearchMode = "product"'>
+                <i class="bi bi-box-seam"></i>
+                <span class="toggle-label">Termék</span>
+            </button>
+            <button class="toggle-option @(searchMode == "shop" ? "active" : "")"
+                    @onclick='() => SearchMode = "shop"'>
+                <i class="bi bi-shop"></i>
+                <span class="toggle-label">Bolt</span>
+            </button>
+        </div>
+
+        <!-- Filter button -->
+        <button class="action-btn" disabled="@(searchMode != "product")" title="Szűrők"
+                @onclick="OpenFilter">
+            <i class="bi bi-sliders"></i>
+            <span class="btn-label">Szűrők</span>
+        </button>
+
+        <!-- Categories button -->
+        <button class="action-btn" title="Kategóriák"
+                @onclick="GoToCategories">
+            <i class="bi bi-grid"></i>
+            <span class="btn-label">Kategóriák</span>
+        </button>
+
+        <!-- Add new button -->
+        @* <button class="action-btn action-btn-add" title="@(searchMode == "product" ? "Új termék hozzáadása" : "Új bolt hozzáadása")"
+                @onclick="AddNew">
+            <i class="bi bi-plus-lg"></i>
+            <span class="btn-label">Hozzáadás</span>
+        </button> *@
+    </div>
+
+    @if (!activeFilters.IsEmpty)
+    {
+        <div class="active-filters">
+            @if (activeFilters.FromArfigyelo.HasValue)
+            {
+                <span class="filter-chip">
+                    Forrás: @(activeFilters.FromArfigyelo.Value ? "Árfigyelő" : "Egyéb")
+                    <button @onclick='() => RemoveFilterAsync("fromarfigyelo")'><i class="bi bi-x"></i></button>
+                </span>
+            }
+            @foreach (var id in activeFilters.AllergenIds.ToList())
+            {
+                var capturedId = id;
+                var name = filterLabels.GetValueOrDefault($"allergen_{capturedId}", capturedId.ToString());
+                <span class="filter-chip">@name <button @onclick='() => RemoveIdFilterAsync(activeFilters.AllergenIds, capturedId)'><i class="bi bi-x"></i></button></span>
+            }
+            @foreach (var id in activeFilters.LabelIds.ToList())
+            {
+                var capturedId = id;
+                var name = filterLabels.GetValueOrDefault($"label_{capturedId}", capturedId.ToString());
+                <span class="filter-chip">@name <button @onclick='() => RemoveIdFilterAsync(activeFilters.LabelIds, capturedId)'><i class="bi bi-x"></i></button></span>
+            }
+            @foreach (var id in activeFilters.AttributeIds.ToList())
+            {
+                var capturedId = id;
+                var name = filterLabels.GetValueOrDefault($"attr_{capturedId}", capturedId.ToString());
+                <span class="filter-chip">@name <button @onclick='() => RemoveIdFilterAsync(activeFilters.AttributeIds, capturedId)'><i class="bi bi-x"></i></button></span>
+            }
+            @foreach (var id in activeFilters.BrandIds.ToList())
+            {
+                var capturedId = id;
+                var name = filterLabels.GetValueOrDefault($"brand_{capturedId}", capturedId.ToString());
+                <span class="filter-chip">@name <button @onclick='() => RemoveIdFilterAsync(activeFilters.BrandIds, capturedId)'><i class="bi bi-x"></i></button></span>
+            }
+            @foreach (var id in activeFilters.CountryIds.ToList())
+            {
+                var capturedId = id;
+                var name = filterLabels.GetValueOrDefault($"country_{capturedId}", capturedId.ToString());
+                <span class="filter-chip">@name <button @onclick='() => RemoveIdFilterAsync(activeFilters.CountryIds, capturedId)'><i class="bi bi-x"></i></button></span>
+            }
+            @foreach (var id in activeFilters.CategoryIds.ToList())
+            {
+                var capturedId = id;
+                var name = filterLabels.GetValueOrDefault($"cat_{capturedId}", capturedId.ToString());
+                <span class="filter-chip">@name <button @onclick='() => RemoveIdFilterAsync(activeFilters.CategoryIds, capturedId)'><i class="bi bi-x"></i></button></span>
+            }
+            @foreach (var id in activeFilters.StoreBrandIds.ToList())
+            {
+                var capturedId = id;
+                var name = filterLabels.GetValueOrDefault($"storebrand_{capturedId}", capturedId.ToString());
+                <span class="filter-chip">@name <button @onclick='() => RemoveIdFilterAsync(activeFilters.StoreBrandIds, capturedId)'><i class="bi bi-x"></i></button></span>
+            }
+            <button class="filter-chip filter-chip-clear" @onclick="ClearAllFiltersAsync">
+                <i class="bi bi-x-circle"></i> Összes törlése
+            </button>
+        </div>
+    }
+
+    <FilterModal IsOpen="filterModalOpen"
+                 CurrentFilters="activeFilters"
+                 OnClose="@(() => filterModalOpen = false)"
+                 OnLabelsReady="OnFilterLabelsReady"
+                 OnApply="OnFiltersApplied" />
+
+    @if(recentSearches.Count > 0 && !TextInInput && activeFilters.IsEmpty)
+    {
+        <h2>Legutóbbi keresések</h2>
+
+        <div class="recent-search-container">
+            @foreach (var label in recentSearches)
+            {
+                <RecentSearchLabel Label="@label" OnClick="OnRecentSearchClicked" />
+            }
+        </div>
+    }
+
+    @if (isSearching)
+    {
+        <div class="search-loading">
+            <div class="search-spinner"></div>
+            <span>Keresés...</span>
+        </div>
+    }
+    else if ((TextInInput || !activeFilters.IsEmpty) && searchedProducts.Count == 0)
+    {
+        @if (TextInInput && !activeFilters.IsEmpty)
+        {
+            <h2>Keresési eredmények "@SearchText" szűrőkkel</h2>
+        }
+        else if (TextInInput)
+        {
+            <h2>Keresési eredmények "@SearchText"</h2>
+        }
+        else
+        {
+            <h2>Szűrt eredmények</h2>
+        }
+        <p>Nem található ilyen termék! Próbálkozzon másik kifejezéssel vagy szűrőkkel.</p>
+    }
+    else if (TextInInput)
+    {
+        <h2>Keresési eredmények "@SearchText"</h2>
+    }
+    else if (!activeFilters.IsEmpty)
+    {
+        <h2>Szűrt eredmények</h2>
+    }
+
+    @if (searchedProducts != null && searchedProducts.Count > 0)
+    {
+        if (showAllProducts && User != null)
+        {
+            <div class="favourites-row @(favouriteProductsCollapsed && favouriteStoresCollapsed ? "all-collapsed" : "")">
+            @if (User.FavoriteProducts.Count > 0)
+            {
+                <div class="favourite-container @(favouriteProductsCollapsed ? "collapsed" : "")">
+                    <div class="favourite-header">
+                        <div class="favourite-title">
+                            <svg xmlns="http://www.w3.org/2000/svg"
+                                 viewBox="0 0 24 24" width="32" height="32">
+                                <style>
+                                    .star {
+                                        fill: none;
+                                        stroke: #fbbf24;
+                                        fill: #fbbf24;
+                                        stroke-width: 2;
+                                        stroke-linejoin: round;
+                                        transition: fill 0.2s ease;
+                                        transform-origin: center;
+                                    }
+                                </style>
+                                <path class="star"
+                                      d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z" />
+                            </svg>
+                            <h3>Kedvenc termékek</h3>
+                        </div>
+                        <button class="collapse-toggle-btn" @onclick="() => favouriteProductsCollapsed = !favouriteProductsCollapsed" title="@(favouriteProductsCollapsed ? "Megjelenítés" : "Elrejtés")">
+                            @if (favouriteProductsCollapsed)
+                            {
+                                <svg xmlns="http://www.w3.org/2000/svg" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                    <path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94"></path>
+                                    <path d="M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19"></path>
+                                    <line x1="1" y1="1" x2="23" y2="23"></line>
+                                </svg>
+                            }
+                            else
+                            {
+                                <svg xmlns="http://www.w3.org/2000/svg" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                    <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path>
+                                    <circle cx="12" cy="12" r="3"></circle>
+                                </svg>
+                            }
+                        </button>
+                    </div>
+                    @if (!favouriteProductsCollapsed)
+                    {
+                        <div class="favourite-items">
+                            @foreach (var product in User.FavoriteProducts)
+                            {
+                                <ProductPreview Product="@product" OnClickProduct="GoToProductPageLabel" />
+                            }
+                        </div>
+                    }
+                </div>
+            }
+            @if (User.FavoriteStores.Count > 0)
+            {
+                <div class="favourite-container @(favouriteStoresCollapsed ? "collapsed" : "")">
+                    <div class="favourite-header">
+                        <div class="favourite-title">
+                            <svg xmlns="http://www.w3.org/2000/svg"
+                                 viewBox="0 0 24 24" width="32" height="32">
+                                <style>
+                                    .star {
+                                        fill: none;
+                                        stroke: #fbbf24;
+                                        fill: #fbbf24;
+                                        stroke-width: 2;
+                                        stroke-linejoin: round;
+                                        transition: fill 0.2s ease;
+                                        transform-origin: center;
+                                    }
+                                </style>
+                                <path class="star"
+                                      d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z" />
+                            </svg>
+                            <h3>Kedvenc Boltok</h3>
+                        </div>
+                        <button class="collapse-toggle-btn" @onclick="() => favouriteStoresCollapsed = !favouriteStoresCollapsed" title="@(favouriteStoresCollapsed ? "Megjelenítés" : "Elrejtés")">
+                            @if (favouriteStoresCollapsed)
+                            {
+                                <svg xmlns="http://www.w3.org/2000/svg" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                    <path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94"></path>
+                                    <path d="M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19"></path>
+                                    <line x1="1" y1="1" x2="23" y2="23"></line>
+                                </svg>
+                            }
+                            else
+                            {
+                                <svg xmlns="http://www.w3.org/2000/svg" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                    <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path>
+                                    <circle cx="12" cy="12" r="3"></circle>
+                                </svg>
+                            }
+                        </button>
+                    </div>
+                    @if (!favouriteStoresCollapsed)
+                    {
+                        <div class="favourite-items">
+                            @if (storeRoutes.Count > 0)
+                            {
+                                @foreach (var store in storeRoutes)
+                                {
+                                    <StorePreview Store="store.Value" Route="store.Key"></StorePreview>
+                                }
+                            }
+                            else
+                            {
+                                @foreach (var store in User.FavoriteStores.Take(10))
+                                {
+                                    <StorePreview Store="store"></StorePreview>
+                                }
+                            }
+                        </div>
+                    }
+                </div>
+            }
+            </div>
+        }
+        @if (SearchMode == "product")
+        {
+            <div class="products-container" id="products-container">
+                @foreach (var product in searchedProducts)
+                {
+                    <ProductPreview Product="@product" OnClickProduct="GoToProductPageLabel" />
+                }
+            </div>
+            @if (isLoadingMore)
+            {
+                <div class="load-more-spinner">
+                    <div class="search-spinner"></div>
+                </div>
+            }
+        }
+        else
+        {
+            <div class="store-search-container">
+                @foreach (var store in searchedStores)
+                {
+                    <StorePreview Store="store"></StorePreview>
+                }
+            </div>
+        }
+    }
+</div>
+
+<script>
+    function setUrl(url) {
+        history.replaceState(null, "", url);
+    }
+</script>
+
+@code
+{
+    [Parameter] public string? SearchTextParameter { get; set; }
+
+    private string searchMode = "product"; // "product" | "shop"
+
+    public string SearchMode {
+        get
+        {
+            return searchMode;
+        }
+
+        set
+        {
+            showAllProducts = false;
+            TextInInput = false;
+            searchMode = value;
+            SearchText = "";
+            ClearAllFiltersAsync();
+            StateHasChanged();
+        }
+    }
+
+    private string searchText = string.Empty;
+
+    public string SearchText
+    {
+        get { return searchText; }
+        set
+        {
+            searchText = value;
+
+            _debounceTimer.Stop();
+            _debounceTimer.Start();
+        }
+    }
+
+    private async Task ExecuteSearchLogic()
+    {
+        string url;
+        showAllProducts = false;
+
+        var currentValue = searchText;
+
+        if (string.IsNullOrEmpty(currentValue))
+        {
+            url = "/";
+            if (activeFilters.IsEmpty)
+            {
+                if (SearchMode == "product")
+                {
+                    await LoadAllProducts();
+                }
+                else
+                {
+                    await LoadAllStores();
+                }
+            }
+            else
+            {
+                _ = RunSearchAsync();
+            }
+        }
+        else
+        {
+            if (SearchMode == "product")
+            {
+                url = $"/search/{Uri.EscapeDataString(currentValue)}";
+                Searching();
+
+            }
+            else
+            {
+                url = "/";
+                await SearchStore();
+            }
+        }
+
+        await JS.InvokeVoidAsync("setUrl", url);
+
+        StateHasChanged();
+    }
+
+    private bool TextInInput { get; set; } = false;
+    private bool isSearching = false;
+    private bool isLoadingMore = false;
+    private List<string> recentSearches { get; set; } = new List<string>();
+    private List<Product> searchedProducts = new();
+    private List<Store> searchedStores = new();
+    private bool showAllProducts = false;
+    private bool favouriteProductsCollapsed = false;
+    private bool favouriteStoresCollapsed = false;
+    private readonly Queue<Func<Task>> searchQueue = new();
+    private bool isProcessingSearchQueue = false;
+    private IJSObjectReference? scrollModule;
+    private DotNetObjectReference<Search>? dotNetRef;
+    private int loadedPagesOfProducts = 1;
+    private ApplicationUser User;
+
+    private System.Timers.Timer _debounceTimer;
+
+    // Filter state
+    private bool filterModalOpen = false;
+    private ProductFilterParams activeFilters = new();
+    private Dictionary<string, string> filterLabels = new();
+
+    private void ClearSearch()
+    {
+        SearchText = string.Empty;
+        OnInputHandle(new ChangeEventArgs { Value = string.Empty });
+    }
+
+    private void OpenFilter()
+    {
+        filterModalOpen = true;
+    }
+
+    private async Task OnFiltersApplied(ProductFilterParams filters)
+    {
+        activeFilters = filters;
+        showAllProducts = false;
+
+        isSearching = true;
+        StateHasChanged();
+
+        loadedPagesOfProducts = 1;
+        await RunSearchAsync();
+
+        isSearching = false;
+        StateHasChanged();
+    }
+
+    private void OnFilterLabelsReady(Dictionary<string, string> labels)
+    {
+        filterLabels = labels;
+    }
+
+    private async Task RemoveFilterAsync(string key)
+    {
+        if (key == "fromarfigyelo") activeFilters.FromArfigyelo = null;
+
+        isSearching = true;
+        StateHasChanged();
+
+        if (activeFilters.IsEmpty)
+        {
+            await LoadAllProducts();
+        }
+        else
+        {
+            await RunSearchAsync();
+        }
+
+        isSearching = false;
+        StateHasChanged();
+    }
+
+    private async Task LoadAllStores()
+    {
+        searchedStores = await StoreService.SearchStore("");
+    }
+
+    private async Task SearchStore()
+    {
+        searchedStores = await StoreService.SearchStore(SearchText);
+    }
+
+    private async Task RemoveIdFilterAsync(List<int> list, int id)
+    {
+        list.Remove(id);
+
+        isSearching = true;
+        StateHasChanged();
+
+        if (activeFilters.IsEmpty)
+        {
+            await LoadAllProducts();
+        }
+        else
+        {
+            await RunSearchAsync();
+        }
+
+        isSearching = false;
+        StateHasChanged();
+    }
+
+    private async Task ClearAllFiltersAsync()
+    {
+        activeFilters = new();
+        filterLabels.Clear();
+
+        isSearching = true;
+        StateHasChanged();
+
+        if (string.IsNullOrWhiteSpace(SearchText))
+        {
+            await LoadAllProducts();
+        }
+        else
+        {
+            await RunSearchAsync();
+        }
+
+        isSearching = false;
+        StateHasChanged();
+    }
+
+    private async Task RunSearchAsync()
+    {
+        if (SearchMode == "product")
+        {
+            loadedPagesOfProducts = 1;
+            List<Product> result;
+            if (!activeFilters.IsEmpty)
+            {
+                result = await ProductService.GetProductsFilteredAsync(
+                    string.IsNullOrWhiteSpace(SearchText) ? null : SearchText,
+                    activeFilters, loadedPagesOfProducts);
+            }
+            else if (string.IsNullOrEmpty(SearchText))
+            {
+                result = await ProductService.GetAllProductsAsync(loadedPagesOfProducts);
+            }
+            else
+            {
+                result = await ProductService.GetProductsSearchAsync(SearchText, loadedPagesOfProducts);
+            }
+            if (result != null) searchedProducts = result;
+        }
+    }
+
+    private void GoToCategories()
+    {
+        NavigationManager.NavigateTo("/categories");
+    }
+
+    private void AddNew()
+    {
+        // TODO: navigate to new product or new shop form based on searchMode
+        // if (searchMode == "product") NavigationManager.NavigateTo("/product/new");
+        // else NavigationManager.NavigateTo("/shop/new");
+    }
+
+    SortedList<RouteToStore, Store> storeRoutes = new(
+        Comparer<RouteToStore>.Create((x, y) =>
+        {
+            int durationCompare = x.Duration.CompareTo(y.Duration);
+            if (durationCompare != 0) return durationCompare;
+
+            int distanceCompare = x.Distance.CompareTo(y.Distance);
+            if (distanceCompare != 0) return distanceCompare;
+
+            return x.GetHashCode().CompareTo(y.GetHashCode());
+        })
+    );
+
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (firstRender)
+        {
+            _debounceTimer = new (500);
+            _debounceTimer.AutoReset = false;
+            _debounceTimer.Elapsed += async (sender, args) => await InvokeAsync(ExecuteSearchLogic);
+            loadedPagesOfProducts = 1;
+            recentSearches = await LocalStorageService.GetValue<List<string>>("recentSearches", new List<string>());
+            if (!string.IsNullOrEmpty(SearchTextParameter))
+            {
+                SearchText = SearchTextParameter;
+                TextInInput = !string.IsNullOrWhiteSpace(SearchText);
+                AddRecentSearch(SearchTextParameter);
+            }
+            else
+            {
+                await LoadAllProducts();
+                if (await UserAccessor.IsAuthenticatedAsync())
+                {
+                    User = await UserAccessor.GetCurrentUserAsync(query =>
+                            query.Include(u => u.FavoriteProducts)
+                                    .ThenInclude(p => p.ProductImages)
+                                 .Include(u => u.FavoriteStores)
+                                    .ThenInclude(s => s.StoreBrand));
+
+                    _ = Task.Run(async () => await SortStores());
+                    StateHasChanged();
+                }
+            }
+        }
+        dotNetRef = DotNetObjectReference.Create(this);
+        scrollModule = await JS.InvokeAsync<IJSObjectReference>("import", "./Pages/Search.razor.js");
+        await scrollModule.InvokeVoidAsync("onScroll", "page", dotNetRef);
+
+    }
+
+    private async Task SortStores()
+    {
+        var location = await LocationService.GetUserLocationAsync();
+        if (location == null) return;
+
+        var storesWithDistance = new List<(Store Store, double distance)>();
+
+        foreach (var store in User.FavoriteStores)
+        {
+            if (double.TryParse(store.Latitude, out double lat)
+                && double.TryParse(store.Longitude, out double lon))
+            {
+                double airDistance = LocationService.CalculateDistance(
+                    location.Latitude,
+                    location.Longitude,
+                    lat,
+                    lon
+                );
+                storesWithDistance.Add((store, airDistance));
+            }
+        }
+
+        var closestStores = storesWithDistance
+            .OrderBy(x => x.distance)
+            .Take(10)
+            .ToList();
+
+        var tempRoutes = new SortedList<RouteToStore, Store>(storeRoutes.Comparer);
+        foreach (var storeData in closestStores)
+        {
+            var preliminaryRoute = new RouteToStore
+            {
+                Distance = Math.Round(storeData.distance, 1),
+                Duration = -1
+            };
+            tempRoutes.Add(preliminaryRoute, storeData.Store);
+        }
+
+        storeRoutes = new SortedList<RouteToStore, Store>(tempRoutes, storeRoutes.Comparer);
+        await InvokeAsync(StateHasChanged);
+
+        var routeTasks = closestStores.Select(async storeData =>
+        {
+            if (double.TryParse(storeData.Store.Latitude, out double lat)
+                && double.TryParse(storeData.Store.Longitude, out double lon))
+            {
+                var route = await LocationService.GetRouteInfoAsync(
+                    location.Latitude,
+                    location.Longitude,
+                    lat,
+                    lon
+                );
+
+                if (route is null) return (null, null);
+                route.Duration = Math.Round(route.Duration);
+                route.Distance = Math.Round(route.Distance, 1);
+
+                await InvokeAsync(() =>
+                {
+                    var updatedRoutes = new SortedList<RouteToStore, Store>(storeRoutes.Comparer);
+
+                    foreach (var kvp in storeRoutes)
+                    {
+                        if (kvp.Value.Id != storeData.Store.Id)
+                        {
+                            updatedRoutes.Add(kvp.Key, kvp.Value);
+                        }
+                    }
+
+                    updatedRoutes.Add(route, storeData.Store);
+
+                    storeRoutes = updatedRoutes;
+                    StateHasChanged();
+                });
+
+                return (route, storeData.Store);
+            }
+            return (null, null);
+        }).ToList();
+
+        await Task.WhenAll(routeTasks);
+    }
+
+    private void OnInputHandle(ChangeEventArgs e)
+    {
+        SearchText = e.Value?.ToString() ?? string.Empty;
+        TextInInput = !string.IsNullOrWhiteSpace(SearchText);
+    }
+
+    private async void Searching()
+    {
+        searchQueue.Enqueue(async () =>
+        {
+            loadedPagesOfProducts = 1;
+            isSearching = true;
+            StateHasChanged();
+
+            List<Product> result;
+            if (!activeFilters.IsEmpty)
+            {
+                result = await ProductService.GetProductsFilteredAsync(
+                    string.IsNullOrWhiteSpace(SearchText) ? null : SearchText,
+                    activeFilters, loadedPagesOfProducts);
+            }
+            else if (string.IsNullOrEmpty(SearchText))
+            {
+                result = await ProductService.GetAllProductsAsync(loadedPagesOfProducts);
+            }
+            else
+            {
+                result = await ProductService.GetProductsSearchAsync(SearchText, loadedPagesOfProducts);
+            }
+
+            isSearching = false;
+            if (result != null)
+            {
+                searchedProducts = result;
+                StateHasChanged();
+            }
+        });
+
+        if (!isProcessingSearchQueue)
+        {
+            await ProcessSearchQueue();
+        }
+    }
+
+    private async Task ProcessSearchQueue()
+    {
+        isProcessingSearchQueue = true;
+
+        while (searchQueue.Count > 0)
+        {
+            var currentSearch = searchQueue.Dequeue();
+            await currentSearch();
+        }
+
+        isProcessingSearchQueue = false;
+    }
+
+    private async void AddRecentSearch(string search)
+    {
+        if (!string.IsNullOrWhiteSpace(search) && !recentSearches.Contains(search))
+        {
+            recentSearches.Insert(0, search);
+            if (recentSearches.Count > 10)
+                recentSearches.RemoveAt(recentSearches.Count - 1);
+        }
+        else if (recentSearches.Contains(search))
+        {
+            recentSearches.Remove(search);
+            recentSearches.Insert(0, search);
+        }
+        await LocalStorageService.SetValue("recentSearches", recentSearches);
+    }
+
+    private void OnRecentSearchClicked(string search)
+    {
+        if (!string.IsNullOrWhiteSpace(search))
+        {
+            SearchText = search;
+            AddRecentSearch(search);
+        }
+    }
+
+    private async Task LoadAllProducts()
+    {
+        searchedProducts = await ProductService.GetAllProductsAsync(loadedPagesOfProducts);
+        showAllProducts = true;
+        StateHasChanged();
+    }
+
+    private async void GoToProductPageLabel(Product product)
+    {
+        AddRecentSearch(SearchText);
+        await LocalStorageService.SetValue("prevUrl", SearchText);
+        await DisposeAsync();
+    }
+
+    public async ValueTask DisposeAsync()
+    {
+        try
+        {
+            if (scrollModule != null)
+            {
+                await scrollModule.InvokeVoidAsync("offScroll");
+                await scrollModule.DisposeAsync();
+            }
+        }
+        catch (JSDisconnectedException)
+        {
+        }
+        finally
+        {
+            dotNetRef?.Dispose();
+            dotNetRef = null;
+        }
+    }
+
+    [JSInvokable]
+    public async Task<bool> OnScrollBottom()
+    {
+        isLoadingMore = true;
+        StateHasChanged();
+
+        loadedPagesOfProducts++;
+        List<Product> more = null;
+
+        if (!activeFilters.IsEmpty)
+        {
+            more = await ProductService.GetProductsFilteredAsync(
+                string.IsNullOrWhiteSpace(SearchText) ? null : SearchText,
+                activeFilters, loadedPagesOfProducts);
+        }
+        else if (string.IsNullOrEmpty(SearchText))
+        {
+            more = await ProductService.GetAllProductsAsync(loadedPagesOfProducts);
+        }
+        else
+        {
+            more = await ProductService.GetProductsSearchAsync(SearchText, loadedPagesOfProducts);
+        }
+
+        bool hasMore = false;
+
+        if (more != null && more.Count > 0)
+        {
+            searchedProducts.AddRange(more);
+            hasMore = true;
+        }
+        else
+        {
+            loadedPagesOfProducts--;
+        }
+
+        isLoadingMore = false;
+        StateHasChanged();
+
+        return hasMore;
+    }
+}
+
+
+

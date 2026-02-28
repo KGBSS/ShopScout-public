@@ -1,0 +1,28 @@
+﻿@using ShopScout.Services
+@inject AccountNavbarService NavBarService
+@implements IDisposable
+
+<div class="sticky-header">
+    <div class="header-content">
+        <a class="back-btn" href="@NavBarService.BackHref">
+            <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <line x1="19" y1="12" x2="5" y2="12"></line>
+                <polyline points="12 19 5 12 12 5"></polyline>
+            </svg>
+        </a>
+        <h2 class="header-title">@NavBarService.Title</h2>
+        <div style="width: 2.5rem;"></div>
+    </div>
+</div>
+
+@code {
+    protected override void OnInitialized()
+    {
+        NavBarService.OnChange += StateHasChanged;
+    }
+
+    public void Dispose()
+    {
+        NavBarService.OnChange -= StateHasChanged;
+    }
+}

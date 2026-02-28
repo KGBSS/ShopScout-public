@@ -1,0 +1,123 @@
+﻿@page "/Account/LoginWithRecoveryCode"
+
+@using System.ComponentModel.DataAnnotations
+@using Microsoft.AspNetCore.Identity
+@using ShopScout.Data
+@using ShopScout.SharedLib.Models
+
+@inject SignInManager<ApplicationUser> SignInManager
+@inject UserManager<ApplicationUser> UserManager
+@inject IdentityRedirectManager RedirectManager
+@inject ILogger<LoginWithRecoveryCode> Logger
+
+<PageTitle>Helyreállítási kóddal történő bejelentkezés</PageTitle>
+
+<div class="page-container">
+    <div class="content-wrapper">
+        <div class="auth-page-content">
+            <div class="auth-icon-wrapper">
+                <svg class="auth-icon" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <path d="M21 2l-2 2m-7.61 7.61a5.5 5.5 0 1 1-7.778 7.778 5.5 5.5 0 0 1 7.777-7.777zm0 0L15.5 7.5m0 0l3 3L22 7l-3-3m-3.5 3.5L19 4"></path>
+                </svg>
+            </div>
+
+            <h1 class="auth-title">Helyreállítási kód ellenőrzése</h1>
+            <p class="auth-description">Add meg az egyik mentett helyreállítási kódodat a bejelentkezéshez.</p>
+
+            <StatusMessage Message="@message" />
+
+            <EditForm Model="Input" FormName="login-with-recovery-code" OnValidSubmit="OnValidSubmitAsync" method="post">
+                <DataAnnotationsValidator />
+
+                <div class="form-group">
+                    <label for="Input.RecoveryCode" class="form-label">Helyreállítási kód</label>
+                    <InputText @bind-Value="Input.RecoveryCode" id="Input.RecoveryCode" class="form-control recovery-code-input" autocomplete="off" placeholder="XXXXX-XXXXX" />
+                    <ValidationMessage For="() => Input.RecoveryCode" class="validation-message" />
+                </div>
+
+                <button type="submit" class="btn-auth-submit">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <path d="M15 3h4a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2h-4"></path>
+                        <polyline points="10 17 15 12 10 7"></polyline>
+                        <line x1="15" y1="12" x2="3" y2="12"></line>
+                    </svg>
+                    Bejelentkezés
+                </button>
+            </EditForm>
+
+            <div class="auth-divider">
+                <span class="divider-line"></span>
+                <span class="divider-text">vagy</span>
+                <span class="divider-line"></span>
+            </div>
+
+            <a href="Account/LoginWith2fa?ReturnUrl=@ReturnUrl" class="btn-recovery-link">
+                <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <polyline points="15 18 9 12 15 6"></polyline>
+                </svg>
+                Vissza a hitelesítő kódhoz
+            </a>
+
+            <div class="recovery-warning-box">
+                <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"></path>
+                    <line x1="12" y1="9" x2="12" y2="13"></line>
+                    <line x1="12" y1="17" x2="12.01" y2="17"></line>
+                </svg>
+                <div>
+                    <p class="recovery-warning-title">Fontos tudnivaló</p>
+                    <p class="recovery-warning-text">Minden helyreállítási kód csak egyszer használható. A bejelentkezés után ez a kód törlődik.</p>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+@code {
+    private string? message;
+    private ApplicationUser user = default!;
+
+    [SupplyParameterFromForm]
+    private InputModel Input { get; set; } = new();
+
+    [SupplyParameterFromQuery]
+    private string? ReturnUrl { get; set; }
+
+    protected override async Task OnInitializedAsync()
+    {
+        // Ensure the user has gone through the username & password screen first
+        user = await SignInManager.GetTwoFactorAuthenticationUserAsync() ??
+            throw new InvalidOperationException("Unable to load two-factor authentication user.");
+    }
+
+    private async Task OnValidSubmitAsync()
+    {
+        var recoveryCode = Input.RecoveryCode.Replace(" ", string.Empty);
+        var result = await SignInManager.TwoFactorRecoveryCodeSignInAsync(recoveryCode);
+        var userId = await UserManager.GetUserIdAsync(user);
+
+        if (result.Succeeded)
+        {
+            Logger.LogInformation("User with ID '{UserId}' logged in with a recovery code.", userId);
+            RedirectManager.RedirectTo(ReturnUrl);
+        }
+        else if (result.IsLockedOut)
+        {
+            Logger.LogWarning("User account locked out.");
+            RedirectManager.RedirectTo("Account/Lockout");
+        }
+        else
+        {
+            Logger.LogWarning("Invalid recovery code entered for user with ID '{UserId}' ", userId);
+            message = "err: Érvénytelen helyreállítási kód.";
+        }
+    }
+
+    private sealed class InputModel
+    {
+        [Required(ErrorMessage = "A helyreállítási kód megadása kötelező.")]
+        [DataType(DataType.Text)]
+        [Display(Name = "Helyreállítási kód")]
+        public string RecoveryCode { get; set; } = "";
+    }
+}

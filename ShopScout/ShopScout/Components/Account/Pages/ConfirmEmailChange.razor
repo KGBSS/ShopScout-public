@@ -1,0 +1,68 @@
+﻿@page "/Account/ConfirmEmailChange"
+@layout EmptyLayout
+
+@using System.Text
+@using Microsoft.AspNetCore.Identity
+@using Microsoft.AspNetCore.WebUtilities
+@using ShopScout.Client.Layout
+@using ShopScout.Data
+@using ShopScout.SharedLib.Models
+
+@inject UserManager<ApplicationUser> UserManager
+@inject SignInManager<ApplicationUser> SignInManager
+@inject IdentityRedirectManager RedirectManager
+
+<PageTitle>Confirm email change</PageTitle>
+
+<HeadContent>
+    <link rel="stylesheet" href="/css/account/confirm-welcome.css" />
+</HeadContent>
+
+@if (isSuccessful)
+{
+    <ActionResult IsSuccessful="true" Message="Sikeres email megerősítés" Details="Fiókod aktív! Most már menthetsz kedvenceket, árriasztásokat állíthatsz be, és személyre szabhatod a vásárlási élményed." />
+}
+else
+{
+    <ActionResult IsSuccessful="false" Message="Hiba történt" Message2="Kérlek próbáld újra" />
+}
+
+@code {
+    private bool isSuccessful = false;
+
+    [CascadingParameter]
+    private HttpContext HttpContext { get; set; } = default!;
+
+    [SupplyParameterFromQuery]
+    private string? UserId { get; set; }
+
+    [SupplyParameterFromQuery]
+    private string? Email { get; set; }
+
+    [SupplyParameterFromQuery]
+    private string? Code { get; set; }
+
+    protected override async Task OnInitializedAsync()
+    {
+        if (UserId is null || Email is null || Code is null)
+        {
+            return;
+        }
+
+        var user = await UserManager.FindByIdAsync(UserId);
+        if (user is null)
+        {
+            return;
+        }
+
+        var code = Encoding.UTF8.GetString(WebEncoders.Base64UrlDecode(Code));
+        var result = await UserManager.ChangeEmailAsync(user, Email, code);
+        if (!result.Succeeded)
+        {
+            return;
+        }
+
+        await SignInManager.RefreshSignInAsync(user);
+        isSuccessful = true;
+    }
+}

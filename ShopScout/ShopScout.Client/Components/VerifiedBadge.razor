@@ -1,0 +1,49 @@
+﻿<div class="verified-badge" title="Ellenőrzött">
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24">
+        <defs>
+            <linearGradient id="badge-gradient" x1="0%" y1="0%" x2="100%" y2="100%">
+                <stop offset="0%" stop-color="#27ae60" />
+                <stop offset="100%" stop-color="#229954" />
+            </linearGradient>
+        </defs>
+
+        @if (WhiteBg)
+        {
+            <path fill="#fff"
+                  stroke="#fff"
+                  stroke-width="2.5"
+                  stroke-linejoin="round"
+                  d="M12,2 L14.4,4.6 L17.9,4.2 L18.7,7.7 L22,9.3 L20.9,12.7 L22,16.1 L18.7,17.7 L17.9,21.2 L14.4,20.8 L12,23.4 L9.6,20.8 L6.1,21.2 L5.3,17.7 L2,16.1 L3.1,12.7 L2,9.3 L5.3,7.7 L6.1,4.2 L9.6,4.6 Z" />
+
+            <path fill="none"
+                  stroke="url(#badge-gradient)"
+                  stroke-width="3"
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+                  d="M 7 13.5 L 10 16.5 L 17 9.5"
+                  transform="scale(0.8)"
+                  transform-origin="center" />
+        }
+        else
+        {
+            <path fill="url(#badge-gradient)"
+                  stroke="url(#badge-gradient)"
+                  stroke-width="2.5"
+                  stroke-linejoin="round"
+                  d="M12,2 L14.4,4.6 L17.9,4.2 L18.7,7.7 L22,9.3 L20.9,12.7 L22,16.1 L18.7,17.7 L17.9,21.2 L14.4,20.8 L12,23.4 L9.6,20.8 L6.1,21.2 L5.3,17.7 L2,16.1 L3.1,12.7 L2,9.3 L5.3,7.7 L6.1,4.2 L9.6,4.6 Z" />
+
+            <path fill="none"
+                  stroke="#ffffff"
+                  stroke-width="3"
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+                  d="M 7 13.5 L 10 16.5 L 17 9.5"
+                  transform="scale(0.8)"
+                  transform-origin="center" />
+        }
+    </svg>
+</div>
+
+@code {
+    [Parameter] public bool WhiteBg { get; set; } = false;
+}

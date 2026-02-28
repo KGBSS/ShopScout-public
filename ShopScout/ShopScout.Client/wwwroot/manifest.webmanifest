@@ -1,0 +1,64 @@
+{
+  "name": "ShopScout",
+  "short_name": "ShopScout",
+  "icons": [
+    {
+      "src": "/img/favicons/web-app-manifest-192x192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any maskable"
+    },
+    {
+      "src": "/img/favicons/web-app-manifest-512x512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any maskable"
+    }
+  ],
+  "theme_color": "#d7e2dd",
+  "background_color": "#c8dfd6",
+  "display": "fullscreen",
+  "id": "/",
+  "start_url": "/",
+  "scope": "/",
+  "shortcuts": [
+    {
+      "name": "Vonalkód beolvasás",
+      "short_name": "Beolvasás",
+      "description": "Megnyitja a vonalkód olvasó kamerát.",
+      "url": "/reader",
+      "icons": [{ "src": "/img/pwa/camera.png", "sizes": "256x256" }]
+    }
+  ],
+  "description": "Az Okos Vásárlási Asszisztensed",
+  "screenshots": [
+    {
+      "src": "/img/pwa/screenshots/0.jpg",
+      "type": "image/jpg",
+      "sizes": "1206x2468"
+    },
+    {
+      "src": "/img/pwa/screenshots/1.jpg",
+      "type": "image/jpg",
+      "sizes": "1206x2468"
+    },
+    {
+      "src": "/img/pwa/screenshots/2.jpg",
+      "type": "image/jpg",
+      "sizes": "1206x2468"
+    },
+    {
+      "src": "/img/pwa/screenshots/3.jpg",
+      "type": "image/jpg",
+      "sizes": "1918x914",
+      "form_factor": "wide"
+    },
+    {
+      "src": "/img/pwa/screenshots/4.jpg",
+      "type": "image/jpg",
+      "sizes": "1918x914",
+      "form_factor": "wide"
+    }
+
+  ]
+}

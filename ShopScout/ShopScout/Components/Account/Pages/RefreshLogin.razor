@@ -1,0 +1,25 @@
+﻿@page "/Account/RefreshLogin"
+@using Microsoft.AspNetCore.Identity
+@using ShopScout.SharedLib.Models
+@attribute [Microsoft.AspNetCore.Authorization.Authorize]
+
+@inject IdentityUserAccessor UserAccessor
+@inject SignInManager<ApplicationUser> SignInManager
+@inject NavigationManager NavigationManager
+
+@code {
+    [CascadingParameter]
+    private HttpContext HttpContext { get; set; } = default!;
+
+    private ApplicationUser user = default!;
+
+    protected override async Task OnInitializedAsync()
+    {
+        user = await UserAccessor.GetRequiredUserAsync(HttpContext);
+        if(user != null)
+        {
+            await SignInManager.RefreshSignInAsync(user);
+        }
+        NavigationManager.NavigateTo("/");
+    }
+}

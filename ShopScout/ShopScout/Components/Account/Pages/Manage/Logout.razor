@@ -1,0 +1,57 @@
+﻿@page "/Account/Logout"
+@using ShopScout.Client.Layout
+@using ShopScout.Components.Layout
+
+
+<div class="content-wrapper">
+    <div class="logout-page-content">
+        <div class="logout-icon-wrapper-large">
+            <svg class="logout-icon-large" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"></path>
+                <polyline points="16 17 21 12 16 7"></polyline>
+                <line x1="21" y1="12" x2="9" y2="12"></line>
+            </svg>
+        </div>
+
+        <h1 class="logout-title">Kijelentkezés</h1>
+        <p class="logout-description">Biztosan ki szeretnél jelentkezni a fiókodból?</p>
+
+        <div class="logout-actions">
+                
+            <form action="Account/Logout" method="post">
+                <AntiforgeryToken />
+                <input type="hidden" name="ReturnUrl" value="account/login" />
+                <button type="submit" class="btn-logout-confirm">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"></path>
+                        <polyline points="16 17 21 12 16 7"></polyline>
+                        <line x1="21" y1="12" x2="9" y2="12"></line>
+                    </svg>
+                    Kijelentkezés
+                </button>
+            </form>
+            <a href="/Account/Manage" class="btn-logout-cancel">
+                <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <polyline points="15 18 9 12 15 6"></polyline>
+                </svg>
+                Mégse
+            </a>
+        </div>
+
+        <div class="logout-info-card">
+            <svg class="info-icon" xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <circle cx="12" cy="12" r="10"></circle>
+                <line x1="12" y1="16" x2="12" y2="12"></line>
+                <line x1="12" y1="8" x2="12.01" y2="8"></line>
+            </svg>
+            <p class="logout-info-text">A kijelentkezés után újra be kell jelentkezned a fiókodba a ShopScout szolgáltatásainak eléréséhez.</p>
+        </div>
+    </div>
+</div>
+
+@code {
+    protected override void OnInitialized()
+    {
+        NavBarService.SetNavBar("Kijelentkezés", "/account/manage");
+    }
+}

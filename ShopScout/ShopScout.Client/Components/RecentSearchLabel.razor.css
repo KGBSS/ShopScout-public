@@ -1,0 +1,15 @@
+﻿.recent-search-label {
+    color: #065f46;
+    background-color: #d1fae5;
+    border-radius: 100px;
+    width: fit-content;
+    height: fit-content;
+    padding: 4px 14px;
+    transition: all 0.3s ease;
+    user-select: none;
+}
+
+.recent-search-label:hover {
+    cursor: pointer;
+    filter: brightness(80%);
+}

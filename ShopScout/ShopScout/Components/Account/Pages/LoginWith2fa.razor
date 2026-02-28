@@ -1,0 +1,147 @@
+﻿@page "/Account/LoginWith2fa"
+
+@using System.ComponentModel.DataAnnotations
+@using Microsoft.AspNetCore.Identity
+@using ShopScout.Data
+@using ShopScout.SharedLib.Models
+
+@inject SignInManager<ApplicationUser> SignInManager
+@inject UserManager<ApplicationUser> UserManager
+@inject IdentityRedirectManager RedirectManager
+@inject ILogger<LoginWith2fa> Logger
+
+<PageTitle>Kétfaktoros hitelesítés</PageTitle>
+
+<div class="page-container">
+    <div class="content-wrapper">
+        <div class="auth-page-content">
+            <div class="auth-icon-wrapper">
+                <svg class="auth-icon" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <rect x="5" y="11" width="14" height="10" rx="2" ry="2"></rect>
+                    <circle cx="12" cy="16" r="1"></circle>
+                    <path d="M8 11V7a4 4 0 0 1 8 0v4"></path>
+                </svg>
+            </div>
+
+            <h1 class="auth-title">Kétfaktoros hitelesítés</h1>
+            <p class="auth-description">A bejelentkezésed hitelesítő alkalmazással védett. Add meg az alkalmazásban látható kódot.</p>
+
+            <StatusMessage Message="@message" />
+
+            <EditForm Model="Input" FormName="login-with-2fa" OnValidSubmit="OnValidSubmitAsync" method="post">
+                <input type="hidden" name="ReturnUrl" value="@ReturnUrl" />
+                <input type="hidden" name="RememberMe" value="@RememberMe" />
+                <DataAnnotationsValidator />
+
+                <div class="form-group">
+                    <label for="Input.TwoFactorCode" class="form-label">Hitelesítő kód</label>
+                    <InputText @bind-Value="Input.TwoFactorCode" id="Input.TwoFactorCode" class="form-control form-control-2fa" autocomplete="off" placeholder="000 000" maxlength="7" />
+                    <ValidationMessage For="() => Input.TwoFactorCode" class="validation-message" />
+                </div>
+
+                <div class="checkbox-wrapper">
+                    <label class="checkbox-label">
+                        <InputCheckbox @bind-Value="Input.RememberMachine" class="checkbox-input" />
+                        <span class="checkbox-text">Eszköz megjegyzése</span>
+                    </label>
+                    <p class="checkbox-hint">Ne jelöld be nyilvános eszközökön</p>
+                </div>
+
+                <button type="submit" class="btn-auth-submit">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <path d="M15 3h4a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2h-4"></path>
+                        <polyline points="10 17 15 12 10 7"></polyline>
+                        <line x1="15" y1="12" x2="3" y2="12"></line>
+                    </svg>
+                    Bejelentkezés
+                </button>
+            </EditForm>
+
+            <div class="auth-divider">
+                <span class="divider-line"></span>
+                <span class="divider-text">vagy</span>
+                <span class="divider-line"></span>
+            </div>
+
+            <a href="Account/LoginWithRecoveryCode?ReturnUrl=@ReturnUrl" class="btn-recovery-link">
+                <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <path d="M21 2l-2 2m-7.61 7.61a5.5 5.5 0 1 1-7.778 7.778 5.5 5.5 0 0 1 7.777-7.777zm0 0L15.5 7.5m0 0l3 3L22 7l-3-3m-3.5 3.5L19 4"></path>
+                </svg>
+                Helyreállítási kód használata
+            </a>
+
+            <a href="Account/LoginWithRecoveryCode?ReturnUrl=@ReturnUrl" class="btn-recovery-link">
+                <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <rect x="2" y="4" width="20" height="16" rx="2"></rect>
+                    <path d="m2 7 10 7 10-7"></path>
+                </svg>
+                Hitelesítés e-mailes kóddal
+            </a>
+
+            <div class="auth-info-card">
+                <svg class="info-icon" xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <circle cx="12" cy="12" r="10"></circle>
+                    <line x1="12" y1="16" x2="12" y2="12"></line>
+                    <line x1="12" y1="8" x2="12.01" y2="8"></line>
+                </svg>
+                <p class="auth-info-text">Nyisd meg a hitelesítő alkalmazást (pl. Google Authenticator, Microsoft Authenticator) és add meg a ShopScout fiókodhoz tartozó 6 jegyű kódot.</p>
+            </div>
+        </div>
+    </div>
+</div>
+
+@code {
+    private string? message;
+    private ApplicationUser user = default!;
+
+    [SupplyParameterFromForm]
+    private InputModel Input { get; set; } = new();
+
+    [SupplyParameterFromQuery]
+    private string? ReturnUrl { get; set; }
+
+    [SupplyParameterFromQuery]
+    private bool RememberMe { get; set; }
+
+    protected override async Task OnInitializedAsync()
+    {
+        // Ensure the user has gone through the username & password screen first
+        user = await SignInManager.GetTwoFactorAuthenticationUserAsync() ??
+            throw new InvalidOperationException("Unable to load two-factor authentication user.");
+    }
+
+    private async Task OnValidSubmitAsync()
+    {
+        var authenticatorCode = Input.TwoFactorCode!.Replace(" ", string.Empty).Replace("-", string.Empty);
+        var result = await SignInManager.TwoFactorAuthenticatorSignInAsync(authenticatorCode, RememberMe, Input.RememberMachine);
+        var userId = await UserManager.GetUserIdAsync(user);
+
+        if (result.Succeeded)
+        {
+            Logger.LogInformation("User with ID '{UserId}' logged in with 2fa.", userId);
+            RedirectManager.RedirectTo(ReturnUrl);
+        }
+        else if (result.IsLockedOut)
+        {
+            Logger.LogWarning("User with ID '{UserId}' account locked out.", userId);
+            RedirectManager.RedirectTo("Account/Lockout");
+        }
+        else
+        {
+            Logger.LogWarning("Invalid authenticator code entered for user with ID '{UserId}'.", userId);
+            message = "err: Érvénytelen hitelesítő kód.";
+        }
+    }
+
+    private sealed class InputModel
+    {
+        [Required(ErrorMessage = "A hitelesítő kód megadása kötelező.")]
+        [StringLength(7, ErrorMessage = "A {0} legalább {2} és legfeljebb {1} karakter hosszú lehet.", MinimumLength = 6)]
+        [DataType(DataType.Text)]
+        [Display(Name = "Hitelesítő kód")]
+        public string? TwoFactorCode { get; set; }
+
+        [Display(Name = "Eszköz megjegyzése")]
+        public bool RememberMachine { get; set; }
+    }
+}

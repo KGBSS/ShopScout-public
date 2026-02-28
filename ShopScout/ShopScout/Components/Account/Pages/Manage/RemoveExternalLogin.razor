@@ -1,0 +1,126 @@
+﻿@page "/Account/Manage/RemoveExternalLogin"
+@using Microsoft.AspNetCore.Identity
+@using ShopScout.SharedLib.Models
+
+@inject NavigationManager NavigationManager
+@inject UserManager<ApplicationUser> UserManager
+@inject SignInManager<ApplicationUser> SignInManager
+@inject IdentityUserAccessor UserAccessor
+@inject IdentityRedirectManager RedirectManager
+
+<PageTitle>Külső bejelentkezés eltávolítása</PageTitle>
+
+<div class="content-wrapper">
+    <div class="card" style="border: 1px solid var(--gray-200);">
+        <div class="section-header">
+            <div class="external-login-icon">
+                <svg xmlns="http://www.w3.org/2000/svg" height="24" viewBox="0 0 24 24" width="24">
+                    <path d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z" fill="#4285F4" />
+                    <path d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z" fill="#34A853" />
+                    <path d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z" fill="#FBBC05" />
+                    <path d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z" fill="#EA4335" />
+                    <path d="M1 1h22v22H1z" fill="none" />
+                </svg>
+            </div>
+            <div>
+                <h2 class="section-title-neutral">Google bejelentkezés leválasztása</h2>
+                <p class="section-description-neutral">Válaszd le Google fiókod az alkalmazásról</p>
+            </div>
+        </div>
+
+        @if (!hasPassword)
+        {
+            <div class="alert-warning-custom" style="margin-top: 1.5rem;">
+                <div class="alert-icon-wrapper">
+                    <svg class="alert-icon" xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <path d="m21.73 18-8-14a2 2 0 0 0-3.48 0l-8 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.73-3Z" />
+                        <path d="M12 9v4" />
+                        <path d="M12 17h.01" />
+                    </svg>
+                    <strong>Jelszó beállítása szükséges</strong>
+                </div>
+                <p class="alert-text">
+                    A külső bejelentkezés eltávolítása előtt be kell állítanod egy helyi jelszót. Ez biztosítja, hogy a Google leválasztása után is hozzáférhess a fiókodhoz.
+                </p>
+            </div>
+
+            <a href="/Account/Manage/ChangePassword" class="btn-set-password" style="text-align: center; display: block; padding: 0.75rem; margin-top: 1rem;">
+                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="display: inline-block; vertical-align: middle; margin-right: 0.25rem;">
+                    <rect width="18" height="11" x="3" y="11" rx="2" ry="2" />
+                    <path d="M7 11V7a5 5 0 0 1 10 0v4" />
+                </svg>
+                Jelszó beállítása
+            </a>
+        }
+        else
+        {
+            <div class="info-list" style="margin-top: 1.5rem;">
+                <ul>
+                    <li>
+                        <span class="bullet-neutral">•</span>
+                        <span>A bejelentkezés eltávolítása megakadályozza, hogy Google-lal jelentkezz be.</span>
+                    </li>
+                    <li>
+                        <span class="bullet-neutral">•</span>
+                        <span>Az e-mail címed és jelszavad használatával kell majd bejelentkezned.</span>
+                    </li>
+                    <li>
+                        <span class="bullet-neutral">•</span>
+                        <span>Ez a művelet visszafordítható a Google fiók későbbi újracsatlakoztatásával.</span>
+                    </li>
+                </ul>
+            </div>
+
+            <form @formname="@($"remove-login-Google")" @onsubmit="OnSubmitAsync" method="post">
+                <AntiforgeryToken />
+                <button class="btn-remove-external" type="submit">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <path d="M18 6 6 18" />
+                        <path d="m6 6 12 12" />
+                    </svg>
+                    Leválasztás
+                </button>
+            </form>
+        }
+    </div>
+
+    <div class="notice-card">
+        <p class="notice-text">
+            <strong>Segítségre van szükséged?</strong> Ha problémád van a bejelentkezési módok kezelésével vagy vissza kell szerezned a fiókodhoz való hozzáférést, kérjük, vedd fel a kapcsolatot az ügyfélszolgálatunkkal.
+        </p>
+    </div>
+</div>
+
+@code {
+    private string? message;
+    private bool hasPassword;
+    private ApplicationUser user = default!;
+
+    [CascadingParameter]
+    private HttpContext HttpContext { get; set; } = default!;
+
+    protected override async Task OnInitializedAsync()
+    {
+        NavBarService.SetNavBar("Külső bejelentkezés eltávolítása", "/account/manage/accountsecurity");
+        user = await UserAccessor.GetRequiredUserAsync(HttpContext);
+
+        hasPassword = await UserManager.HasPasswordAsync(user);
+    }
+
+    private async Task OnSubmitAsync()
+    {
+        var currentLogin = (await UserManager.GetLoginsAsync(user)).FirstOrDefault();
+        if (currentLogin.LoginProvider != "Google") return;
+
+        var result = await UserManager.RemoveLoginAsync(user, currentLogin.LoginProvider, currentLogin.ProviderKey);
+        if (!result.Succeeded)
+        {
+            RedirectManager.RedirectToCurrentPageWithStatus("err: Valami hiba történt.", HttpContext);
+            return;
+        }
+
+        await SignInManager.RefreshSignInAsync(user);
+
+        RedirectManager.RedirectTo("/Account/Manage/AccountSecurity");
+    }
+}

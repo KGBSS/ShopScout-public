@@ -1,0 +1,244 @@
+﻿@rendermode InteractiveAuto
+
+<div class="toolbar-container @(ActiveGroup != null ? "expanded" : "") @Class">
+    <div class="toolbar">
+        @if (ActiveGroup != null)
+        {
+            <button class="mobile-only-flex back-btn" @onclick='() => ToggleGroup(null)'>
+                <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="3">
+                    <path d="M15 18l-6-6 6-6" />
+                </svg>
+            </button>
+        }
+
+        <div class="toolbar-section @(ActiveGroup == null ? "single " : "mobile-hidden")">
+            <!-- Move Tool -->
+            <div class="tooltip-wrapper">
+                <ShakeButton IsSelected="@(SelectedTool == Tool.Move)" Value="Tool.Move" OnSelected="SetTool" ShakeButtonState="ShakeState">
+                    <svg class="icon" viewBox="0 0 24 24" fill="none"
+                         stroke="currentColor" stroke-width="2"
+                         stroke-linecap="round" stroke-linejoin="round"
+                         aria-hidden="true">
+                        <!-- Up arrow -->
+                        <path d="M12 2l3 3m-3-3L9 5m3-3v20" />
+                        <!-- Left arrow -->
+                        <path d="M2 12l3-3m-3 3l3 3M2 12h20" />
+                        <!-- Right arrow -->
+                        <path d="M22 12l-3-3m3 3l-3 3" />
+                        <!-- Down arrow -->
+                        <path d="M12 22l3-3m-3 3l-3-3" />
+                    </svg>
+                </ShakeButton>
+            </div>
+
+            <!-- Eraser Tool -->
+            <div class="tooltip-wrapper">
+                <ShakeButton IsSelected="@(SelectedTool == Tool.Eraser)" Value="Tool.Eraser" OnSelected="SetTool" ShakeButtonState="ShakeState">
+                    <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <path d="M20 20H10L4 14L14 4L20 10L10 20" />
+                        <path d="M4 14L10 20" />
+                    </svg>
+                </ShakeButton>
+            </div>
+        </div>
+
+        <div class="separator mobile-hidden"></div>
+
+        <div class="section-label mobile-hidden">Fal</div>
+
+        @* --- GROUP 2: WALLS --- *@
+        <!-- Wall section -->
+        <div class="toolbar-section @(ActiveGroup == null ? "single" : "mobile-hidden")">
+            <!-- Wall Tool -->
+            <div class="tooltip-wrapper">
+                <ShakeButton IsSelected="@(CurrentEditorMode == EditorMode.WallEditor)" Value="EditorMode.WallEditor" OnSelected="SetEditorMode" ShakeButtonState="ShakeState">
+                    <svg fill='currentColor' height='36px' width='36px' version='1.1' xmlns='http://www.w3.org/2000/svg' xmlns:xlink='http://www.w3.org/1999/xlink' viewBox='0 0 512 512' xml:space='preserve'>
+                        <g id='SVGRepo_bgCarrier' stroke-width='0'></g>
+                        <g id='SVGRepo_tracerCarrier' stroke-linecap='round' stroke-linejoin='round'></g>
+                        <g id='SVGRepo_iconCarrier'>
+                            <g>
+                                <g>
+                                    <path d='M488.727,46.545h-93.091H209.455H23.273C10.42,46.545,0,56.965,0,69.818v93.091V256v93.091v93.091 c0,12.853,10.42,23.273,23.273,23.273h93.091h186.182h186.182c12.853,0,23.273-10.42,23.273-23.273v-93.091V256v-93.091V69.818 C512,56.965,501.58,46.545,488.727,46.545z M232.727,93.091h139.636v46.545h-69.818h-69.818V93.091z M279.273,186.182v46.545 h-69.818h-69.818v-46.545h69.818H279.273z M46.545,93.091h139.636v46.545h-69.818H46.545V93.091z M46.545,186.182h46.545v46.545 H46.545V186.182z M93.091,418.909H46.545v-46.545h46.545V418.909z M46.545,325.818v-46.545h69.818h69.818v46.545h-69.818H46.545z M279.273,418.909H139.636v-46.545h69.818h69.818V418.909z M232.727,325.818v-46.545h69.818h69.818v46.545h-69.818H232.727z M465.455,418.909H325.818v-46.545h69.818h69.818V418.909z M465.455,325.818h-46.545v-46.545h46.545V325.818z M465.455,232.727 h-69.818h-69.818v-46.545h69.818h69.818V232.727z M465.455,139.636h-46.545V93.091h46.545V139.636z'>
+                                    </path>
+                                </g>
+                            </g>
+                        </g>
+                    </svg>
+                </ShakeButton>
+            </div>
+        </div>
+
+        <div class="separator mobile-hidden"></div>
+
+        <!-- Shelf Types Label -->
+        <div class="section-label mobile-hidden">Polcok</div>
+
+        @* --- GROUP 3: SHELVES --- *@
+        @if (ActiveGroup == null)
+        {
+            <button class="mobile-only-flex mobile-trigger" @onclick='() => ToggleGroup("shelves")'>
+                @(CurrentShelfType != null ? shelfIcons[(ShelfType)CurrentShelfType] : (MarkupString)buttonSvg)
+            </button>
+        }
+
+        <!-- Shelves section -->
+        <div class="toolbar-section @(ActiveGroup == "shelves" ? "mobile-active" : "mobile-hidden") @(DisableShelves ? "disabled" : "")">
+            <!-- Generic -->
+            <div class="tooltip-wrapper">
+                <ShakeButton IsSelected="@(CurrentShelfType == ShelfType.Shelf)" Style="color: #4A90E2" Value="ShelfType.Shelf" OnSelected="SetShelfType" ShakeButtonState="ShakeState">
+                    @shelfIcons[ShelfType.Shelf]
+                </ShakeButton>
+            </div>
+
+            <!-- Fridge, freezer -->
+            <div class="tooltip-wrapper">
+                <ShakeButton IsSelected="@(CurrentShelfType == ShelfType.Fridge)" Style="color: #50E3C2" Value="ShelfType.Fridge" OnSelected="SetShelfType" ShakeButtonState="ShakeState">
+                    @shelfIcons[ShelfType.Fridge]
+                </ShakeButton>
+            </div>
+
+            <!-- Fruits, vegetables -->
+            <div class="tooltip-wrapper">
+                <ShakeButton IsSelected="@(CurrentShelfType == ShelfType.Produce)" Style="color: #7ED321" Value="ShelfType.Produce" OnSelected="SetShelfType" ShakeButtonState="ShakeState">
+                    @shelfIcons[ShelfType.Produce]
+                </ShakeButton>
+            </div>
+
+            <!-- Bakery -->
+            <div class="tooltip-wrapper">
+                <ShakeButton IsSelected="@(CurrentShelfType == ShelfType.Bakery)" Style="color: #F5A623" Value="ShelfType.Bakery" OnSelected="SetShelfType" ShakeButtonState="ShakeState">
+                    @shelfIcons[ShelfType.Bakery]
+                </ShakeButton>
+            </div>
+
+            <!-- Meat -->
+            <div class="tooltip-wrapper">
+                <ShakeButton IsSelected="@(CurrentShelfType == ShelfType.Butcher)" Style="color: #D0021B" Value="ShelfType.Butcher" OnSelected="SetShelfType" ShakeButtonState="ShakeState">
+                    @shelfIcons[ShelfType.Butcher]
+                </ShakeButton>
+            </div>
+        </div>
+    </div>
+</div>
+
+@code {
+    [Parameter] public bool DisableShelves { get; set; } = false;
+
+    [Parameter] public EditorMode CurrentEditorMode { get; set; }
+
+    [Parameter] public EventCallback<EditorMode> CurrentEditorModeChanged { get; set; }
+
+    [Parameter] public Tool SelectedTool { get; set; }
+
+    [Parameter] public EventCallback<Tool> SelectedToolChanged { get; set; }
+
+    [Parameter] public ShelfType? CurrentShelfType { get; set; }
+
+    [Parameter] public EventCallback<ShelfType?> CurrentShelfTypeChanged { get; set; }
+
+    [Parameter] public ShakeButtonState ShakeState { get; set; } = default!;
+
+    [Parameter] public string? ActiveGroup { get; set; } = null;
+
+    [Parameter] public EventCallback<string?> activeGroupChanged { get; set; }
+
+    [Parameter] public string? Class { get; set; }
+
+    private string buttonSvg = @"
+        <svg viewBox='0 0 24 24' width='24' height='24' fill='none' stroke='currentColor' stroke-width='2'>
+            <path d='M4 5H20M4 12H20M4 19H20' />
+        </svg>
+    ";
+
+    private Dictionary<ShelfType, MarkupString> shelfIcons = new()
+    {
+        { ShelfType.Shelf, (MarkupString)@"<svg fill='currentColor' width='36px' height='36px' viewBox='0 0 1000 1000' version='1.1' xmlns='http://www.w3.org/2000/svg' xmlns:xlink='http://www.w3.org/1999/xlink' enable-background='new 0 0 1000 1000' xml:space='preserve'>
+                        <g id='SVGRepo_bgCarrier' stroke-width='0'></g>
+                        <g id='SVGRepo_tracerCarrier' stroke-linecap='round' stroke-linejoin='round'></g>
+                        <g id='SVGRepo_iconCarrier'>
+                            <g>
+                                <g transform='translate(0.000000,511.000000) scale(0.100000,-0.100000)'>
+                                    <path d='M1852.4,4979.1c-60.4-16.1-155-54.3-211.3-84.5c-130.8-68.4-350.2-285.8-418.6-418.6c-124.8-231.4-116.7,42.3-116.7-4365.3c0-4393.4-6-4125.8,112.7-4363.3c68.4-134.8,289.8-356.2,424.7-424.7c235.5-118.7,64.4-112.7,3357-112.7c3292.5,0,3121.5-6,3357,112.7c134.8,68.4,356.2,289.8,424.7,424.7c118.7,237.5,112.7-30.2,112.7,4363.3c0,4393.4,6,4125.8-112.7,4363.3c-68.4,134.8-289.8,356.2-424.7,424.7c-235.5,118.7-62.4,112.7-3367,110.7C2409.8,5009.3,1945,5005.2,1852.4,4979.1z M8127.6,4371.3c38.2-18.1,88.5-60.4,110.7-90.6c42.3-56.4,42.3-80.5,48.3-1203.5l4-1145.2H5000H1709.5l4,1145.2c6,1123,6,1147.2,48.3,1203.5c22.1,30.2,72.5,72.4,110.7,90.6c64.4,34.2,255.6,36.2,3127.5,36.2C7872,4407.5,8063.2,4405.5,8127.6,4371.3z M8290.6,120.7v-1207.5H5000H1709.5V120.7v1207.5H5000h3290.5V120.7z M8286.5-2845.8c-6-1133.1-6-1157.2-48.3-1213.6c-22.1-30.2-72.5-72.4-110.7-90.6c-64.4-34.2-255.6-36.2-3127.5-36.2c-2871.9,0-3063.1,2-3127.5,36.2c-38.2,18.1-88.6,60.4-110.7,90.6c-42.3,56.3-42.3,80.5-48.3,1213.6l-4,1155.2H5000h3290.5L8286.5-2845.8z'></path>
+                                    <path d='M4607.6,3652.8v-392.5H5000h392.4v392.5v392.5H5000h-392.5V3652.8z'></path>
+                                    <path d='M3923.3,2676.7v-301.9H5000h1076.7v301.9v301.9H5000H3923.3V2676.7z'></path>
+                                    <path d='M4607.6,543.4V161H5000h392.4v382.4v382.4H5000h-392.5V543.4z'></path>
+                                    <path d='M3923.3-442.8v-301.9H5000h1076.7v301.9v301.9H5000H3923.3V-442.8z'></path>
+                                    <path d='M4607.6-2465.4v-392.5H5000h392.4v392.5v392.5H5000h-392.5V-2465.4z'></path>
+                                    <path d='M3923.3-3441.5v-301.9H5000h1076.7v301.9v301.9H5000H3923.3V-3441.5z'></path>
+                                </g>
+                            </g>
+                        </g>
+                    </svg>" },
+        { ShelfType.Fridge, (MarkupString)@"<svg width='36px' height='36px' viewBox='0 0 24 24' fill='none' xmlns='http://www.w3.org/2000/svg'>
+                        <g id='SVGRepo_bgCarrier' stroke-width='0'></g>
+                        <g id='SVGRepo_tracerCarrier' stroke-linecap='round' stroke-linejoin='round'></g>
+                        <g id='SVGRepo_iconCarrier'>
+                            <path d='M12 2V18M12 22V18M12 18L15 21M12 18L9 21M15 3L12 6L9 3' stroke='currentColor' stroke-width='1.5' stroke-linecap='round'></path>
+                            <path d='M3.33978 7.00042L6.80389 9.00042M6.80389 9.00042L17.1962 15.0004M6.80389 9.00042L5.70581 4.90234M6.80389 9.00042L2.70581 10.0985M17.1962 15.0004L20.6603 17.0004M17.1962 15.0004L21.2943 13.9023M17.1962 15.0004L18.2943 19.0985' stroke='currentColor' stroke-width='1.5' stroke-linecap='round'></path>
+                            <path d='M20.66 7.00042L17.1959 9.00042M17.1959 9.00042L6.80364 15.0004M17.1959 9.00042L18.294 4.90234M17.1959 9.00042L21.294 10.0985M6.80364 15.0004L3.33954 17.0004M6.80364 15.0004L2.70557 13.9023M6.80364 15.0004L5.70557 19.0985' stroke='currentColor' stroke-width='1.5' stroke-linecap='round'></path>
+                        </g>
+                    </svg>" },
+        { ShelfType.Produce, (MarkupString)@"<svg width='36px' height='36px' viewBox='0 0 24 24' xmlns='http://www.w3.org/2000/svg' fill='currentColor' stroke='currentColor' stroke-width='0.00024000000000000003'>
+                        <g id='SVGRepo_bgCarrier' stroke-width='0'></g>
+                        <g id='SVGRepo_tracerCarrier' stroke-linecap='round' stroke-linejoin='round' stroke='#CCCCCC' stroke-width='0.096'></g>
+                        <g id='SVGRepo_iconCarrier'>
+                            <defs>
+                                <style>.cls-1{fill:currentColor;}</style>
+                            </defs>
+                            <path class='cls-1' d='M11.63,22a10.32,10.32,0,0,1-7.34-3,1,1,0,0,1,0-1.41L17.55,4.29a1,1,0,0,1,1.41,0,10.37,10.37,0,0,1,2.57,10.42,1,1,0,1,1-1.91-.59A8.45,8.45,0,0,0,20,11.63a8.28,8.28,0,0,0-1.79-5.17L6.46,18.21a8.37,8.37,0,0,0,11.09-.66c.11-.11.22-.23.32-.35a1,1,0,1,1,1.49,1.34L19,19A10.3,10.3,0,0,1,11.63,22Z'></path><path class='cls-1' d='M14.89,15.74a1,1,0,0,1-.71-.29l-.56-.56a1,1,0,0,1,0-1.42,1,1,0,0,1,1.41,0l.56.57a1,1,0,0,1,0,1.41A1,1,0,0,1,14.89,15.74Z'></path><path class='cls-1' d='M17.47,13.16a1,1,0,0,1-.7-.3l-.57-.57a1,1,0,0,1,1.41-1.41l.57.57a1,1,0,0,1,0,1.41A1,1,0,0,1,17.47,13.16Z'></path><path class='cls-1' d='M12.19,18.44a1,1,0,0,1-.71-.29l-.57-.57a1,1,0,0,1,1.42-1.41l.57.56a1,1,0,0,1,0,1.42A1,1,0,0,1,12.19,18.44Z'></path><path class='cls-1' d='M3.88,15.66A1,1,0,0,1,3,15.1a9.57,9.57,0,0,1-1-4.21c0-2.69,1.93-5.6,5.06-5.6A6.32,6.32,0,0,1,10,6.07a4.85,4.85,0,0,1,2.94-1,6.24,6.24,0,0,1,3.45,1.09,1,1,0,0,1-1.14,1.65,4.17,4.17,0,0,0-2.31-.74A2.89,2.89,0,0,0,10.79,8a1,1,0,0,1-1.23.14,4.88,4.88,0,0,0-2.5-.84c-2,0-3.06,2.09-3.06,3.6a7.59,7.59,0,0,0,.77,3.32,1,1,0,0,1-.45,1.34A1.06,1.06,0,0,1,3.88,15.66Z'></path><path class='cls-1' d='M9.91,8.14a.91.91,0,0,1-.39-.08A1,1,0,0,1,9,6.76a2.25,2.25,0,0,0,.11-.37,3.92,3.92,0,0,0,.07-.68,2.17,2.17,0,0,0-.9-1.87,1,1,0,0,1-.34-1.37,1,1,0,0,1,1.35-.36,4.17,4.17,0,0,1,1.89,3.6,6.12,6.12,0,0,1-.11,1.1,7,7,0,0,1-.22.71A1,1,0,0,1,9.91,8.14Z'>
+                            </path>
+                        </g>
+                    </svg>" },
+        { ShelfType.Bakery, (MarkupString)@"<svg height='36px' width='36px' version='1.1' xmlns='http://www.w3.org/2000/svg' xmlns:xlink='http://www.w3.org/1999/xlink' viewBox='0 0 512 512' xml:space='preserve' fill='currentColor'>
+                        <g id='SVGRepo_bgCarrier' stroke-width='0'></g>
+                        <g id='SVGRepo_tracerCarrier' stroke-linecap='round' stroke-linejoin='round'></g>
+                        <g id='SVGRepo_iconCarrier'>
+                            <style type='text/css'> .st0{fill:currentColor;} </style>
+                            <g>
+                                <path class='st0' d='M506.033,234.379c-3.835-10.318-9.432-20.046-16.362-28.81c-20.996-26.601-53.633-46.272-93.351-59.9 c-2.87-0.957-5.821-1.921-8.764-2.799c-15.326-4.792-31.609-8.627-48.632-11.498c-25.198-4.274-52.014-6.483-79.939-6.483h-4.864 c-16.506,0.144-32.638,1.108-48.258,2.727c-27.557,2.943-53.568,8.102-77.291,15.47c-13.707,4.13-26.672,9.066-38.682,14.592 c-3.828,1.77-7.591,3.612-11.275,5.526c-23.132,12.152-42.509,27.112-56.432,45.013c-13.93,17.908-22.255,39.2-22.183,62.116v0.734 c0.079,11.204,2.137,21.96,6.044,31.68c6.85,17.248,19.305,31.242,34.854,42.071c23.428,16.283,54,26.457,89.371,33.012 c35.437,6.554,75.816,9.281,118.692,9.281c2.656,0,5.382,0,8.03-0.072c67.052-0.59,128.06-7.224,174.405-24.392 c23.204-8.692,42.948-20.111,57.54-35.803c7.217-7.887,13.117-16.873,17.096-26.824c3.98-9.944,6.038-20.772,5.965-32.191v-0.741 C511.927,255.742,509.862,244.69,506.033,234.379z M478.842,267.829c0,7.512-1.252,13.995-3.612,19.888 c-4.123,10.318-11.786,19.528-23.795,27.853c-17.83,12.527-45.243,22.398-78.838,28.658c-33.595,6.339-73.312,9.361-115.822,9.656 c-2.655,0.072-5.231,0.072-7.814,0.072c-63.217,0.072-119.728-6.331-158.41-20.851c-19.377-7.145-34.04-16.211-43.322-26.378 c-4.64-5.08-8.03-10.462-10.39-16.283c-2.353-5.821-3.605-12.232-3.684-19.6v-0.511c0-14.958,5.015-28.586,15.182-41.775 c12.081-15.693,31.976-30.213,57.692-41.855c9.426,18.348,17.088,35.811,23.133,50.252c11.124,26.306,34.408,17.167,28.515-7.512 c-3.317-14.297-7.001-32.789-15.693-55.849c23.579-6.93,50.028-11.722,78.392-14.002c10.023,24.535,17.391,47.963,22.989,66.829 c8.771,29.321,35.364,22.471,32.126-4.497c-1.921-16.132-3.612-36.983-10.685-63.807c30.206,0.295,58.871,3.54,84.731,9.066 c5.454,21.291,9.282,41.186,12.232,57.764c5.446,30.429,32.342,26.378,32.048-1.18c-0.072-12.009,0.223-26.45-1.252-44.208 c9.21,3.461,17.83,7.224,25.716,11.275c19.815,10.167,35.141,22.247,45.236,35.221c10.167,12.965,15.182,26.37,15.326,41.257 V267.829z'>
+                                </path> 
+                            </g> 
+                        </g>
+                    </svg>" },
+        { ShelfType.Butcher, (MarkupString)@"<svg height='36px' width='36px' version='1.1' xmlns='http://www.w3.org/2000/svg' xmlns:xlink='http://www.w3.org/1999/xlink' viewBox='0 0 512 512' xml:space='preserve' fill='currentColor'>
+                        <g id='SVGRepo_bgCarrier' stroke-width='0'></g>
+                        <g id='SVGRepo_tracerCarrier' stroke-linecap='round' stroke-linejoin='round'></g>
+                        <g id='SVGRepo_iconCarrier'>
+                            <style type='text/css'> .st0{fill:currentColor;} </style>
+                            <g>
+                                <path class='st0' d='M110.26,202.977c-4.636-3.246-10.289-5.311-16.284-5.303c-6.003-0.008-11.664,2.057-16.3,5.303 c-6.979,4.912-12.054,12.192-15.584,20.725c-3.514,8.548-5.433,18.464-5.45,29.061c0.032,14.128,3.416,27.036,9.516,37.13 c3.058,5.035,6.849,9.395,11.517,12.648c4.636,3.254,10.297,5.327,16.3,5.312c5.995,0.016,11.648-2.058,16.284-5.312 c6.996-4.888,12.063-12.192,15.584-20.708c3.514-8.549,5.45-18.48,5.45-29.07c-0.024-14.128-3.4-27.045-9.5-37.13 C118.719,210.597,114.93,206.23,110.26,202.977z M105.185,279.791c-1.936,3.181-4.083,5.45-6.018,6.8 c-1.968,1.334-3.571,1.806-5.19,1.806c-1.627,0-3.229-0.472-5.189-1.806c-2.928-1.992-6.296-6.198-8.703-12.16 c-2.457-5.929-4.002-13.478-3.986-21.668c-0.033-10.923,2.774-20.708,6.654-27.036c1.936-3.156,4.083-5.441,6.027-6.783 c1.968-1.35,3.57-1.814,5.197-1.83c1.619,0.016,3.222,0.48,5.19,1.83c2.912,1.976,6.279,6.189,8.703,12.144 c2.44,5.945,3.986,13.486,3.986,21.676C111.879,263.686,109.073,273.455,105.185,279.791z'></path> <path class='st0' d='M512,223.221c0-17.105-6.963-32.729-18.204-43.93c-11.176-11.208-26.808-18.203-43.922-18.187 c-16.674-0.016-31.949,6.646-43.044,17.382c-7.499,7.223-13.127,16.39-16.25,26.662h-21.994c-1.464-1.521-3.124-3.277-4.88-5.164 c-3.92-4.23-8.247-9.11-10.655-12.233c-12.623-16.284-24.328-31.339-37.334-44.947c-19.44-20.432-42.279-37.488-73.562-48.567 c-31.298-11.118-70.502-16.634-124.34-16.65c-5.726,0-11.623,0.065-17.706,0.195v0.016C84.298,77.856,69.576,84.2,57.432,94.155 c-9.239,7.516-17.284,17.089-24.279,28.183C22.66,138.997,14.47,159.185,8.784,181.821C3.123,204.473,0,229.549,0,256 c0.041,47.037,9.761,89.747,26.508,122.046c8.402,16.146,18.618,29.769,30.924,39.823c12.16,9.939,26.882,16.291,42.702,16.356 c6.385,0.13,12.558,0.187,18.553,0.187c37.936,0,68.396-2.481,93.814-7.434c19.066-3.726,35.292-8.858,49.477-15.438 c21.302-9.826,37.765-22.921,51.837-37.871c13.949-14.794,25.784-31.249,38.992-49.062l16.072-17.732h21.701 c3.123,10.273,8.751,19.44,16.25,26.67c11.095,10.728,26.37,17.382,43.044,17.382c17.113,0,32.746-6.987,43.922-18.195 c11.241-11.2,18.204-26.816,18.204-43.93c0-12.022-3.514-23.262-9.468-32.788C508.486,246.492,512,235.243,512,223.221z M127.292,396.819c-2.863,2.131-5.726,3.758-8.573,5.19c-0.016,0-0.024,0-0.032,0c-5.774,0-11.737-0.065-17.91-0.171l-0.162-0.025 h-0.162c-7.32-0.016-14.641-2.709-22.563-9.085c-5.888-4.774-11.843-11.64-17.316-20.334c-8.24-13.054-15.381-30.225-20.351-50.079 c-4.969-19.87-7.816-42.417-7.816-66.314c-0.049-42.442,9.094-80.743,22.855-107.081c6.832-13.176,14.771-23.286,22.628-29.638 c7.922-6.386,15.243-9.061,22.563-9.093h0.179h0.163c5.856-0.131,11.534-0.188,17.023-0.188c0.309,0,0.61,0.008,0.92,0.008 c2.838,1.424,5.694,3.066,8.556,5.189c13.534,9.988,26.613,28.102,36,52.365c9.435,24.239,15.275,54.512,15.258,88.438 c0.032,45.256-10.411,83.98-25.759,110.585C145.138,379.908,136.305,390.141,127.292,396.819z M347.666,276.887 c-3.4,6.515-8.459,13.9-15.421,22.148l-4.522,4.994l-0.472,0.635c-1.138,1.26-2.163,2.472-3.383,3.766l0.342,0.341 c-10.753,14.535-20.261,27.427-29.957,38.286c-7.962,8.938-16.056,16.584-25.32,23.181c-13.901,9.874-30.583,17.65-54.431,23.189 c-15.991,3.7-35.284,6.271-58.611,7.572c11.404-12.762,21.05-29.127,28.542-48.331c10.565-27.207,16.796-60.14,16.796-96.668 c-0.017-48.712-11.029-90.992-28.769-121.884c-4.962-8.622-10.501-16.251-16.479-22.97c17.332,1.115,32.469,2.994,45.686,5.62 c16.61,3.286,30.274,7.686,42.051,13.014c17.666,8.044,31.242,18.146,44.264,31.022c12.168,12.014,23.799,26.622,36.846,43.442 l-0.951,0.903c8.735,9.167,16.584,17.537,21.92,25.581c5.368,8.085,8.215,15.446,8.231,23.677 C354.027,260.717,352.319,267.949,347.666,276.887z M470.648,267.582c5.548,5.474,8.931,12.86,8.948,21.221 c-0.017,8.264-3.302,15.576-8.704,21.017c-5.433,5.4-12.753,8.694-21.017,8.703c-8.036-0.008-15.178-3.139-20.546-8.296 c-5.352-5.189-8.752-12.249-9.061-20.203l-0.618-15.544h-49.876c2.408-6.913,3.709-13.624,3.693-20.074 c0.016-5.962-1.026-11.558-2.75-16.861h48.932l0.618-15.544c0.309-7.963,3.709-15.015,9.061-20.196 c5.368-5.166,12.51-8.289,20.546-8.297c8.264,0.008,15.584,3.302,21.017,8.703c5.401,5.424,8.687,12.746,8.704,21.009 c-0.017,8.361-3.4,15.747-8.931,21.213l-11.826,11.582L470.648,267.582z'>
+                                </path>
+                            </g>
+                        </g>
+                    </svg>" }
+    };
+
+    private void ToggleGroup(string? groupName)
+    {
+        activeGroupChanged.InvokeAsync(ActiveGroup == groupName ? null : groupName);
+        Console.WriteLine($"Toggled group: {groupName}, activeGroup is now: {ActiveGroup}");
+    }
+
+    private void SetEditorMode(object modeObj)
+    {
+        ActiveGroup = null;
+        var mode = (EditorMode)modeObj;
+        // if (CurrentEditorMode == mode) return;
+        CurrentEditorModeChanged.InvokeAsync(mode);
+    }
+
+    private void SetTool(object toolObj)
+    {
+        ActiveGroup = null;
+        var tool = (Tool)toolObj;
+        if (tool == SelectedTool) return;
+        SelectedToolChanged.InvokeAsync(tool);
+    }
+
+    private void SetShelfType(object shelfTypeObj)
+    {
+        ActiveGroup = null;
+        var shelfType = (ShelfType)shelfTypeObj;
+        CurrentShelfTypeChanged.InvokeAsync(shelfType);
+    }
+}

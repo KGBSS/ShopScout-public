@@ -1,0 +1,1278 @@
+{
+  "categories": [
+    {
+      "name": "Színezékek",
+      "items": [
+        {
+          "code": "E100",
+          "name": "Kurkumin",
+          "description": "Növényi eredetű sárga színezék, a kurkuma fűszernövény természetes festékanyaga",
+          "safety_level": 0
+        },
+        {
+          "code": "E101",
+          "name": "Riboflavin / B2-vitamin",
+          "description": "Növényi eredetű sárga színezék, sok élelmiszer természetes alkotója",
+          "safety_level": 0
+        },
+        {
+          "code": "E102",
+          "name": "Tartrazin*",
+          "description": "Szintetikus sárga színezék, allergén mivolta miatt gyerekeknek kifejezetten nem ajánlott. Elsősorban gyümölcsételek, pudingok, sütemények, élelmiszerporok, levesek, szószok, jégkrémek, édességek, rágógumik, ételzselék színezésére használják. Lehetséges mellékhatásai a hiperaktivitás, asztma, migrén, torz látás, csalánkiütés, illetve potenciálisan rákkeltő.",
+          "safety_level": 2
+        },
+        {
+          "code": "E104",
+          "name": "Kinolinsárga*",
+          "description": "Szintetikus sárga színezék, allergén. Jégkrémek, cukorkák és füstölt halak színezőanyagaként fordul elő. Lehetséges mellékhatásai a hiperaktivitás, asztma, ekcéma, torz látás, inszomnia, máj- és veserák.",
+          "safety_level": 2
+        },
+        {
+          "code": "E107",
+          "name": "Sárga 2G",
+          "description": "Szintetikus sárga színezék, több országban betiltották. Arra érzékenyekben és asztmásokban allergiát, hasmenést válthat ki",
+          "safety_level": 2
+        },
+        {
+          "code": "E110",
+          "name": "Narancssárga S*",
+          "description": "Szintetikus narancssárga színezék, mely leginkább instant levesporokban, felvágottakban, húsételekben fordul elő. Allergén, ill. mellékhatásként előfordulhat még bőrizzadás, hasmenés, hányás, vagy egyéb emésztőrendszeri bántalmak.",
+          "safety_level": 2
+        },
+        {
+          "code": "E120",
+          "name": "Kármin",
+          "description": "Bíbortetűből előállított vörös színezék, gyerekeknek kifejezetten nem ajánlott! Elsősorban gyümölcsitalokban, jégkrémekben, joghurtokban, édességekben használják. Allergén (asztma, ekcéma), okozhat hiperaktivitást és álmatlanságot, rákkeltő.",
+          "safety_level": 2
+        },
+        {
+          "code": "E122",
+          "name": "Azorubin / Karmazsin*",
+          "description": "Szintetikus piros vagy barna színezék, több országban betiltották. Megtalálható zsemlemorzsában, joghurtokban, lekvárokban, ételzselékben, tortákban. Allergiát, hiperaktivitást okozhat.",
+          "safety_level": 2
+        },
+        {
+          "code": "E123",
+          "name": "Amaranth",
+          "description": "Szintetikus sötétvörös vagy lila színezék, potenciálisan rákkeltő hatása miatt több országban betiltották, beleértve Európát.",
+          "safety_level": 2
+        },
+        {
+          "code": "E124",
+          "name": "Ponszó 4R / Neukokcin*",
+          "description": "Kőszénkátrányból szintetizált vörös színezék, feltételezett rákkeltő hatása miatt több országban betiltották. Előfordulhat édességekben, joghurtokban, üdítőitalokban, ketchupban. Okozhat hiperaktivitást, allergiát, álmatlanságot, illetve genotoxikus hatású.",
+          "safety_level": 2
+        },
+        {
+          "code": "E127",
+          "name": "Eritrozin",
+          "description": "Meggyszínű színezék, szén alapú fluorin. Allergén, okozhat hiperaktivitást, álmatlanságot, pajzsmirigyproblémákat, illetve rákkeltő hatású.",
+          "safety_level": 2
+        },
+        {
+          "code": "E128",
+          "name": "Vörös 2G",
+          "description": "Szintetikus piros színezék, az EU-ban 2007-ben betiltották.",
+          "safety_level": 2
+        },
+        {
+          "code": "E129",
+          "name": "Allura vörös AC",
+          "description": "Kőszénkátrányból szintetizált piros színezék, több országban betiltották. Asztmásoknál bőrviszketést, enyhe rosszullétet válthat ki, illetve potenciálisan rákkeltő.",
+          "safety_level": 2
+        },
+        {
+          "code": "E131",
+          "name": "Patentkék V",
+          "description": "Szintetikus sötétkék színezék, több országban betiltották. Gyerekek számára kifejezetten nem ajánlott! Allergiás reakciót válthat ki, melynek tünetei lehetnek bőrviszketés, rosszullét, alacsony vérnyomás, és ritkán anafilaxiás sokk.",
+          "safety_level": 2
+        },
+        {
+          "code": "E132",
+          "name": "Indigókármin",
+          "description": "Régebben indigócserjéből, ma szintetikusan előállított mélykék színezék, mely használatos élelmiszer-adalékanyagként, ruha- és papírfestékként, valamint egyéb festékként. Mellékhatásként jelentkezhet hiperaktivitás, hányinger, magas vérnyomás, légzési problémák, illetve potenciálisan rákkeltő hatású.",
+          "safety_level": 2
+        },
+        {
+          "code": "E133",
+          "name": "Brillantkék FCF*",
+          "description": "Kőszénkátrányból szintetizált pirosas-kék színezék. Megtalálható jégkrémekben, fagylaltokban, konzerv borsóban, tejtermékekben, édességekben és italokban. Okozhat allergiát, hiperaktivitást, álmatlanságot, illetve rákkeltő hatású.",
+          "safety_level": 2
+        },
+        {
+          "code": "E140",
+          "name": "Klorofill és klorofillin",
+          "description": "Növényi eredetű zöld színezék, mely a levelek zöld színét adja.",
+          "safety_level": 0
+        },
+        {
+          "code": "E141",
+          "name": "Klorofill(in)-rézkomplex",
+          "description": "Klorofill(in) (E140) származékai, magas réztartalma miatt vitatott zöld színezék. Bőrirritációt, asztmát, légzési nehézségeket okozhat.",
+          "safety_level": 1
+        },
+        {
+          "code": "E142",
+          "name": "Zöld S",
+          "description": "Kőszénkátrányból szintetizált zöld színezék, több országban betiltották. Többek között szószok, desszertek, édességek, jégkrémek és konzerv borsók színezéséhez használják. Okozhat hiperaktivitást, álmatlanságot, allergiát, illetve rákkeltő lehet.",
+          "safety_level": 2
+        },
+        {
+          "code": "E150",
+          "name": "Karamell (a-d)",
+          "description": "Természetes vagy mesterséges úton nyert barna színezék, általában keményítőből, vagy kukoricaszirupból állítják elő. Általában szénsavas üdítőitalokban alkalmazzák. Nátrium-glutamátot (E621) tartalmazhat, így igencsak vitatott.",
+          "safety_level": 1
+        },
+        {
+          "code": "E151",
+          "name": "Fekete PN / Brillantfekete",
+          "description": "Szintetikus fekete színezőanyag. Általában desszertek, édességek, jégkrémek, lekvárok, üdítőitalok, halpástétomok és mustár színezésére használják. Allergiás reakciókat okozhat, valamint hisztamin-felszabadító hatása miatt az asztmás tüneteket erősítheti, illetve lehetséges rákkeltő.",
+          "safety_level": 2
+        },
+        {
+          "code": "E153",
+          "name": "Növényi szén",
+          "description": "Növényi hamuból nyert fekete színezék, egyes források szerint ártalmatlan.",
+          "safety_level": 1
+        },
+        {
+          "code": "E154",
+          "name": "Barna FK",
+          "description": "Szintetikus barna színezék. Több országban betiltották, beleértve Európát.",
+          "safety_level": 2
+        },
+        {
+          "code": "E155",
+          "name": "Csokoládébarna HT",
+          "description": "Kőszénkátrányból szintetizált barna színezék, több országban betiltották. Csokoládétortákban, tejtermékekben, joghurtokban, gyümölcsételekben a kakaó vagy a karamell helyettesítésére használják, de megtalálható halételekben, sajtokban és más ételekben is. Veseproblémákat, asztmásoknál allergiás tüneteket okozhat, illetve rákkeltő hatású.",
+          "safety_level": 2
+        },
+        {
+          "code": "E160a",
+          "name": "Karotin",
+          "description": "Természetes vagy mesterséges úton nyert narancsszínű színezék. Természetes formája ártalmatlan.",
+          "safety_level": 1
+        },
+        {
+          "code": "E160b",
+          "name": "Annatto / Bixin",
+          "description": "Természetes úton az orleánfa magjából nyerik, ártalmatlan. Mesterséges úton is előállítható piros színezék.",
+          "safety_level": 1
+        },
+        {
+          "code": "E160c",
+          "name": "Paprikakivonat",
+          "description": "Növényi eredetű piros színezék, csípős paprikából nyerik.",
+          "safety_level": 0
+        },
+        {
+          "code": "E160d",
+          "name": "Likopin",
+          "description": "Növényi eredetű paradicsomból nyert piros színezék, azonban előfordulhat genetikailag módosított eredet.",
+          "safety_level": 1
+        },
+        {
+          "code": "E160e",
+          "name": "Béta-apo-8'-karotenal",
+          "description": "Karotinból szintetikus úton előállított sötétvörös színezék.",
+          "safety_level": 0
+        },
+        {
+          "code": "E160f",
+          "name": "Béta-apo-8'-karotinsav-etilésztere",
+          "description": "Szintetikus úton előállított színezék és antioxidáns.",
+          "safety_level": 0
+        },
+        {
+          "code": "E161",
+          "name": "Xantofill",
+          "description": "Növényi eredetű sárga színezék.",
+          "safety_level": 0
+        },
+        {
+          "code": "E161a",
+          "name": "Flavoxantin",
+          "description": "A xantofillok csoportjába tartozó sárgás színezék.",
+          "safety_level": 1
+        },
+        {
+          "code": "E161b",
+          "name": "Lutein",
+          "description": "Leveles zöldségekben is megtalálható sárgás színezék. Más színanyagok jelenlétében erősen instabil.",
+          "safety_level": 1
+        },
+        {
+          "code": "E161c",
+          "name": "Kriptoxantin",
+          "description": "Természetes karotinoid melyről kevés információ áll rendelkezésre.",
+          "safety_level": 1
+        },
+        {
+          "code": "E161g",
+          "name": "Kantaxantin",
+          "description": "Gombákból nyert, állati eredetű vagy mesterségesen előállított sárga színezék. Májtoxikus hatású.",
+          "safety_level": 2
+        },
+        {
+          "code": "E162",
+          "name": "Céklavörös / Betanin",
+          "description": "Céklából nyert kékes-piros színezék, antioxidáns.",
+          "safety_level": 0
+        },
+        {
+          "code": "E163",
+          "name": "Antocián",
+          "description": "Gyümölcsökből és zöldségekből nyert pirosas, lilás, kékes színezék, antioxidáns.",
+          "safety_level": 0
+        },
+        {
+          "code": "E170",
+          "name": "Kalcium-karbonát",
+          "description": "Mészkőből nyert természetes fehér színezék.",
+          "safety_level": 1
+        },
+        {
+          "code": "E171",
+          "name": "Titán-dioxid",
+          "description": "Természetben előforduló titánfehér színezék, ellentmondásos.",
+          "safety_level": 1
+        },
+        {
+          "code": "E172",
+          "name": "Vasoxidok és hidroxidok",
+          "description": "Vasoxidáció során nyert sárga, vörös, barna, fekete színezék.",
+          "safety_level": 0
+        },
+        {
+          "code": "E173",
+          "name": "Alumínium",
+          "description": "Por alakban használt ezüstszürke színezék. Étvágytalanságot, hányingert, gyomorfekélyt, veseproblémákat és idegi károsodást okozhat, valamint összefüggésbe hozták az Alzheimer-kór kialakulásával.",
+          "safety_level": 2
+        },
+        {
+          "code": "E174",
+          "name": "Ezüst",
+          "description": "Ásványi eredetű ezüstszürke színezék, nehezen ürül ki a szervezetből.",
+          "safety_level": 2
+        },
+        {
+          "code": "E175",
+          "name": "Arany",
+          "description": "Ásványi eredetű aranyszínű színezék, befolyásolhatja a vér összetételét.",
+          "safety_level": 2
+        },
+        {
+          "code": "E180",
+          "name": "Rubin pigment",
+          "description": "Szintetikus piros színezék, több országban betiltották. Asztmát, bőrirritációt, hiperaktivitást, álmatlanságot okozhat. Rákkeltő.",
+          "safety_level": 2
+        }
+      ]
+    },
+    {
+      "name": "Tartósítószerek",
+      "items": [
+        {
+          "code": "E200",
+          "name": "Szorbinsav",
+          "description": "Először a madárberkenyéből izolált mesterségesen előállított tartósítószer. A szorbinsav és sói mikroba-pusztító hatásuk által meggátolják az élelmiszerbe került penész vagy más gombafajták elszaporodását. Kutatások kimutatták, hogy ez az adalékanyag megzavarja az emberi szervezet enzimrendszereinek működését, amely számos egészségügyi probléma kiváltó oka lehet, többek között allergiás reakciók (asztma, csalánkiütés, orrnyálkahártya-gyulladás) és emésztési gondok.",
+          "safety_level": 2
+        },
+        {
+          "code": "E201",
+          "name": "Nátrium-szorbát",
+          "description": "Szorbinsav (E200) nátrium-, kálium- és kalciumsói. A penész- és élesztőgombák szaporodásának gátlására széles körben használt tartósítószerek. Elsősorban borokban, sajtokban, joghurtokban, tartósított tejben, üdítőitalokban, gyümölcskészítményekben található meg, illetve sok szárított gyümölcsöt is kezelnek vele. Mellékhatásokért ld. E200.",
+          "safety_level": 2
+        },
+        {
+          "code": "E202",
+          "name": "Kálium-szorbát",
+          "description": "Mellékhatásokért ld. E200.",
+          "safety_level": 2
+        },
+        {
+          "code": "E203",
+          "name": "Kalcium-szorbát",
+          "description": "Mellékhatásokért ld. E200.",
+          "safety_level": 2
+        },
+        {
+          "code": "E210",
+          "name": "Benzoesav",
+          "description": "Benzolból szintetizált tartósítószer, melyet a savas élelmiszerek, mint például gyümölcslevek (citromsav), üdítőitalok (foszforsav), savanyúságok (ecetsav) és szószok tartósítására használnak. Rendkívül káros adalékanyag, lehetséges mellékhatásai allergiás reakciók (asztma, csalánkiütés), álmatlanság, hiperaktivitás, viselkedészavarok, fejlődési problémák, neurológiai rendellenességek. Ezen kívül kapcsolatba hozták a leukémiával, valamint állatkísérleteken nagy dózisban halálosnak bizonyult.",
+          "safety_level": 2
+        },
+        {
+          "code": "E211",
+          "name": "Nátrium-benzoát",
+          "description": "Benzoesav (E210) nátrium-, kálium- és kalciumsói. Nem ölik meg a baktériumokat és a gombákat, csak a szaporodásukat teszik lehetetlenné. Aszkorbinsavval (E300) együtt alkalmazva benzol, egy ismert rákkeltő anyag keletkezhet. Gyerekeknek kifejezetten nem ajánlott! Mellékhatásokért ld. E210.",
+          "safety_level": 2
+        },
+        {
+          "code": "E212",
+          "name": "Kálium-benzoát",
+          "description": "Mellékhatásokért ld. E210.",
+          "safety_level": 2
+        },
+        {
+          "code": "E213",
+          "name": "Kalcium-benzoát",
+          "description": "Mellékhatásokért ld. E210.",
+          "safety_level": 2
+        },
+        {
+          "code": "E214",
+          "name": "Etil-para-hidroxi-benzoát",
+          "description": "Benzoesavból (E210) szintetizált tartósítószer, a kozmetikai iparban hírhedtté vált parabének egyike. Mellékhatásai allergia (asztma, csalánkiütés), hiperaktivitás, álmatlanság, görcsök.",
+          "safety_level": 2
+        },
+        {
+          "code": "E215",
+          "name": "Nátrium-etil-p-hidroxi-benzoát",
+          "description": "Etil-para-hidroxi-benzoát nátriumsója, ld. E214.",
+          "safety_level": 2
+        },
+        {
+          "code": "E216",
+          "name": "Propil-p-hidroxi-benzoát",
+          "description": "Benzoesav propil-észtere, ld. E214.",
+          "safety_level": 2
+        },
+        {
+          "code": "E217",
+          "name": "Nátrium-propil-p-hidroxi-benzoát",
+          "description": "Propil-para-hidroxi-benzoát nátriumsója, ld. E214.",
+          "safety_level": 2
+        },
+        {
+          "code": "E218",
+          "name": "Metil-(p-hidroxi-benzoát)",
+          "description": "Benzoesav metil-észtere, ld. E214.",
+          "safety_level": 2
+        },
+        {
+          "code": "E219",
+          "name": "Nátrium-metil-p-hidroxi-benzoát",
+          "description": "Metil-para-hidroxi-benzoát nátriumsója, ld. E214.",
+          "safety_level": 2
+        },
+        {
+          "code": "E220",
+          "name": "Kén-dioxid",
+          "description": "Szúrós szagú, mérgező gáz, belélegezve a nyálkahártyát izgatja, a vörösvérsejteket roncsolja. A mikroorganizmusokat is elpusztítja, ezért a konzerviparban tartósításra használják. Lehetséges mellékhatásai: allergiás reakciók, emésztési problémák, a DNS károsodása, fejfájás. Ezen kívül akadályozza a B-vitamin és a kalcium felszívódását a szervezetben.",
+          "safety_level": 2
+        },
+        {
+          "code": "E221",
+          "name": "Nátrium-szulfit",
+          "description": "Kénessavból szintetizált tartósítószerek, melyeket a húsok, gyümölcsök, szószok tartósításra használnak. Asztmásoknál a tünetek erősödését, fejfájást, nyálkahártya-irritációt okozhat, valamint a B1 és az E-vitamin hatékonyságát csökkenti. Gyermekeknek kifejezetten nem ajánlott!",
+          "safety_level": 2
+        },
+        {
+          "code": "E222",
+          "name": "Nátrium-biszulfit",
+          "description": "Gyermekeknek kifejezetten nem ajánlott!",
+          "safety_level": 2
+        },
+        {
+          "code": "E223",
+          "name": "Nátrium-metabiszulfit",
+          "description": "Kémiai vegyületek, melyek savas környezetben kénessavvá alakulnak, ezért tartósítószerként alkalmazzák őket. Erős gombaölő hatásuk miatt elsősorban a sörgyártás valamint borok készítésénél használják, illetve savas környezetben tartósított gyümölcsöknél. Oxidáló hatásuk miatt csökkentik a vitaminok koncentrációját. Allergiás reakciókat, főként bőrirritációt válthatnak ki. Gyermekeknek kifejezetten nem ajánlott!",
+          "safety_level": 2
+        },
+        {
+          "code": "E224",
+          "name": "Kálium-metabiszulfit",
+          "description": "Illetve savas környezetben tartósított gyümölcsöknél. Oxidáló hatásuk miatt csökkentik a vitaminok koncentrációját. Allergiás reakciókat, főként bőrirritációt válthatnak ki. Gyermekeknek kifejezetten nem ajánlott!",
+          "safety_level": 2
+        },
+        {
+          "code": "E225",
+          "name": "Kálium-szulfit",
+          "description": "Allergiás reakciókat, főként bőrirritációt válthatnak ki. Gyermekeknek kifejezetten nem ajánlott!",
+          "safety_level": 2
+        },
+        {
+          "code": "E226",
+          "name": "Kalcium-szulfit",
+          "description": "Gyermekeknek kifejezetten nem ajánlott!",
+          "safety_level": 2
+        },
+        {
+          "code": "E227",
+          "name": "Kalcium-hidrogénszulfit",
+          "description": "Gyermekeknek kifejezetten nem ajánlott!",
+          "safety_level": 2
+        },
+        {
+          "code": "E228",
+          "name": "Kálium-hidrogénszulfit",
+          "description": "Gyermekeknek kifejezetten nem ajánlott!",
+          "safety_level": 2
+        },
+        {
+          "code": "E230",
+          "name": "Bifenil / Difenil",
+          "description": "Kőszénkátrányból szintetizált rovarölőszerek. Megakadályozzák a penészgombák növekedését, ezért az élelmiszeriparban tartósítószerként alkalmazzák őket, elsősorban citrusfélék felületének kezelésére. Mérgezőek, így a kezelt gyümölcsök héját semmiképp ne fogyasszuk! A tiabendazolt permetszerként is alkalmazzák. Lehetséges mellékhatások: allergia, rosszullét, szemirritáció, vese- és májbántalmak. Rákkeltő lehet.",
+          "safety_level": 2
+        },
+        {
+          "code": "E231",
+          "name": "Ortofenil-fenol",
+          "description": "Lehetséges mellékhatások: allergia, rosszullét, szemirritáció, vese- és májbántalmak. Rákkeltő lehet.",
+          "safety_level": 2
+        },
+        {
+          "code": "E232",
+          "name": "Nátrium-ortofenil-fenol",
+          "description": "Lehetséges mellékhatások: allergia, rosszullét, szemirritáció, vese- és májbántalmak. Rákkeltő lehet.",
+          "safety_level": 2
+        },
+        {
+          "code": "E233",
+          "name": "Tiabendazol",
+          "description": "A tiabendazolt permetszerként is alkalmazzák. Lehetséges mellékhatások: allergia, rosszullét, szemirritáció, vese- és májbántalmak. Rákkeltő lehet.",
+          "safety_level": 1
+        },
+        {
+          "code": "E234",
+          "name": "Nizin",
+          "description": "Természetes peptidantibiotikum, melyet fermentációval, a tejben is előforduló Lactococcus lactis baktérium segítségével állítanak elő. Leginkább sajtokban alkalmazzák. Az ellentmondásos beszámolók miatt itt sárga.",
+          "safety_level": 1
+        },
+        {
+          "code": "E235",
+          "name": "Natamicin",
+          "description": "Természetes antimikrobiális szerves vegyület, melyet az élelmiszeriparban tartósítószerként, a gyógyszerészetben gombaölő szerként használnak. Elsősorban sajtfélek felületi kezelésére alkalmazzák a penészesedés meggátlására. Nagyobb mennyiségben fogyasztva émelygést, hányást és hasmenést okozhat.",
+          "safety_level": 2
+        },
+        {
+          "code": "E236",
+          "name": "Hangyasav",
+          "description": "Erős szerves sav, a természetben is előfordul a hangyák, méhek, darazsak mérgében. Az élelmiszeriparban tartósítószerként használják. Állatkísérletek bizonyították, hogy mutagén, és közvetlen, nagy mennyiségű érintkezés máj- és vesekárosodást okozhat, vagy allergia alakulhat ki.",
+          "safety_level": 2
+        },
+        {
+          "code": "E237",
+          "name": "Nátrium-formiát",
+          "description": "Hangyasav (E236) nátrium- és kalciumsói. Előfordulhatnak különböző gyümölcskészítményekben, zöldségekben valamint egyes alkoholmentes italokban. Mellékhatásokért ld. E236.",
+          "safety_level": 2
+        },
+        {
+          "code": "E238",
+          "name": "Kalcium-formiát",
+          "description": "Hangyasav (E236) nátrium- és kalciumsói. Előfordulhatnak különböző gyümölcskészítményekben, zöldségekben valamint egyes alkoholmentes italokban. Mellékhatásokért ld. E236.",
+          "safety_level": 2
+        },
+        {
+          "code": "E239",
+          "name": "Hexametilén-tetremin",
+          "description": "Formaldehid és ammónia reakciójából keletkező szerves vegyület. Az élelmiszeriparban tartósítószerként alkalmazzák, mert meggátolja a gombák elszaporodását. Előfordulhat kaviárban, egyes sajtokban, és halkonzervekben, halételekben. Allergiás reakciókat válthat ki, emésztési zavarokat okozhat.",
+          "safety_level": 2
+        },
+        {
+          "code": "E242",
+          "name": "Dimetil-dikarbonát",
+          "description": "Elsősorban üdítőitalok tartósítására, valamint különféle eszközök fertőtlenítésére használják. Vízzel érintkezve néhány óra alatt lebomlik széndioxidra és metanolra; ez utóbbi nagyobb mennyiségben mérgező! Fogyasztása kerülendő!",
+          "safety_level": 2
+        },
+        {
+          "code": "E249",
+          "name": "Kálium-nitrit",
+          "description": "Salétromossav kálium- és nátriumsói. Az élelmiszeriparban tartósítószerként alkalmazzák őket, mert a hús- és halételekben meggátolják egy ételmérgezést okozó baktérium elszaporodását, illetve élénkebbé, tartósabbá teszik a hús színét. Magas koncentrációban reakcióba lép a hemoglobinnal, zavart okozva ezzel a vér oxigénszállításában. Kísérletek igazolni látszanak a nitritekkel kezelt húsok fogyasztásának és egyes ráktípusok gyakoriságának kapcsolatát. Gyerekeknek kifejezetten kerülendő!",
+          "safety_level": 2
+        },
+        {
+          "code": "E250",
+          "name": "Nátrium-nitrit",
+          "description": "Salétromossav kálium- és nátriumsói. Az élelmiszeriparban tartósítószerként alkalmazzák őket, mert a hús- és halételekben meggátolják egy ételmérgezést okozó baktérium elszaporodását, illetve élénkebbé, tartósabbá teszik a hús színét. Magas koncentrációban reakcióba lép a hemoglobinnal, zavart okozva ezzel a vér oxigénszállításában. Kísérletek igazolni látszanak a nitritekkel kezelt húsok fogyasztásának és egyes ráktípusok gyakoriságának kapcsolatát. Gyerekeknek kifejezetten kerülendő!",
+          "safety_level": 2
+        },
+        {
+          "code": "E251",
+          "name": "Nátrium-nitrát",
+          "description": "Többek között műtrágyákban, robbanószerekben használt kémiai vegyületek. Élelmiszerekben tartósítóként alkalmazzák őket, elsősorban sajtokban, húsételekben, pizzákban. Leveles zöldségekben természetes úton is előfordul. A gyomorban nitritté alakulhatnak, melyből nitrózaminok képződhetnek. Ezeknek rákkeltő hatást tulajdonítanak.",
+          "safety_level": 2
+        },
+        {
+          "code": "E252",
+          "name": "Kálium-nitrát / Salétrom",
+          "description": "Többek között műtrágyákban, robbanószerekben használt kémiai vegyületek. Élelmiszerekben tartósítóként alkalmazzák őket, elsősorban sajtokban, húsételekben, pizzákban. Leveles zöldségekben természetes úton is előfordul. A gyomorban nitritté alakulhatnak, melyből nitrózaminok képződhetnek. Ezeknek rákkeltő hatást tulajdonítanak.",
+          "safety_level": 2
+        },
+        {
+          "code": "E255",
+          "name": "Szilícium-oxid",
+          "description": "Porételekben használt csomósodásgátló, nanorészecskéket tartalmazhat.",
+          "safety_level": 1
+        },
+        {
+          "code": "E260",
+          "name": "Ecetsav / Etánsav",
+          "description": "Savanyúságot szabályozó étkezési sav, általában ártalmatlannak vélik, azonban hígítatlan állapotban erős, maró szerves sav.",
+          "safety_level": 1
+        },
+        {
+          "code": "E261",
+          "name": "Kálium-acetát",
+          "description": "Savanyúságot szabályozó tartósítószerek, az ecetsav (E260) sói általában ártalmatlannak vélik, azonban veseproblémákkal küzdők, állapotosok és csecsemők kerüljék fogyasztását!",
+          "safety_level": 1
+        },
+        {
+          "code": "E262",
+          "name": "Nátrium-acetát",
+          "description": "Savanyúságot szabályozó tartósítószerek, az ecetsav (E260) sói általában ártalmatlannak vélik, azonban veseproblémákkal küzdők, állapotosok és csecsemők kerüljék fogyasztását!",
+          "safety_level": 1
+        },
+        {
+          "code": "E263",
+          "name": "Kalcium-acetát",
+          "description": "Savanyúságot szabályozó tartósítószer, melyet elsősorban a pékárukban használnak. Természetes úton szinte minden erjesztés útján készült élelmiszerben megtalálható.",
+          "safety_level": 0
+        },
+        {
+          "code": "E264",
+          "name": "Ammónium-acetát",
+          "description": "Ecetsav és ammónia reakciójából keletkező fehér só, rosszullétet és hányingert okozhat",
+          "safety_level": 2
+        },
+        {
+          "code": "E270",
+          "name": "Tejsav",
+          "description": "Természetes úton a tejtermékekben és a savanyú káposztában fordul elő. Egyéb élelmiszerekben antioxidánsként, savanyúságot szabályozó anyagként, vagy tartósítószerként alkalmazzák. Mivel a csecsemők még nem képesek a tejsavat megfelelően bontani, számukra kerülendő.",
+          "safety_level": 1
+        },
+        {
+          "code": "E280",
+          "name": "Propionsav",
+          "description": "A propionsav meggátolja egyes penészgombák és baktériumok szaporodását. Sói tartósítószerként előfordulhatnak sajtokban, pékárukban, pizzákban és hústermékekben. Nagy mennyiségben gyomorbántalmakat, fejfájást okozhat.",
+          "safety_level": 1
+        },
+        {
+          "code": "E281",
+          "name": "Nátrium-propionát",
+          "description": "A propionsav meggátolja egyes penészgombák és baktériumok szaporodását. Sói tartósítószerként előfordulhatnak sajtokban, pékárukban, pizzákban és hústermékekben. Nagy mennyiségben gyomorbántalmakat, fejfájást okozhat.",
+          "safety_level": 1
+        },
+        {
+          "code": "E282",
+          "name": "Kalcium-propionát",
+          "description": "A propionsav meggátolja egyes penészgombák és baktériumok szaporodását. Sói tartósítószerként előfordulhatnak sajtokban, pékárukban, pizzákban és hústermékekben. Nagy mennyiségben gyomorbántalmakat, fejfájást okozhat.",
+          "safety_level": 1
+        },
+        {
+          "code": "E283",
+          "name": "Kálium-propionát",
+          "description": "A propionsav meggátolja egyes penészgombák és baktériumok szaporodását. Sói tartósítószerként előfordulhatnak sajtokban, pékárukban, pizzákban és hústermékekben. Nagy mennyiségben gyomorbántalmakat, fejfájást okozhat.",
+          "safety_level": 1
+        },
+        {
+          "code": "E284",
+          "name": "Bórsav",
+          "description": "Élelmiszeripari felhasználásuk nincs minden országban engedélyezve. A kaviár tartósítására használják. Nagy mennyiségben szervi elváltozásokat, menstruációs zavarokat, hajhullást okozhatnak.",
+          "safety_level": 2
+        },
+        {
+          "code": "E285",
+          "name": "Nátrium-tetraborát / Bórax",
+          "description": "Élelmiszeripari felhasználásuk nincs minden országban engedélyezve. A kaviár tartósítására használják. Nagy mennyiségben szervi elváltozásokat, menstruációs zavarokat, hajhullást okozhatnak.",
+          "safety_level": 2
+        },
+        {
+          "code": "E290",
+          "name": "Szén-dioxid",
+          "description": "Leginkább hajtógázként használják szénsavas italokban. Általában ártalmatlannak vélik, azonban okozhat szédülést, hirtelen vérnyomás emelkedést.",
+          "safety_level": 1
+        },
+        {
+          "code": "E296",
+          "name": "Almasav",
+          "description": "Savanyúságot szabályozó étkezési sav, mely természetes formában megtalálható az éretlen, savanyú gyümölcsökben, azonban gyerekeknek nagyobb mennyiségben nem ajánlott.",
+          "safety_level": 1
+        },
+        {
+          "code": "E297",
+          "name": "Fumársav",
+          "description": "Savanyúságot szabályozó anyag, mely szabadon egyes gombákban és zuzmókban fordul elő.",
+          "safety_level": 0
+        }
+      ]
+    },
+    {
+      "name": "Antioxidánsok És Savanyúság Szabályozók",
+      "items": [
+        {
+          "code": "E300",
+          "name": "Aszkorbinsav / C-vitamin",
+          "description": "Az emberi szervezet számára nélkülözhetetlen antioxidáns.",
+          "safety_level": 0
+        },
+        {
+          "code": "E301",
+          "name": "Nátrium-aszkorbát",
+          "description": "Az aszkorbátok használata tartósítószerként egyszerűbb, mint az enyhén savas aszkorbinsav (E300) alkalmazása, azonban a szervezetben igen csekély mértékben szívódnak fel, így vitaminbevitelre alkalmatlanok.",
+          "safety_level": 0
+        },
+        {
+          "code": "E302",
+          "name": "Kalcium-aszkorbát",
+          "description": "Az aszkorbátok használata tartósítószerként egyszerűbb, mint az enyhén savas aszkorbinsav (E300) alkalmazása, azonban a szervezetben igen csekély mértékben szívódnak fel, így vitaminbevitelre alkalmatlanok.",
+          "safety_level": 0
+        },
+        {
+          "code": "E303",
+          "name": "Kálium-aszkorbát",
+          "description": "Az aszkorbátok használata tartósítószerként egyszerűbb, mint az enyhén savas aszkorbinsav (E300) alkalmazása, azonban a szervezetben igen csekély mértékben szívódnak fel, így vitaminbevitelre alkalmatlanok.",
+          "safety_level": 0
+        },
+        {
+          "code": "E304",
+          "name": "Aszkorbil-palmitát / Aszkorbil-sztearát",
+          "description": "Aszkorbinsav zsírsav észterei, egyes színezékek oxidációját akadályozzák.",
+          "safety_level": 0
+        },
+        {
+          "code": "E306",
+          "name": "Tokoferol / E-vitamin",
+          "description": "Szabadgyök-kötő hatású antioxidáns.",
+          "safety_level": 0
+        },
+        {
+          "code": "E307",
+          "name": "Alfa-tokoferol",
+          "description": "A természetes E-vitamin (E306) több különböző tokoferolt tartalmazhat, melyeket elsősorban tartósítószerként, vagy vitaminkészítményekben használnak.",
+          "safety_level": 0
+        },
+        {
+          "code": "E308",
+          "name": "Gamma-tokoferol",
+          "description": "A természetes E-vitamin (E306) több különböző tokoferolt tartalmazhat, melyeket elsősorban tartósítószerként, vagy vitaminkészítményekben használnak.",
+          "safety_level": 0
+        },
+        {
+          "code": "E309",
+          "name": "Delta-tokoferol",
+          "description": "A természetes E-vitamin (E306) több különböző tokoferolt tartalmazhat, melyeket elsősorban tartósítószerként, vagy vitaminkészítményekben használnak.",
+          "safety_level": 0
+        },
+        {
+          "code": "E310",
+          "name": "Propil-gallát",
+          "description": "Szintetikus antioxidánsok, melyeket a zsírok avasodásának gátlására alkalmaznak, valamint ropogtatnivalókban, zacskós levesekben, rágógumikban. Az élelmiszerekben felhasználható mennyiségét szigorúan korlátozzák, gyerekeknek és állapotosoknak nem ellenjavallott. Allergiát, álmatlanságot, hiperaktivitást, meddőséget és emésztési zavarokat okozhatnak.",
+          "safety_level": 2
+        },
+        {
+          "code": "E311",
+          "name": "Oktil-gallát",
+          "description": "Szintetikus antioxidánsok, melyeket a zsírok avasodásának gátlására alkalmaznak, valamint ropogtatnivalókban, zacskós levesekben, rágógumikban. Az élelmiszerekben felhasználható mennyiségét szigorúan korlátozzák, gyerekeknek és állapotosoknak nem ellenjavallott. Allergiát, álmatlanságot, hiperaktivitást, meddőséget és emésztési zavarokat okozhatnak.",
+          "safety_level": 2
+        },
+        {
+          "code": "E312",
+          "name": "Dodecil-gallát",
+          "description": "Szintetikus antioxidánsok, melyeket a zsírok avasodásának gátlására alkalmaznak, valamint ropogtatnivalókban, zacskós levesekben, rágógumikban. Az élelmiszerekben felhasználható mennyiségét szigorúan korlátozzák, gyerekeknek és állapotosoknak nem ellenjavallott. Allergiát, álmatlanságot, hiperaktivitást, meddőséget és emésztési zavarokat okozhatnak.",
+          "safety_level": 2
+        },
+        {
+          "code": "E315",
+          "name": "Eritroaszkorbinsav",
+          "description": "Szintetikus antioxidánsok és stabilizátorok, melyeket elsősorban húskészítményekben alkalmaznak, mivel hatásukra a hús színe tovább marad élénk, rózsaszínes. Nincs ismert mellékhatásuk, azonban nem sok információ áll róluk rendelkezésre.",
+          "safety_level": 1
+        },
+        {
+          "code": "E316",
+          "name": "Nátrium-eritroaszkorbát",
+          "description": "Szintetikus antioxidánsok és stabilizátorok, melyeket elsősorban húskészítményekben alkalmaznak, mivel hatásukra a hús színe tovább marad élénk, rózsaszínes. Nincs ismert mellékhatásuk, azonban nem sok információ áll róluk rendelkezésre.",
+          "safety_level": 1
+        },
+        {
+          "code": "E320",
+          "name": "Butil-hidroxi-anizol (BHA)",
+          "description": "Rákkeltő hatású szintetikus antioxidáns, gyerekeknek és állapotosoknak kifejezetten ellenjavallott.",
+          "safety_level": 2
+        },
+        {
+          "code": "E321",
+          "name": "Butil-hidroxi-toluol (BHT)",
+          "description": "Rákkeltő hatású antioxidáns, több országban betiltották.",
+          "safety_level": 2
+        },
+        {
+          "code": "E322",
+          "name": "Lecitin",
+          "description": "Növényi vagy állati eredetű tartósítószer, emulgeálószer, stabilizátor.",
+          "safety_level": 0
+        },
+        {
+          "code": "E325",
+          "name": "Nátrium-laktát",
+          "description": "Savanyúságot szabályozó természetes vagy mesterséges úton előállított antioxidánsok, a tejsav (E270) sói, fogyasztásuk gyerekeknek és állapotosoknak nem ajánlott.",
+          "safety_level": 1
+        },
+        {
+          "code": "E326",
+          "name": "Kálium-laktát",
+          "description": "Savanyúságot szabályozó természetes vagy mesterséges úton előállított antioxidánsok, a tejsav (E270) sói, fogyasztásuk gyerekeknek és állapotosoknak nem ajánlott.",
+          "safety_level": 1
+        },
+        {
+          "code": "E327",
+          "name": "Kalcium-laktát",
+          "description": "Savanyúságot szabályozó természetes vagy mesterséges úton előállított antioxidánsok, a tejsav (E270) sói, fogyasztásuk gyerekeknek és állapotosoknak nem ajánlott.",
+          "safety_level": 1
+        },
+        {
+          "code": "E330",
+          "name": "Citromsav",
+          "description": "Savanyúságot szabályozó étkezési sav, általában ártalmatlannak vélik.",
+          "safety_level": 1
+        },
+        {
+          "code": "E331",
+          "name": "Nátrium-citrát",
+          "description": "Citromsav nátriumsója, tartósítószer és ízfokozó.",
+          "safety_level": 0
+        },
+        {
+          "code": "E332",
+          "name": "Kálium-citrát",
+          "description": "Citromsav káliumsója, savanyúságot szabályozó anyag.",
+          "safety_level": 1
+        },
+        {
+          "code": "E333",
+          "name": "Kalcium-citrát",
+          "description": "Citromsav kalciumsója, savanyúságot szabályozó anyag.",
+          "safety_level": 1
+        },
+        {
+          "code": "E334",
+          "name": "Borkősav",
+          "description": "Savanyúságot szabályozó antioxidáns hatású étkezési sav.",
+          "safety_level": 0
+        },
+        {
+          "code": "E335",
+          "name": "Nátrium-tartarát",
+          "description": "Növényi eredetű savanyúságot szabályozó antioxidáns, emulgeálószer, ipari mennyiségben a szőlő héjából állítják elő. A szervezetben egyáltalán nem szívódik fel, hanem a vizelettel távozik.",
+          "safety_level": 0
+        },
+        {
+          "code": "E336",
+          "name": "Kálium-tartarát",
+          "description": "A szervezetben egyáltalán nem szívódik fel, hanem a vizelettel távozik.",
+          "safety_level": 0
+        },
+        {
+          "code": "E337",
+          "name": "Nátrium-kálium-tartarát",
+          "description": "A szervezetben egyáltalán nem szívódik fel, hanem a vizelettel távozik.",
+          "safety_level": 0
+        },
+        {
+          "code": "E338",
+          "name": "Foszforsav",
+          "description": "Savanyúságot szabályozó antioxidáns, mely a szervezetből kalciumot von el.",
+          "safety_level": 1
+        },
+        {
+          "code": "E339",
+          "name": "Nátrium-foszfát",
+          "description": "Élelmiszerek esetében csomósodást gátló anyagként, savanyúságot szabályozó anyagként, valamint stabilizátorként alkalmazzák, sok élelmiszerben megtalálhatóak, erős kalcium-megkötő képességük miatt a szervezetből kalciumot vonnak el.",
+          "safety_level": 1
+        },
+        {
+          "code": "E340",
+          "name": "Kálium-foszfát",
+          "description": "Élelmiszerek esetében csomósodást gátló anyagként, savanyúságot szabályozó anyagként, valamint stabilizátorként alkalmazzák, sok élelmiszerben megtalálhatóak, erős kalcium-megkötő képességük miatt a szervezetből kalciumot vonnak el.",
+          "safety_level": 1
+        },
+        {
+          "code": "E341",
+          "name": "Kalcium-foszfát",
+          "description": "Élelmiszerek esetében csomósodást gátló anyagként, savanyúságot szabályozó anyagként, valamint stabilizátorként alkalmazzák, sok élelmiszerben megtalálhatóak, erős kalcium-megkötő képességük miatt a szervezetből kalciumot vonnak el.",
+          "safety_level": 1
+        },
+        {
+          "code": "E342",
+          "name": "Ammónium-foszfát",
+          "description": "Élelmiszerek esetében csomósodást gátló anyagként, savanyúságot szabályozó anyagként, valamint stabilizátorként alkalmazzák, sok élelmiszerben megtalálhatóak, erős kalcium-megkötő képességük miatt a szervezetből kalciumot vonnak el.",
+          "safety_level": 1
+        },
+        {
+          "code": "E343",
+          "name": "Magnézium-foszfát",
+          "description": "Élelmiszerek esetében csomósodást gátló anyagként, savanyúságot szabályozó anyagként, valamint stabilizátorként alkalmazzák, sok élelmiszerben megtalálhatóak, erős kalcium-megkötő képességük miatt a szervezetből kalciumot vonnak el.",
+          "safety_level": 1
+        },
+        {
+          "code": "E350",
+          "name": "Nátrium-malát",
+          "description": "Az almasav (E296) sói, savanyúságot szabályozó anyagok. Kisgyermekek számára szánt élelmiszerekben tilos felhasználni, mert bennük még nem fejlődött ki a lebontásukhoz szükséges enzim.",
+          "safety_level": 0
+        },
+        {
+          "code": "E351",
+          "name": "Kálium-malát",
+          "description": "Az almasav (E296) sói, savanyúságot szabályozó anyagok. Kisgyermekek számára szánt élelmiszerekben tilos felhasználni, mert bennük még nem fejlődött ki a lebontásukhoz szükséges enzim.",
+          "safety_level": 0
+        },
+        {
+          "code": "E352",
+          "name": "Kalcium-malát",
+          "description": "Az almasav (E296) sói, savanyúságot szabályozó anyagok. Kisgyermekek számára szánt élelmiszerekben tilos felhasználni, mert bennük még nem fejlődött ki a lebontásukhoz szükséges enzim.",
+          "safety_level": 0
+        },
+        {
+          "code": "E353",
+          "name": "Metaborkősav",
+          "description": "Főként a bortermelésben használt savanyúságot szabályozó anyag.",
+          "safety_level": 0
+        },
+        {
+          "code": "E354",
+          "name": "Kalcium-tartarát",
+          "description": "Savanyúságot szabályozó anyag, emulgeálószer, fémek megkötésére.",
+          "safety_level": 0
+        },
+        {
+          "code": "E356",
+          "name": "Nátrium-adipát",
+          "description": "Szintetikus, savanyúságot szabályozó anyagok, mely só helyett használhatóak. A szervezetben lebomlanak, vagy a vizelettel távoznak.",
+          "safety_level": 0
+        },
+        {
+          "code": "E357",
+          "name": "Kálium-adipát",
+          "description": "Szintetikus, savanyúságot szabályozó anyagok, mely só helyett használhatóak. A szervezetben lebomlanak, vagy a vizelettel távoznak.",
+          "safety_level": 1
+        },
+        {
+          "code": "E363",
+          "name": "Borostyánkősav",
+          "description": "Ízfokozó, savanyúságot szabályozó anyag, egyes források szerint ártalmatlan. Nagy mennyiségben emésztési problémákat okozhat.",
+          "safety_level": 1
+        },
+        {
+          "code": "E370",
+          "name": "1,4-Heptonolakton",
+          "description": "Mesterséges aroma, melyet több országban betiltottak. Kevés adat áll róla rendelkezésre.",
+          "safety_level": 1
+        },
+        {
+          "code": "E375",
+          "name": "Nikotinsav / B3-vitamin",
+          "description": "Nikotin oxidációjával előállított értágító hatású vegyület.",
+          "safety_level": 1
+        },
+        {
+          "code": "E380",
+          "name": "Triammónium-citrát",
+          "description": "Szintetikus, savanyúságot szabályozó emulgeálószer. Előfordulhat cukrászipari termékekben és egyes sajtkrémekben. Nagy dózisban emésztési zavarokat, máj- és veseproblémákat okozhat.",
+          "safety_level": 2
+        },
+        {
+          "code": "E385",
+          "name": "Kalcium-dinátrium-etiléndiamin-tetraacetát (CaNa-EDTA)",
+          "description": "Szintetikus stabilizátor, jó fémmegkötő. Élelmiszeripari használata rendkívül elterjedt, többek között üdítőitalokban, fémdobozban levő konzerveknél. Orálisan reprodukciós és fejlődési rendellenességeket okozhat, illetve a nehézfémeken túl megkötheti a hasznos nyomelemeket is. Gyerekek számára kifejezetten nem ajánlott, egyes országokban be is tiltották.",
+          "safety_level": 2
+        }
+      ]
+    },
+    {
+      "name": "Sürítőanyagok, Stabilizálók És Emulgeálószerek",
+      "items": [
+        {
+          "code": "E400",
+          "name": "Alginsav",
+          "description": "Barnamoszatból nyert sűrítő, zselésítő, stabilizátor, emulgeálószer.",
+          "safety_level": 0
+        },
+        {
+          "code": "E401",
+          "name": "Nátrium-alginát",
+          "description": "A növényi eredetű alginsav (E400) sói, élelmiszeripari felhasználásuk szempontjából sűrítők, zselésítők, stabilizátorok, emulgeálószerek. A gyógyszeriparban, valamint a textilgyártás során is alkalmazzák őket.",
+          "safety_level": 0
+        },
+        {
+          "code": "E402",
+          "name": "Kálium-alginát",
+          "description": "A növényi eredetű alginsav (E400) sói, élelmiszeripari felhasználásuk szempontjából sűrítők, zselésítők, stabilizátorok, emulgeálószerek. A gyógyszeriparban, valamint a textilgyártás során is alkalmazzák őket.",
+          "safety_level": 0
+        },
+        {
+          "code": "E403",
+          "name": "Ammónium-alginát",
+          "description": "A növényi eredetű alginsav (E400) sói, élelmiszeripari felhasználásuk szempontjából sűrítők, zselésítők, stabilizátorok, emulgeálószerek. A gyógyszeriparban, valamint a textilgyártás során is alkalmazzák őket.",
+          "safety_level": 0
+        },
+        {
+          "code": "E404",
+          "name": "Kalcium-alginát",
+          "description": "A növényi eredetű alginsav (E400) sói, élelmiszeripari felhasználásuk szempontjából sűrítők, zselésítők, stabilizátorok, emulgeálószerek. A gyógyszeriparban, valamint a textilgyártás során is alkalmazzák őket.",
+          "safety_level": 0
+        },
+        {
+          "code": "E405",
+          "name": "Propándiol-alginát",
+          "description": "A növényi eredetű alginsav (E400) származéka, de propilén-glikolt (1520) is tartalmaz, ami nagyobb mennyiségben májproblémákat okozhat. Ezen kívül egyes kutatások szerint csökkenti az ásványi anyagok és vitaminok felszívódását a szervezetben. Az ellentmondásos kutatási eredmények ellenére széles körben elterjedt a gyerekeknek szánt élelmiszerekben.",
+          "safety_level": 1
+        },
+        {
+          "code": "E406",
+          "name": "Agaragar",
+          "description": "Tengeri vörösmoszatokból nyert sűrítő, zselésítő. Ártalmatlannak tartják, de nagy mennyiségben allergén, illetve gátolja az ásványi anyagok felszívódását.",
+          "safety_level": 1
+        },
+        {
+          "code": "E407",
+          "name": "Karragén",
+          "description": "Tengeri hínárból előállított sűrítő, zselésítő. Sokáig ártalmatlannak tartották, de 1969-ben tanulmányok bizonyították káros mellékhatásait: gyulladáskeltő hatásából kifolyólag több emésztőszervi megbetegedés kiváltó oka lehet, például a fekélyes vastagbélgyulladásé vagy a vastagbélráké, illetve a cukorbetegséggel is összefüggésbe hozták. Gyakran használják ún. egészséges termékekben, például növényi tejekben, mint sűrítőanyagot!",
+          "safety_level": 1
+        },
+        {
+          "code": "E407a",
+          "name": "Feldolgozott euchemamoszat",
+          "description": "Tengeri hínárból előállított sűrítő, zselésítő. Sokáig ártalmatlannak tartották, de 1969-ben tanulmányok bizonyították káros mellékhatásait: gyulladáskeltő hatásából kifolyólag több emésztőszervi megbetegedés kiváltó oka lehet, például a fekélyes vastagbélgyulladásé vagy a vastagbélráké, illetve a cukorbetegséggel is összefüggésbe hozták. Gyakran használják ún. egészséges termékekben, például növényi tejekben, mint sűrítőanyagot!",
+          "safety_level": 1
+        },
+        {
+          "code": "E410",
+          "name": "Szentjánoskenyér-liszt",
+          "description": "Szentjánoskenyérfa magjából előállított térfogatnövelő, emulgeálószer. Nagy dózisban puffadást okozhat.",
+          "safety_level": 1
+        },
+        {
+          "code": "E412",
+          "name": "Guargumi",
+          "description": "Guarbab magjából előállított stabilizátor, emulgeálószer. Allergiás reakciókat, hasi görcsöket, puffadást, illetve az ásványi anyagok és vitaminok rossz felszívódását okozhatja.",
+          "safety_level": 1
+        },
+        {
+          "code": "E413",
+          "name": "Tragantmézga",
+          "description": "Csődfüvek gyökeréből kivont sűrítőanyag, stabilizátor, emulgeálószer. Nagy dózisban puffadást okozhat.",
+          "safety_level": 1
+        },
+        {
+          "code": "E414",
+          "name": "Gumiarábikum / Arabmézga",
+          "description": "Egyes akáciafajok gumiszerű váladéka, melyet az élelmiszeriparban szirupok, gumi- és pillecukrok állagának elnyeréséért használnak. Allergiás reakciókat, valamint az ásványi anyagok és vitaminok rossz felszívódását okozhatja.",
+          "safety_level": 1
+        },
+        {
+          "code": "E415",
+          "name": "Xantángumi",
+          "description": "Egy baktériumfaj cukor erjesztése során állítja elő, azonban gyakran kukoricakeményítőből állítják elő, így nem kizárt a genetikailag módosított eredet. Asztmarohamot, bőrirritációt okozhat.",
+          "safety_level": 1
+        },
+        {
+          "code": "E416",
+          "name": "Karaya-gumi",
+          "description": "Növényi eredetű sűrítőanyag, stabilizátor, emulgeálószer. Számos élelmiszerben megtalálható, nagy mennyiségben történő fogyasztás esetén puffadás léphet fel.",
+          "safety_level": 1
+        },
+        {
+          "code": "E417",
+          "name": "Taramag liszt",
+          "description": "Növényi eredetű sűrítőanyag, stabilizátor Enyhén allergén lehet.",
+          "safety_level": 0
+        },
+        {
+          "code": "E418",
+          "name": "Gellán-gumi",
+          "description": "Egy baktériumfaj cukor erjesztése során állítja elő, kevés adat van róla. Nagy dózisban puffadást okozhat.",
+          "safety_level": 1
+        },
+        {
+          "code": "E420",
+          "name": "Szorbitol / Szorbitszirup",
+          "description": "Gyümölcsökben is megtalálható cukoralkohol, melyet az élelmiszeripar édesítőszerként, nedvességnövelő anyagként használ. Elsősorban köhögés elleni szirupokban, diétás élelmiszerekben, cukormentes rágógumikban alkalmazzák. Nagy mennyiségben puffadást okozhat. Egy éves kor alatt fogyasztása tilos, mert ekkor még nem alakul ki a lebontásához szükséges enzim.",
+          "safety_level": 1
+        },
+        {
+          "code": "E421",
+          "name": "Mannit",
+          "description": "Szintetikusan előállított édesítőszer, csomósodásgátló. Nagy mennyiség elfogyasztása esetén puffadás, hasmenés léphet fel.",
+          "safety_level": 2
+        },
+        {
+          "code": "E422",
+          "name": "Glicerin",
+          "description": "Állati zsírokban és növényi olajokban egyaránt jelenlevő cukoralkohol, melyet az élelmiszeriparban a víztartalom megőrzésére, oldószerként, édesítőszerként alkalmaznak. Állapotosoknak és gyereknek adalékanyagként nem ajánlott.",
+          "safety_level": 1
+        },
+        {
+          "code": "E425",
+          "name": "Konjak",
+          "description": "Növényi eredetű emulgeálószer, melyet főként mártások és pudingok sűrítéséhez használnak, mivel a vízzel rendkívül viszkózus gélt alkot. Puffadást, hasmenést, a vitaminok rossz felszívódását okozhatja.",
+          "safety_level": 2
+        },
+        {
+          "code": "E430",
+          "name": "Polioxietilén(8)-sztearát",
+          "description": "Szintetikusan előállított adalékanyagok, melyeket az élelmiszeriparban főként emulgeálószerként, sűrítőanyagként, stabilizátorként használnak.",
+          "safety_level": 2
+        },
+        {
+          "code": "E431",
+          "name": "Polioxietilén(40)-sztearát",
+          "description": "Szintetikusan előállított adalékanyagok, melyeket az élelmiszeriparban főként emulgeálószerként, sűrítőanyagként, stabilizátorként használnak.",
+          "safety_level": 2
+        },
+        {
+          "code": "E432",
+          "name": "Polioxietilén(20)-szorbitán-laurát",
+          "description": "Szintetikusan előállított adalékanyagok, melyeket az élelmiszeriparban főként emulgeálószerként, sűrítőanyagként, stabilizátorként használnak, többek között szószokban (E430), pudingokban (E431), jégkrémekben és üdítőitalokban (E432), és tortákban (E434, E435, E436). Lehetséges mellékhatásaik közé tartoznak az emésztési problémák, hólyagkő és vesekő képződése, tumorok kialakulása, illetve gátolják a vas felszívódását.",
+          "safety_level": 2
+        },
+        {
+          "code": "E433",
+          "name": "Polioxietilén(20)-szorbitán-oleát",
+          "description": "Szintetikusan előállított adalékanyagok, melyeket az élelmiszeriparban főként emulgeálószerként, sűrítőanyagként, stabilizátorként használnak.",
+          "safety_level": 2
+        },
+        {
+          "code": "E434",
+          "name": "Polioxietilén(20)-szorbitán-palmitát",
+          "description": "Lehetséges mellékhatásaik közé tartoznak az emésztési problémák, hólyagkő és vesekő képződése, tumorok kialakulása, illetve gátolják a vas felszívódását.",
+          "safety_level": 2
+        },
+        {
+          "code": "E435",
+          "name": "Polioxietilén(20)-szorbitán-sztearát",
+          "description": "Veszélyes, rákkeltő adalékanyagok, fogyasztásuk mindenáron kerülendő!",
+          "safety_level": 2
+        },
+        {
+          "code": "E436",
+          "name": "Polioxietilén(20)-szorbitán-trisztearát",
+          "description": "Veszélyes, rákkeltő adalékanyagok, fogyasztásuk mindenáron kerülendő!",
+          "safety_level": 2
+        },
+        {
+          "code": "E440a",
+          "name": "Pektin",
+          "description": "Növényi eredetű zselésítő, emulgeálószer, mely húsos gyümölcsök, például alma sejtfalából állítható elő. A legtöbb estben lekvárak, dzsemek zselésítésére használják.",
+          "safety_level": 0
+        },
+        {
+          "code": "E440b",
+          "name": "Amidált pektin",
+          "description": "A pektin (440a) származéka.",
+          "safety_level": 0
+        },
+        {
+          "code": "E441",
+          "name": "Zselatin",
+          "description": "Állati eredetű sűrítő, zselésítő, emulgeálószer, melyet leginkább a szarvasmarha vagy sertés csontjából és kötőszövetéből kivont kollagénből, hidrolízis útján állítanak elő. Az iparilag előállított zselatinnak nem sok köze van a házilag készítetthez, mivel az összetevők koncentrációja erősen függ a zselatin elkészítésének módjától és a felhasznált alapanyagoktól, így adalékanyagként lehetőleg mellőzzük fogyasztását!",
+          "safety_level": 2
+        },
+        {
+          "code": "E442",
+          "name": "Ammónium-foszfatid",
+          "description": "Kakaóalapú élelmiszerekben használt szintetikus emulgeálószer.",
+          "safety_level": 1
+        },
+        {
+          "code": "E443",
+          "name": "Brómozott növényi olaj (BVO)",
+          "description": "Szénsavas üdítőkben használt emulgeálószer és stabilizátor, mely nagy valószínűség szerint rákkeltő.",
+          "safety_level": 2
+        },
+        {
+          "code": "E444",
+          "name": "Szacharóz-acetát-izobutiráz",
+          "description": "Szintetikus stabilizátor és emulgeálószer, opálosító anyag alkoholos és üdítőitalokban.",
+          "safety_level": 1
+        },
+        {
+          "code": "E445",
+          "name": "Glicerin-észterek természetes gyantából",
+          "description": "Gyantából nyert szintetikus stabilizátor. Genetikailag módosított alapanyagok alkalmazása lehetséges.",
+          "safety_level": 0
+        },
+        {
+          "code": "E450",
+          "name": "Difoszfátok / Pirofoszfátok",
+          "description": "Szintetikus emulgeáló- és térfogatnövelő szerek, stabilizátorok, illetve savanyúságot szabályozó anyagok; a foszforsav nátriummal, káliummal, illetve kalciummal alkotott sói, melyek nagy dózisban hiperaktivitást, az ásványi anyagok rossz felszívódását, illetve emésztési problémákat okozhatnak.",
+          "safety_level": 2
+        },
+        {
+          "code": "E451",
+          "name": "Trifoszfátok",
+          "description": "Szintetikus emulgeáló- és térfogatnövelő szerek, stabilizátorok, illetve savanyúságot szabályozó anyagok; a foszforsav nátriummal, káliummal, illetve kalciummal alkotott sói, melyek nagy dózisban hiperaktivitást, az ásványi anyagok rossz felszívódását, illetve emésztési problémákat okozhatnak.",
+          "safety_level": 2
+        },
+        {
+          "code": "E452",
+          "name": "Polifoszfátok",
+          "description": "Szintetikus emulgeáló- és térfogatnövelő szerek, stabilizátorok, illetve savanyúságot szabályozó anyagok; a foszforsav nátriummal, káliummal, illetve kalciummal alkotott sói, melyek nagy dózisban hiperaktivitást, az ásványi anyagok rossz felszívódását, illetve emésztési problémákat okozhatnak.",
+          "safety_level": 2
+        },
+        {
+          "code": "E459",
+          "name": "Béta-ciklodextrin",
+          "description": "Stabilizátor és hordozóanyag, mely szerkezetének köszönhetően megvédi a hőérzékeny aromákat, színanyagokat és enzimeket az elillanástól, melyek így a sütést és a hosszú időn át tartó tárolást is el tudják viselni. Leginkább tablettákban, drazsékban, italporokban és snack-ekben használják; nagy dózisban az ásványi anyagok és vitaminok rossz felszívódását okozhatja.",
+          "safety_level": 1
+        },
+        {
+          "code": "E460",
+          "name": "Mikrokristályos, ill. porított cellulóz",
+          "description": "A cellulóz hordozóanyag, emulgeálószer és sűrítőanyag, mely a gyapot előállításának mellékterméke. Felhasználása sokrétű, a papír- és textilgyártáson kívül vízoldható ragasztókban, lakkokban is alkalmazzák. Az élelmiszeriparban főként sűrítőanyagként használják, leginkább pékárukban és vegetáriánus fasírtokban található meg. Az emberi emésztőrendszer nem tudja feldolgozni, így a szervezetből változatlanul kiürül, viszont nagy mennyiségben fogyasztva puffadást, hasmenést okozhat, illetve egyes kutatások szerint potenciálisan rákkeltő.",
+          "safety_level": 2
+        },
+        {
+          "code": "E461",
+          "name": "Metil-cellulóz",
+          "description": "A cellulóz hordozóanyag, emulgeálószer és sűrítőanyag, mely a gyapot előállításának mellékterméke.",
+          "safety_level": 2
+        },
+        {
+          "code": "E463",
+          "name": "Hidroxi-propil-cellulóz",
+          "description": "A cellulóz hordozóanyag, emulgeálószer és sűrítőanyag.",
+          "safety_level": 2
+        },
+        {
+          "code": "E464",
+          "name": "Hidroxi-propil-metil-cellulóz",
+          "description": "A cellulóz hordozóanyag, emulgeálószer és sűrítőanyag.",
+          "safety_level": 2
+        },
+        {
+          "code": "E465",
+          "name": "Etil-metil-cellulóz",
+          "description": "A cellulóz hordozóanyag, emulgeálószer és sűrítőanyag.",
+          "safety_level": 2
+        },
+        {
+          "code": "E466",
+          "name": "Nátrium-karboxi-metil-cellulóz",
+          "description": "A cellulóz hordozóanyag, emulgeálószer és sűrítőanyag.",
+          "safety_level": 2
+        },
+        {
+          "code": "E468",
+          "name": "Keresztkötésű nátrium-karboxi-metil-cellulóz",
+          "description": "A cellulóz hordozóanyag, emulgeálószer és sűrítőanyag.",
+          "safety_level": 2
+        },
+        {
+          "code": "E469",
+          "name": "Enzimmel hidrolizált karboxi-metil-cellulóz",
+          "description": "A cellulóz hordozóanyag, emulgeálószer és sűrítőanyag.",
+          "safety_level": 2
+        },
+        {
+          "code": "E470a",
+          "name": "Zsírsavak nátrium-, kálium- és kalcium sói",
+          "description": "Általában növényi eredetű zsírsavak (olajsav, palmitinsav, sztearinsav, mirisztinsav) sói, de az állati eredet sem zárható ki. Emulgeálószerként, stabilizátorként, és csomósodást gátló anyagként számos élelmiszerben megtalálhatóak, többek között fűszersó keverékekben, italporokban, stb.",
+          "safety_level": 0
+        },
+        {
+          "code": "E470b",
+          "name": "Zsírsavak magnézium sói",
+          "description": "Általában növényi eredetű zsírsavak sói, de az állati eredet sem zárható ki.",
+          "safety_level": 0
+        },
+        {
+          "code": "E471",
+          "name": "Zsírsavak mono- és digliceridjei",
+          "description": "Általában növényi eredetű zsírsavakból álló, szintetikus úton előállított keverékek, de az állati eredet sem zárható ki, valamint előfordulhat genetikailag módosított eredet. Emulgeálószerként és stabilizátorként számos élelmiszerben megtalálhatóak.",
+          "safety_level": 2
+        },
+        {
+          "code": "E472a",
+          "name": "Zsírsavak mono- és digliceridjeinek ecetsav-észterei",
+          "description": "Emulgeálószerként és stabilizátorként számos élelmiszerben megtalálhatóak, például hús-, tejszín- és csokoládékészítményekben.",
+          "safety_level": 2
+        },
+        {
+          "code": "E472c",
+          "name": "Zsírsavak mono- és digliceridjeinek citromsav-észterei",
+          "description": "Ezenkívül tésztafélékben, kenyerekben, pékárukban állagjavítóként, lekvárokban, dzsemekben, gyümölcszselékben habmentesítő hatásuk miatt használják.",
+          "safety_level": 2
+        },
+        {
+          "code": "E472d",
+          "name": "Zsírsavak mono- és digliceridjeinek borkősav-észterei",
+          "description": "A szervezetben visszabomlanak természetes összetevőikké, amik ártalmatlanok, ezért ezeknek az adalékanyagoknak általában veszélytelen a megítélése.",
+          "safety_level": 2
+        },
+        {
+          "code": "E472e",
+          "name": "Zsírsavak mono- és digliceridjeinek mono- és diacetil-borkősav észterei",
+          "description": "Azonban egyes állatkísérletek szerint növekedési visszamaradást okozhatnak, gátolják az esszenciális zsírsavak felszívódását, a máj és a vesék megnagyobbodásához vezethetnek, illetve hatással vannak a herék és a méh működésére, valamint potenciálisan mutagén hatásúak.",
+          "safety_level": 2
+        },
+        {
+          "code": "E472f",
+          "name": "Zsírsavak mono- és digliceridjeinek ecetsav- és borkősav-észterei",
+          "description": "Potenciálisan mutagén hatásúak.",
+          "safety_level": 2
+        },
+        {
+          "code": "E473",
+          "name": "Zsírsavak szacharóz észterei",
+          "description": "Emulgeálószerek, melyekkel a liszt- és csokoládémasszák állagát javítják, így leginkább süteményekben, kekszekben, leveles tésztafélékben, édességekben, fagylaltokban találhatóak meg. Genetikailag módosított alapanyagok alkalmazása lehetséges. Mivel az emésztőrendszerben alkotóikra bomlanak, melyek ártalmatlan anyagok, ezért általában veszélytelen a megítélésük, ám nyomokban propilén-glikolt (E1520) (350 mg/kg) és metanolt (10 mg/kg) tartalmazhatnak, ezért fogyasztásuk kerülendő.",
+          "safety_level": 2
+        },
+        {
+          "code": "E474",
+          "name": "Szacharóz gliceridjei",
+          "description": "Fogyasztásuk kerülendő.",
+          "safety_level": 2
+        },
+        {
+          "code": "E475",
+          "name": "Zsírsavak poliglicerin észterei",
+          "description": "Emulgeálószer és stabilizátor, melyet főleg mártásokban, salátaöntetekben, mázakban és kozmetikai termékekben (E475), illetve csökkentett zsírtartalmú és csokoládétermékekben (E476) használnak. Genetikailag módosított alapanyagok alkalmazása lehetséges, valamit allergiás reakciót válthatnak ki.",
+          "safety_level": 1
+        },
+        {
+          "code": "E476",
+          "name": "Poliricinolsav poligliceridje",
+          "description": "Emulgeálószer és stabilizátor, melyet főleg mártásokban, salátaöntetekben, mázakban és kozmetikai termékekben (E475), illetve csökkentett zsírtartalmú és csokoládétermékekben (E476) használnak. Genetikailag módosított alapanyagok alkalmazása lehetséges, valamit allergiás reakciót válthatnak ki.",
+          "safety_level": 1
+        },
+        {
+          "code": "E477",
+          "name": "Zsírsavak propán-1,2-diol észterei",
+          "description": "Emulgeálószerként és térfogatnövelőként elsősorban tortákban és sütemények díszítésére szolgáló habokban alkalmazzák. Szintetikus úton állítják elő, kőolajszármazékokat (!) tartalmaz, és emésztési problémákat okozhat.",
+          "safety_level": 2
+        },
+        {
+          "code": "E479b",
+          "name": "Hőkezeléssel oxidált szójaolaj zsírsavak mono- és digliceridjeivel reagáltatva",
+          "description": "Emulgeálószerként és stabilizátorként főként sütőolajokban található meg. Genetikailag módosított alapanyagok alkalmazása lehetséges. Laboratóriumi kísérletek szerint nagy mennyiségben fogyasztva a májat és a nyirokmirigyeket károsíthatja, valamint rákkeltő hatása is lehet. Kerülendő!",
+          "safety_level": 2
+        },
+        {
+          "code": "E481",
+          "name": "Nátrium-sztearoil-2-laktilát",
+          "description": "Emulgeálószer és stabilizátor, mely a búzalisztben lévő gluténnel kölcsönhatásba lépve javítja a lisztek sütőtulajdonságait, így főként pékárukban, tésztákban, chipsekben, valamint krémekben és krémlikőrökben fordul elő. A szervezetben visszabomlik ártalmatlan sztearinsavvá és tejsavvá.",
+          "safety_level": 0
+        },
+        {
+          "code": "E482",
+          "name": "Kalcium-sztearoil-2-laktilát",
+          "description": "Emulgeálószer és stabilizátor, mely a búzalisztben lévő gluténnel kölcsönhatásba lépve javítja a lisztek sütőtulajdonságait.",
+          "safety_level": 0
+        },
+        {
+          "code": "E483",
+          "name": "Sztearil-tartarát",
+          "description": "A szervezetben visszabomlik ártalmatlan sztearinsavvá és tejsavvá.",
+          "safety_level": 0
+        },
+        {
+          "code": "E491",
+          "name": "Szorbitán-monosztearát",
+          "description": "Zsírsavak és cukoralkoholok kombinációjából származó vegyületek, melyeket az élelmiszeriparban emulgeálószerként és stabilizátorként használnak, de gyógyszeripari és kozmetikai alkalmazásuk is gyakori. Leginkább pékárukban, lisztes készítményekben és sütőélesztőkben, valamint tejszínpótlókban és tejes italporokban fordulnak elő. Túlzott fogyasztásuk könnyen előfordulhat (akár 150g péksütemény vagy 300g édesség elfogyasztásával), mely esetben hasmenést, hólyagkövet és szervi elváltozásokat okozhatnak.",
+          "safety_level": 2
+        }
+      ]
+    }
+  ]
+}

@@ -1,0 +1,199 @@
+﻿.toolbar-container {
+    width: 5rem;
+    background-color: white;
+    border-right: 1px solid #e5e7eb;
+    display: flex;
+    flex-direction: column;
+}
+
+.toolbar {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    padding: 1rem 0;
+    gap: 0.5rem;
+}
+
+.toolbar-section {
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+    pointer-events: initial;
+    transition: filter .1s ease-in-out;
+}
+
+.toolbar-section.disabled {
+    pointer-events: none;
+}
+
+::deep .toolbar-section.disabled button {
+    color: #6b7280 !important;
+}
+
+.icon {
+    width: 1.25rem;
+    height: 1.25rem;
+    stroke-width: 2;
+    stroke: currentColor;
+}
+
+.rotated {
+    transform: rotate(90deg);
+}
+
+.separator {
+    width: 2.5rem;
+    height: 1px;
+    background-color: #e5e7eb;
+    margin: 0.5rem 0;
+}
+
+.section-label {
+    color: #6b7280;
+    font-size: 0.75rem;
+    margin-bottom: 0.25rem;
+}
+
+.tooltip-wrapper {
+    position: relative;
+}
+
+.mobile-only-flex {
+    display: none;
+}
+
+@media (max-width: 768px) {
+    /* Force the toolbar to be a fixed dock at the bottom */
+    .toolbar-container {
+        position: fixed;
+        bottom: 15px;
+        left: 50%;
+        transform: translate(-50%, 100px);
+        width: auto;
+        height: auto;
+        flex-direction: row !important; /* Icons side-by-side */
+        border: none;
+        background: white;
+        z-index: 1000;
+        padding: 0;
+        border-radius: 12px;
+        justify-content: center;
+        box-shadow: 20px 20px 60px #c9c9c9, -20px -20px 60px #ffffff;
+        transition: max-width ease-out .1s, min-width ease-out .4s;
+        min-width: 60px;
+        max-width: 232px;
+    }
+        .toolbar-container:not(.slide-out) {
+            animation: slideInBottom .3s ease-out forwards;
+        }
+
+        .toolbar-container.slide-out {
+            animation: slideOutBottom .3s ease-in forwards; 
+        }
+
+        .toolbar-container.expanded {
+            min-width: 290px;
+            max-width: 95%;
+        }
+
+        .toolbar-container .toolbar {
+            flex-direction: row !important; /* Icons side-by-side */
+            justify-content: center;
+        }
+
+    .toolbar {
+        padding: 0.3rem 0.5rem;
+    }
+
+        .toolbar .separator,
+        .toolbar .section-label {
+            display: none;
+        }
+
+    .toolbar-section {
+        flex-direction: row;
+    }
+
+        .toolbar-section.single {
+            display: flex !important;
+        }
+
+    ::deep .toolbar-section button {
+        color: #374151;
+    }
+
+    .mobile-only-flex {
+        display: flex !important;
+        align-items: center;
+        justify-content: center;
+    }
+
+    /* Expand the chosen group into the full bar */
+    .toolbar-section.mobile-active {
+        display: flex !important;
+        flex-grow: 1;
+        justify-content: space-evenly;
+        animation: slideIn 0.2s ease-out;
+        gap: 0 !important;
+    }
+
+    .mobile-trigger {
+        width: 3rem;
+        height: 3rem;
+        background: transparent;
+        border: none;
+        padding: 10px;
+        flex: 1;
+        color: #374151;
+    }
+
+        ::deep .mobile-trigger svg {
+            width: 24px;
+            height: 24px;
+        }
+
+    .back-btn {
+        background: #f0f0f0;
+        border: none;
+        border-radius: 8px;
+        height: 3rem;
+        width: 3rem;
+        color: #374151;
+    }
+
+    @keyframes slideIn {
+        from {
+            opacity: 0;
+            transform: translateY(10px);
+        }
+
+        to {
+            opacity: 1;
+            transform: translateY(0);
+        }
+    }
+
+    @keyframes slideInBottom {
+        from {
+            opacity: 0;
+            transform: translate(-50%, 100px);
+        }
+
+        to {
+            opacity: 1;
+            transform: translate(-50%, 0);
+        }
+    }
+
+    @keyframes slideOutBottom {
+        from {
+            opacity: 1;
+            transform: translate(-50%, 0);
+        }
+
+        to {
+            opacity: 0;
+            transform: translate(-50%, 100px);
+        }
+    }
+}

@@ -1,0 +1,15 @@
+﻿@namespace ShopScout.Client.Components
+<div class="recent-search-label" @onclick="HandleClick">
+    @Label
+</div>
+
+@code {
+    [Parameter] public string Label { get; set; } = string.Empty;
+    [Parameter] public EventCallback<string> OnClick { get; set; }
+
+    private async Task HandleClick()
+    {
+        if (OnClick.HasDelegate)
+            await OnClick.InvokeAsync(Label);
+    }
+}

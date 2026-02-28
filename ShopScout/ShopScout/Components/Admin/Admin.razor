@@ -1,0 +1,198 @@
+﻿@page "/admin"
+@layout AdminLayout
+@rendermode InteractiveServer
+@using ShopScout.Services
+@using System.Globalization
+@inject StatsService StatsSvc
+@inject IJSRuntime JS
+@implements IAsyncDisposable
+
+<div class="h-100 d-flex flex-column gap-4">
+    <div class="d-flex flex-column flex-md-row justify-content-between align-items-md-end gap-3 border-bottom pb-3">
+        <div>
+            <h1 class="h3 fw-bold m-0 text-dark">Traffic Intelligence</h1>
+            <p class="text-muted small m-0">Report: <span class="text-primary fw-bold">@CultureInfo.CurrentCulture.DateTimeFormat.GetMonthName(SelectedMonth) @SelectedYear</span> | Updated: @Traffic?.LastUpdate</p>
+        </div>
+
+        <div class="d-flex gap-2 bg-white p-2 rounded-pill border shadow-sm">
+            <select class="form-select form-select-sm border-0 bg-transparent fw-bold" @bind="SelectedMonth">
+                @for (int i = 1; i <= 12; i++)
+                {
+                    <option value="@i">@CultureInfo.CurrentCulture.DateTimeFormat.GetAbbreviatedMonthName(i)</option>
+                }
+            </select>
+            <select class="form-select form-select-sm border-0 bg-transparent fw-bold" @bind="SelectedYear">
+                <option value="2025">2025</option>
+                <option value="2026">2026</option>
+            </select>
+            <button class="btn btn-dark btn-sm rounded-pill px-3" @onclick="LoadData">
+                @if (IsLoading)
+                {
+                    <span class="spinner-border spinner-border-sm"></span>
+                }
+                else
+                {
+
+                    <span>Load</span>
+                }
+            </button>
+        </div>
+    </div>
+
+    @if (Traffic != null)
+    {
+        <div class="row g-3">
+            <div class="col-6 col-lg-3">
+                <div class="card border-0 shadow-sm rounded-4 h-100 bg-primary text-white">
+                    <div class="card-body p-3">
+                        <div class="small opacity-75 fw-bold text-uppercase">Visitors</div>
+                        <div class="display-6 fw-bold">@Traffic.UniqueVisitors</div>
+                        <div class="small opacity-75">@Traffic.TotalVisits Sessions</div>
+                    </div>
+                </div>
+            </div>
+            <div class="col-6 col-lg-3">
+                <div class="card border-0 shadow-sm rounded-4 h-100 bg-white">
+                    <div class="card-body p-3">
+                        <div class="small text-muted fw-bold text-uppercase">Page Views</div>
+                        <div class="display-6 fw-bold text-dark">@Traffic.Pages</div>
+                        <div class="small text-muted">@Traffic.Hits Hits</div>
+                    </div>
+                </div>
+            </div>
+            <div class="col-6 col-lg-3">
+                <div class="card border-0 shadow-sm rounded-4 h-100 bg-white">
+                    <div class="card-body p-3">
+                        <div class="small text-muted fw-bold text-uppercase">Bandwidth</div>
+                        <div class="display-6 fw-bold text-success">@Traffic.Bandwidth</div>
+                        <div class="small text-muted">Transferred</div>
+                    </div>
+                </div>
+            </div>
+            <div class="col-6 col-lg-3">
+                <div class="card border-0 shadow-sm rounded-4 h-100 bg-light">
+                    <div class="card-body p-3">
+                        <div class="small text-muted fw-bold text-uppercase">Bot Traffic</div>
+                        <div class="h3 fw-bold text-muted mb-0">@Traffic.BotHits</div>
+                        <div class="small text-warning fw-bold">@Traffic.BotBandwidth Data</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="row g-3">
+            <div class="col-lg-8">
+                <div class="card border-0 shadow-sm rounded-4 h-100">
+                    <div class="card-header bg-white py-3 border-0"><h6 class="m-0 fw-bold">Daily Traffic Trend</h6></div>
+                    <div class="card-body" style="height: 300px;">
+                        <canvas id="dailyChart"></canvas>
+                    </div>
+                </div>
+            </div>
+            <div class="col-lg-4">
+                <div class="card border-0 shadow-sm rounded-4 h-100">
+                    <div class="card-header bg-white py-3 border-0"><h6 class="m-0 fw-bold">Peak Hours</h6></div>
+                    <div class="card-body" style="height: 300px;">
+                        <canvas id="hourlyChart"></canvas>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="card border-0 shadow-sm rounded-4 w-100">
+            <div class="card-header bg-white py-3 border-0">
+                <h6 class="m-0 fw-bold">Yearly Overview (Monthly)</h6>
+            </div>
+            <div class="card-body" style="height: 300px;">
+                <canvas id="monthlyChart"></canvas>
+            </div>
+        </div>
+
+        <div class="row g-3 pb-5">
+            <div class="col-md-6">
+                <div class="card border-0 shadow-sm rounded-4 h-100">
+                    <div class="card-header bg-white py-3 border-0 rounded-4"><h6 class="m-0 fw-bold">Tech Stack</h6></div>
+                    <div class="table-responsive p-3 pt-0" style="max-height: 300px;">
+                        <table class="table table-hover mb-0 align-middle small">
+                            <thead class="bg-light sticky-top"><tr><th>Name</th><th class="text-end">Hits</th><th class="text-end" style="width: 80px;">%</th></tr></thead>
+                            <tbody>
+                                @foreach (var item in Traffic.OperatingSystems.Take(8))
+                                {
+                                    <tr><td>@item.Name</td><td class="text-end">@item.Count</td><td class="text-end">@item.Percent</td></tr>
+                                }
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-6">
+                <div class="card border-0 shadow-sm rounded-4 h-100">
+                    <div class="card-header bg-white py-3 border-0 rounded-4"><h6 class="m-0 fw-bold">Top Content</h6></div>
+                    <div class="table-responsive p-3 pt-0" style="max-height: 300px;">
+                        <table class="table table-hover mb-0 align-middle small">
+                            <thead class="bg-light sticky-top"><tr><th>URL</th><th class="text-end">Views</th></tr></thead>
+                            <tbody>
+                                @foreach (var item in Traffic.TopPages.Take(8))
+                                {
+                                    <tr><td class="text-primary text-truncate" style="max-width: 200px;">@item.Name</td><td class="text-end fw-bold">@item.Count</td></tr>
+                                }
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+    }
+</div>
+
+@code {
+    private SiteStats? Traffic;
+    private bool IsLoading = false;
+    private int SelectedMonth = DateTime.Now.Month;
+    private int SelectedYear = DateTime.Now.Year;
+    private string BaseUrl = "https://win6030.site4now.net/stats/awstats.pl?config=1126216602";
+    private IJSObjectReference? _chartModule;
+
+    protected override async Task OnInitializedAsync() => await LoadData();
+
+    private async Task LoadData()
+    {
+        IsLoading = true;
+        Traffic = await StatsSvc.GetAwStatsAsync(BaseUrl, SelectedMonth, SelectedYear);
+        IsLoading = false;
+    }
+
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (firstRender)
+        {
+            _chartModule = await JS.InvokeAsync<IJSObjectReference>("import", "/js/admin-charts.js");
+        }
+
+        if (Traffic != null && !IsLoading && _chartModule != null)
+        {
+            if (Traffic.DailyLabels.Any())
+            {
+                await _chartModule.InvokeVoidAsync("renderChart", "dailyChart",
+                    Traffic.DailyLabels, Traffic.DailyVisits, "Visits", "#0d6efd", "line");
+            }
+
+            if (Traffic.HourlyLabels.Any())
+            {
+                await _chartModule.InvokeVoidAsync("renderChart", "hourlyChart",
+                    Traffic.HourlyLabels, Traffic.HourlyHits, "Hits", "#198754", "bar");
+            }
+
+            if (Traffic.MonthlyLabels.Any())
+            {
+                await _chartModule.InvokeVoidAsync("renderChart", "monthlyChart",
+                    Traffic.MonthlyLabels, Traffic.MonthlyVisits, "Visits", "#0d6efd", "line");
+            }
+        }
+    }
+
+    public async ValueTask DisposeAsync()
+    {
+        if (_chartModule != null) await _chartModule.DisposeAsync();
+    }
+}

@@ -1,0 +1,16 @@
+﻿<span class="@(TranslatedDisplayString != null ? "translated" : "")" @onclick="ToggleTranslation">@(TranslatedDisplayString != null && ShowTranslated ? TranslatedDisplayString : DisplayString)</span>
+
+@code {
+    [Parameter]
+    public string? DisplayString { get; set; }
+
+    [Parameter]
+    public string? TranslatedDisplayString { get; set; }
+
+    private bool ShowTranslated = true;
+
+    private void ToggleTranslation()
+    {
+        ShowTranslated = !ShowTranslated;
+    }
+}

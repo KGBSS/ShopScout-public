@@ -1,0 +1,123 @@
+﻿@page "/shoplayouteditor"
+@rendermode InteractiveWebAssembly
+@layout EmptyLayout
+
+<div class="editor-layout">
+    <!-- Left Toolbar -->
+    <Toolbar />
+
+    <!-- Main Canvas Area -->
+    <div class="main-area">
+        <!-- Top Bar -->
+        <div class="top-bar">
+            <div>
+                <h1>Shop Layout Editor</h1>
+                <p>Draw walls and place shelves to design your shop</p>
+            </div>
+            <div class="top-bar-actions">
+                <button class="action-button">
+                    <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <polyline points="3 6 5 6 21 6"/>
+                        <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/>
+                    </svg>
+                    Clear All
+                </button>
+                <button class="action-button">
+                    <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
+                        <polyline points="17 8 12 3 7 8"/>
+                        <line x1="12" y1="3" x2="12" y2="15"/>
+                    </svg>
+                    Import
+                </button>
+                <button class="action-button">
+                    <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
+                        <polyline points="7 10 12 15 17 10"/>
+                        <line x1="12" y1="15" x2="12" y2="3"/>
+                    </svg>
+                    Export
+                </button>
+            </div>
+        </div>
+
+        <!-- Canvas -->
+        <div class="canvas-wrapper">
+            <LayoutCanvas />
+        </div>
+    </div>
+
+    <!-- Right Properties Panel -->
+    <PropertiesPanel />
+</div>
+
+<style>
+    .editor-layout {
+        display: flex;
+        height: 100vh;
+        background-color: #f9fafb;
+        font-family: system-ui, -apple-system, sans-serif;
+    }
+
+    .main-area {
+        flex: 1;
+        display: flex;
+        flex-direction: column;
+    }
+
+    .top-bar {
+        background-color: white;
+        border-bottom: 1px solid #e5e7eb;
+        padding: 1rem 1.5rem;
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+    }
+
+    .top-bar h1 {
+        margin: 0;
+        font-size: 1.25rem;
+        font-weight: 600;
+        color: #111827;
+    }
+
+    .top-bar p {
+        margin: 0.25rem 0 0 0;
+        font-size: 0.875rem;
+        color: #6b7280;
+    }
+
+    .top-bar-actions {
+        display: flex;
+        gap: 0.5rem;
+    }
+
+    .action-button {
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+        padding: 0.5rem 0.75rem;
+        background-color: white;
+        border: 1px solid #d1d5db;
+        border-radius: 0.375rem;
+        font-size: 0.875rem;
+        color: #374151;
+        cursor: pointer;
+        transition: all 0.2s;
+    }
+
+    .action-button:hover {
+        background-color: #f9fafb;
+        border-color: #9ca3af;
+    }
+
+    .action-button .icon {
+        width: 1rem;
+        height: 1rem;
+    }
+
+    .canvas-wrapper {
+        flex: 1;
+        overflow: hidden;
+    }
+</style>

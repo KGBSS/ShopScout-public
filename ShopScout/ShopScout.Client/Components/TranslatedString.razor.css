@@ -1,0 +1,5 @@
+﻿span.translated {
+    border-bottom: 2px dashed lightGray;
+    user-select: none;
+    cursor: pointer;
+}

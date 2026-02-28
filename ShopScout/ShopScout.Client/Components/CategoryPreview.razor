@@ -1,0 +1,26 @@
+﻿@namespace ShopScout.Client.Components
+@using ShopScout.SharedLib.Models
+@inject NavigationManager NavigationManager
+
+<div class="category-card" @onclick="ClickHandler">
+    <div class="category-header">
+        @if (Category.Verified)
+        {
+            <VerifiedBadge />
+        }
+
+        <div class="category-name">@Category.Name</div>
+        
+    </div>
+    
+</div>
+
+@code {
+    [Parameter] public ProductCategory Category { get; set; } = default!;
+    [Parameter] public EventCallback<int> Click { get; set; }
+
+    private async Task ClickHandler(MouseEventArgs args)
+    {
+        await Click.InvokeAsync(Category.Id);
+    }
+}

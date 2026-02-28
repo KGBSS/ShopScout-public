@@ -1,0 +1,19 @@
+﻿@if (!string.IsNullOrEmpty(Message))
+{
+    var status = Message.StartsWith("err: ");
+    @if (status)
+    {
+        <span class="text-danger">@Message.Split("err: ")[1]</span>
+    }
+    else
+    {
+        <span class="text-success">@Message</span>
+    }
+
+}
+
+@code {
+
+    [Parameter]
+    public string? Message { get; set; }
+}

@@ -1,0 +1,48 @@
+﻿@page "/account/welcome"
+@using ShopScout.Client.Layout
+@inject NavigationManager Navigation
+@layout EmptyLayout
+
+<HeadContent>
+    <link rel="stylesheet" href="/css/account/confirm-welcome.css"/>
+</HeadContent>
+
+<div class="welcome-container">
+    <div class="welcome-card">
+        <div class="welcome-icon-wrapper">
+            <svg class="welcome-checkmark-icon" viewBox="0 0 52 52" xmlns="http://www.w3.org/2000/svg">
+                <circle class="welcome-checkmark-circle" cx="26" cy="26" r="25" fill="none" />
+                <path class="welcome-checkmark-check" fill="none" d="M14.1 27.2l7.1 7.2 16.7-16.8" />
+            </svg>
+        </div>
+
+        <h1 class="welcome-title">Üdvözlünk a ShopScout-ban!</h1>
+        <p class="welcome-message">
+            Fiókod sikeresen létrejött! Most személyre szabhatod, hogy még hatékonyabban használhasd.
+        </p>
+
+        <div class="welcome-button-group">
+            <a class="welcome-btn welcome-btn-primary" href="/Account/Personalization">
+                <span class="welcome-btn-text">Személyre szabás</span>
+                <svg class="welcome-btn-icon" width="20" height="20" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg">
+                    <path d="M7.5 15L12.5 10L7.5 5" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" />
+                </svg>
+            </a>
+
+            <a class="welcome-btn welcome-btn-secondary" href="/">
+                Kihagyás
+            </a>
+        </div>
+
+        <div class="welcome-settings-info">
+            <svg class="welcome-info-icon" width="16" height="16" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg">
+                <path d="M8 14C11.3137 14 14 11.3137 14 8C14 4.68629 11.3137 2 8 2C4.68629 2 2 4.68629 2 8C2 11.3137 4.68629 14 8 14Z" stroke="currentColor" stroke-width="1.5" />
+                <path d="M8 10.5V8" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" />
+                <circle cx="8" cy="6" r="0.5" fill="currentColor" />
+            </svg>
+            <p class="welcome-settings-text">
+                Bármikor személyre szabhatod az élményed a <strong>Beállítások > Profil</strong> menüpontban
+            </p>
+        </div>
+    </div>
+</div>

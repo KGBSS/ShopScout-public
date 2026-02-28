@@ -1,0 +1,13 @@
+<div class="additive-item risk-@Additive.Risk">
+    <div class="additive-code">@Additive.Code</div>
+    <div class="additive-details">
+        <span class="additive-name">@Additive.Name</span>
+        <span class="additive-function">@Additive.Type</span>
+    </div>
+    <div class="risk-indicator risk-@Additive.Risk"></div>
+</div>
+
+@code {
+    [Parameter]
+    public Additive Additive { get; set; }
+}

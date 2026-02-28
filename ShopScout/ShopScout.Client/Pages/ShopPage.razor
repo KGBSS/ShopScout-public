@@ -1,0 +1,662 @@
+﻿@page "/shop/{id?}"
+@using System.Globalization
+@using System.Text.RegularExpressions
+@using ShopScout.SharedLib.Services
+@using System.Text
+@rendermode @(new InteractiveServerRenderMode(prerender: false))
+@attribute [StreamRendering]
+@inject NavigationManager NavigationManager
+@inject IAdminService AdminService
+@inject IStoreService StoreService
+@inject IUserAccessor UserAccessor
+@inject IJSRuntime JS
+
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+
+<div class="outer-container">
+    @if (isLoading)
+    {
+        <div class="loading-container">
+            <div class="loading-spinner">
+                <div class="spinner-ring"></div>
+                <div class="spinner-ring"></div>
+                <div class="spinner-ring"></div>
+            </div>
+            <p class="loading-text">Bolt adatok betöltése...</p>
+        </div>
+    }
+    else if (store == null)
+    {
+        <div>to be added</div>
+    }
+    else
+    {
+        <!-- Header -->
+        <div class="store-header">
+            <div class="header-top">
+                <div class="store-title-section">
+                    <h1 class="store-name">
+                        @store.StoreBrand?.Name @store.Address <FavouriteButton T="Store" EntryToAlter="store" @bind-Favourited="favourited" NavigationProperty="u => u.FavoriteStores" />
+                    </h1>
+                    <div class="store-brand">
+                        @if (store.StoreBrand != null)
+                        {
+                            <span class="brand-badge">@store.StoreBrand.Name</span>
+                        }
+                        <span class="store-type">Üzlet</span>
+                    </div>
+                </div>
+                <div class="status-badges">
+                    @{
+                        bool? isShopOpen = IsShopOpen();
+                        if (isShopOpen != null)
+                        {
+                            <div class="status-badge @((bool)isShopOpen ? "status-open" : "status-closed")">
+                                @((bool)isShopOpen ? "🟢 Nyitva" : "🔴 Zárva")
+                            </div>
+                            if ((bool)isShopOpen)
+                            {
+                                <div style="font-size: 0.9rem; color: #6b7280; text-align: center; margin-top: 0.25rem;">
+                                    @GetClosingTime()-ig
+                                </div>
+                            }
+                        }
+                    }
+                    
+                </div>
+            </div>
+        </div>
+
+        <!-- Main Grid -->
+        <div class="main-grid">
+            <!-- Map Section -->
+            <div class="map-section">
+                <h3 class="section-title">
+                    <span>📍</span>
+                    <span>Helyszín</span>
+                </h3>
+
+                <div id="map" class="map"></div>
+
+                <div class="address-card">
+                    @if (!string.IsNullOrEmpty(store.Address))
+                    {
+                        <div class="address-line">
+                            <span>🏢</span>
+                            <span class="address-text">@store.Address</span>
+                        </div>
+                    }
+                    <div class="coordinates">
+                        <span>📍 @store.Latitude</span>
+                        <span>📍 @store.Longitude</span>
+                    </div>
+                </div>
+
+                <div class="action-btn-container">
+                    <a href="https://www.google.com/maps?q=@($"{store.Latitude},{store.Longitude}")" class="action-btn" target="_blank">
+                        <span>🌎</span> Megnyitás térképen
+                    </a>
+                    <a href="https://www.google.com/maps/dir/?api=1&destination=@(store.Latitude),@(store.Longitude)&travelmode=walking" class="action-btn" target="_blank">
+                        <span>🚶</span> Navigálás gyalog
+                    </a>
+                    <a href="https://www.google.com/maps/dir/?api=1&destination=@(store.Latitude),@(store.Longitude)&travelmode=driving" class="action-btn" target="_blank">
+                        <span>🚗</span> Navigálás autóval
+                    </a>
+                </div>
+            </div>
+
+            <!-- Right Column: Info + Layout Editor -->
+            <div class="right-column">
+                <!-- Info Section -->
+                @if (store.StoreAttributes.Any() || !string.IsNullOrEmpty(store.OpeningHours))
+                {
+                    <div class="info-section">
+                        <div class="tab-nav">
+                            @if (!string.IsNullOrEmpty(store.OpeningHours))
+                            {
+                                <button class="tab-btn @(activeTab == "hours" ? "active" : "")"
+                                        @onclick='() => SetActiveTab("hours")'>
+                                    ⏰ Nyitvatartás
+                                </button>
+                            }
+                            @if (store.StoreAttributes.Any())
+                            {
+                                <button class="tab-btn @(activeTab == "info" ? "active" : "")"
+                                        @onclick='() => SetActiveTab("info")'>
+                                    ℹ️ Információ
+                                </button>
+                            }
+                        </div>
+
+                        <div class="tab-content">
+                            <!-- Opening Hours Tab -->
+                            @if (activeTab == "hours")
+                            {
+                                <div class="tab-panel active">
+                                    @if (!string.IsNullOrEmpty(store.OpeningHours))
+                                    {
+                                        <div class="hours-grid">
+                                            @foreach (var day in GetOpeningHours())
+                                            {
+                                                <div class="hours-row @(day.IsToday ? "today" : "") @(day.IsClosed ? "closed" : "")">
+                                                    <div class="day-name">@day.DayName</div>
+                                                    <div class="day-hours">
+                                                        <span>@(day.IsClosed ? "🚫" : "⏰")</span>
+                                                        <span>@day.Hours</span>
+                                                    </div>
+                                                </div>
+                                            }
+                                        </div>
+                                    }
+                                    else
+                                    {
+                                        <p>Nincs nyitvatartási információ</p>
+                                    }
+                                </div>
+                            }
+
+                            <!-- Payment Tab -->
+                            @if (activeTab == "info")
+                            {
+                                <div class="tab-panel info active">
+                                    @{
+                                        IEnumerable<StoreStoreAttribute> payments = store.StoreAttributes.Where(a => a.StoreAttribute.Type == StoreAttributeType.Payment);
+                                        IEnumerable<StoreStoreAttribute> contacts = store.StoreAttributes.Where(a => a.StoreAttribute.Type == StoreAttributeType.Contact);
+                                        if (payments.Any())
+                                        {
+                                            <div class="info-section-container">
+                                                <div class="info-section-inner">
+                                                    <h4>💳 Fizetési módok</h4>
+                                                    <div>
+                                                        @foreach (var payment in payments)
+                                                        {
+                                                            <span class="payment-badge">@payment.StoreAttribute.Name</span>
+                                                        }
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        }
+                                        if (contacts.Any())
+                                        {
+                                            <div class="info-section-container">
+                                                <div class="info-section-inner">
+                                                    <h4>📞 Kapcsolat</h4>
+                                                    <div>
+                                                        @foreach (var contact in contacts)
+                                                        {
+                                                            <a href="@GetContactHref(contact.Value)" target="_blank" class="contact-card">
+                                                                <div class="contact-icon">@GetContactIcon(contact.StoreAttribute.Name)</div>
+                                                                <div class="contact-info">
+                                                                    <div class="contact-label">@contact.StoreAttribute.Name</div>
+                                                                    <div class="contact-value">@contact.StoreAttribute.Name</div>
+                                                                </div>
+                                                            </a>
+                                                        }
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        }
+                                    }
+
+                                </div>
+                            }
+                        </div>
+                    </div>
+                }
+                
+                <!-- Layout Editor -->
+                <button class="layout-editor-btn" @onclick="OpenLayoutEditor">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path>
+                        <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path>
+                    </svg>
+                    <span>Alaprajz szerkesztő</span>
+                    <svg class="layout-editor-chevron" xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <polyline points="9 18 15 12 9 6"></polyline>
+                    </svg>
+                </button>
+            </div>
+        </div>
+
+        if (CurrentStoreId != null && CurrentProductPerStore != null)
+        {
+            <LayoutRender StoreId="(int)CurrentStoreId" ProductPerStore="CurrentProductPerStore" OnClose="() => CurrentProductPerStore = null" />
+        }
+
+        @if (store.ProductPerStore != null && store.ProductPerStore.Any())
+        {
+            <div class="products-section">
+                <h3>Termékek ebben a boltban</h3>
+                <div class="search-bar">
+                    <span class="bi bi-search"></span>
+                    <input @bind="SearchText" @bind:event="oninput" type="text" placeholder="Keress termékeket a bolt kínálatából..." class="product-search-input" />
+                </div>
+                <div class="products-flex">
+                    @if (noSearchResult)
+                    {
+                        <p>Nem talalhato ilyen termek</p>
+                    }
+                    else if (ProductsWithRelevance.Count > 0)
+                    {
+                        @foreach (var ppsWithRelevance in ProductsWithRelevance.OrderByDescending(x => x.relevance).Take(20))
+                        {
+                            <ProductPreview ProductPerStore="ppsWithRelevance.pps" OnOpenRenderer="OpenRenderer" />
+                        }
+                    }
+                    else
+                    {
+                        @foreach (var pps in store.ProductPerStore.Take(20))
+                        {
+                            <ProductPreview ProductPerStore="pps" OnOpenRenderer="OpenRenderer" />
+                        }
+                    }
+                </div>
+            </div>
+        }
+    }
+</div>
+
+@code {
+    [Parameter] public string? Id { get; set; }
+
+    private List<(int relevance, ProductPerStore pps)> ProductsWithRelevance = new();
+    private string searchText = string.Empty;
+
+    public string SearchText
+    {
+        get => searchText;
+        set
+        {
+            if (searchText == value)
+            {
+                return;
+            }
+
+            searchText = value ?? string.Empty;
+            noSearchResult = false;
+
+            _ = InvokeAsync(async () =>
+            {
+                if (string.IsNullOrWhiteSpace(searchText))
+                {
+                    ProductsWithRelevance.Clear();
+                }
+                else
+                {
+                    SearchProducts();
+                }
+
+                StateHasChanged();
+            });
+        }
+    }
+
+    private Store? store;
+    private string activeTab = "hours";
+    private IJSObjectReference? module;
+    private bool mapInitialized = false;
+    private bool isLoading = true;
+    private bool favourited { get; set; } = false;
+    private bool noSearchResult = false;
+    private int? CurrentStoreId => store?.Id;
+    private ProductPerStore? CurrentProductPerStore { get; set; }
+
+    protected override async Task OnInitializedAsync()
+    {
+        if (Id != null && int.TryParse(Id, out int idInt))
+        {
+            store = await StoreService.GetStoreAsync(idInt);
+        }
+        isLoading = false;
+    }
+
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (!mapInitialized && store != null)
+        {
+            mapInitialized = true;
+            module = await JS.InvokeAsync<IJSObjectReference>("import", "/js/importShopMap.js");
+
+            if (module != null)
+            {
+                await module.InvokeVoidAsync("importMap", store.Latitude, store.Longitude);
+            }
+            await StoreService.AttachProducts(store);
+            StateHasChanged();
+        }
+    }
+
+    private async Task OpenRenderer(ProductPerStore pps)
+    {
+        CurrentProductPerStore = pps;
+    }
+
+    private void OpenLayoutEditor()
+    {
+        if (store?.Id != null)
+        {
+            NavigationManager.NavigateTo($"/layout-editor/{store.Id}");
+        }
+    }
+
+    private void SearchProducts()
+    {
+        ProductsWithRelevance.Clear();
+
+        var normalizedSearch = RemoveDiacritics(searchText.ToLowerInvariant());
+        var searchTokens = normalizedSearch
+            .Split(new[] { ' ', ',', '-' }, StringSplitOptions.RemoveEmptyEntries)
+            .Where(t => t.Length > 0)
+            .ToArray();
+
+        foreach (var productPerStore in store.ProductPerStore)
+        {
+            var normailizedName = RemoveDiacritics(productPerStore.Product.ProductName.ToLowerInvariant());
+            int score = CalculateProductRelevanceScore(normailizedName, searchTokens, normalizedSearch);
+
+            if (score > 0)
+            {
+                ProductsWithRelevance.Add((score, productPerStore));
+            }
+        }
+
+        if (ProductsWithRelevance.Count == 0) noSearchResult = true;
+    }
+
+    private string RemoveDiacritics(string text)
+    {
+        if (string.IsNullOrWhiteSpace(text))
+            return text;
+
+        var normalizedString = text.Normalize(NormalizationForm.FormD);
+        var stringBuilder = new StringBuilder();
+
+        foreach (var c in normalizedString)
+        {
+            var unicodeCategory = CharUnicodeInfo.GetUnicodeCategory(c);
+            if (unicodeCategory != UnicodeCategory.NonSpacingMark)
+            {
+                stringBuilder.Append(c);
+            }
+        }
+
+        return stringBuilder.ToString().Normalize(NormalizationForm.FormC);
+    }
+
+    private int CalculateProductRelevanceScore(
+        string productName,
+        string[] searchTokens,
+        string originalSearch)
+    {
+        int score = 0;
+
+        // Exact match - highest priority
+        if (productName == originalSearch)
+        {
+            score += 1000;
+        }
+
+        // Full search phrase matching
+        if (productName.StartsWith(originalSearch))
+        {
+            score += 700;
+        }
+
+        if (productName.Contains(originalSearch))
+        {
+            score += 400;
+        }
+
+        // Individual token matching
+        foreach (var token in searchTokens)
+        {
+            // Token at start of product name
+            if (productName.StartsWith(token))
+            {
+                score += 150;
+            }
+            // Token anywhere in product name
+            else if (productName.Contains(token))
+            {
+                score += 80;
+            }
+
+            // Bonus for word boundary matches (token matches a whole word)
+            if (IsWordBoundaryMatch(productName, token))
+            {
+                score += 50;
+            }
+        }
+
+        // Count how many tokens matched
+        int matchedTokens = searchTokens.Count(token => productName.Contains(token));
+        score += matchedTokens * 25;
+
+        // Bonus if ALL tokens are present (complete match)
+        if (searchTokens.Length > 0 && searchTokens.All(token => productName.Contains(token)))
+        {
+            score += 250;
+        }
+
+        // Penalty for very long product names (diluted relevance)
+        if (productName.Length > originalSearch.Length * 3)
+        {
+            score -= 50;
+        }
+
+        return score;
+    }
+
+    // Helper method to check if token matches a complete word
+    private bool IsWordBoundaryMatch(string text, string token)
+    {
+        // Simple word boundary check using spaces and common delimiters
+        string pattern = $@"\b{Regex.Escape(token)}\b";
+        return Regex.IsMatch(text, pattern, RegexOptions.IgnoreCase);
+    }
+
+    private void SetActiveTab(string tab)
+    {
+        activeTab = tab;
+        StateHasChanged();
+    }
+
+    private bool? IsShopOpen()
+    {
+        if (store == null || string.IsNullOrEmpty(store.OpeningHours))
+            return null;
+
+        var now = DateTime.Now;
+        var dayOfWeek = (int)now.DayOfWeek;
+        // Adjust: Sunday = 6, Monday = 0, etc. (matching Day enum)
+        dayOfWeek = dayOfWeek == 0 ? 6 : dayOfWeek - 1;
+        var currentTime = now.TimeOfDay;
+
+        var hours = ParseOpeningHoursString(store.OpeningHours);
+
+        if (hours.ContainsKey(dayOfWeek))
+        {
+            var (open, close) = hours[dayOfWeek];
+            return currentTime >= open && currentTime < close;
+        }
+
+        // Check default hours (first in string)
+        if (hours.ContainsKey(-1))
+        {
+            var (open, close) = hours[-1];
+            return currentTime >= open && currentTime < close;
+        }
+
+        return false;
+    }
+
+    private string GetClosingTime()
+    {
+        if (store == null || string.IsNullOrEmpty(store.OpeningHours))
+            return "";
+
+        var now = DateTime.Now;
+        var dayOfWeek = (int)now.DayOfWeek;
+        dayOfWeek = dayOfWeek == 0 ? 6 : dayOfWeek - 1;
+
+        var hours = ParseOpeningHoursString(store.OpeningHours);
+
+        if (hours.ContainsKey(dayOfWeek))
+        {
+            var (_, close) = hours[dayOfWeek];
+            return close.ToString(@"hh\:mm");
+        }
+
+        if (hours.ContainsKey(-1))
+        {
+            var (_, close) = hours[-1];
+            return close.ToString(@"hh\:mm");
+        }
+
+        return "";
+    }
+
+    private List<DayHours> GetOpeningHours()
+    {
+        var days = new List<DayHours>();
+        if (store == null || string.IsNullOrEmpty(store.OpeningHours))
+            return days;
+
+        var today = (int)DateTime.Now.DayOfWeek;
+        today = today == 0 ? 6 : today - 1;
+
+        var hours = ParseOpeningHoursString(store.OpeningHours);
+        var dayNames = new[] { "Hétfő", "Kedd", "Szerda", "Csütörtök", "Péntek", "Szombat", "Vasárnap" };
+
+        for (int i = 0; i < 7; i++)
+        {
+            string hoursText;
+            bool isClosed = false;
+
+            if (hours.ContainsKey(i))
+            {
+                var (open, close) = hours[i];
+                hoursText = $"{open:hh\\:mm} - {close:hh\\:mm}";
+            }
+            else if (hours.ContainsKey(-1))
+            {
+                var (open, close) = hours[-1];
+                hoursText = $"{open:hh\\:mm} - {close:hh\\:mm}";
+            }
+            else
+            {
+                hoursText = "Zárva";
+                isClosed = true;
+            }
+
+            days.Add(new DayHours
+            {
+                DayName = dayNames[i],
+                Hours = hoursText,
+                IsToday = i == today,
+                IsClosed = isClosed
+            });
+        }
+
+        return days;
+    }
+
+    private Dictionary<int, (TimeSpan Open, TimeSpan Close)> ParseOpeningHoursString(string openingHours)
+    {
+        // Format: "06:30-21:00507:00-20:00607:00-19:00" or "7:00-21:0067:00-19:00"
+        // First part is default, then {day}{hours}
+        var result = new Dictionary<int, (TimeSpan, TimeSpan)>();
+
+        if (string.IsNullOrEmpty(openingHours))
+            return result;
+
+        // Extract first hours (default) - handles both HH:MM and H:MM format
+        var firstHoursMatch = System.Text.RegularExpressions.Regex.Match(openingHours, @"^(\d{1,2}:\d{2})-(\d{1,2}:\d{2})");
+        if (firstHoursMatch.Success)
+        {
+            var open = TimeSpan.Parse(firstHoursMatch.Groups[1].Value);
+            var close = TimeSpan.Parse(firstHoursMatch.Groups[2].Value);
+            result[-1] = (open, close); // -1 for default
+
+            // Remove the default hours from the string to process day-specific hours
+            openingHours = openingHours.Substring(firstHoursMatch.Length);
+        }
+
+        // Extract day-specific hours - day number followed by time range
+        // Pattern: single digit (0-6) followed by time in format H:MM or HH:MM
+        var dayHoursMatches = System.Text.RegularExpressions.Regex.Matches(openingHours, @"(\d)(\d{1,2}:\d{2})-(\d{1,2}:\d{2})");
+        foreach (System.Text.RegularExpressions.Match match in dayHoursMatches)
+        {
+            var day = int.Parse(match.Groups[1].Value);
+            var open = TimeSpan.Parse(match.Groups[2].Value);
+            var close = TimeSpan.Parse(match.Groups[3].Value);
+            result[day] = (open, close);
+        }
+
+        return result;
+    }
+
+    private string GetContactIcon(string contactType)
+    {
+        return contactType.ToLower() switch
+        {
+            "website" => "🌐",
+            "facebook" => "📘",
+            "youtube" => "📺",
+            "pinterest" => "📌",
+            "instagram" => "📷",
+            "email" => "📧",
+            "phone" => "📞",
+            _ => "📞"
+        };
+    }
+
+    private string GetContactHref(string val)
+    {
+        if (string.IsNullOrEmpty(val)) return string.Empty;
+
+        Uri uriResult;
+        bool isvalidUrl = Uri.TryCreate(val, UriKind.Absolute, out uriResult)
+            && (uriResult.Scheme == Uri.UriSchemeHttp || uriResult.Scheme == Uri.UriSchemeHttps);
+
+        if (isvalidUrl)
+            return val;
+
+        else if (IsPhoneNumber(val))
+            return $"tel:{val}";
+
+        else if (IsEmail(val))
+            return $"mailto:{val}";
+
+        else
+            return $"https://www.google.com/search?q={val}";
+    }
+
+    private bool IsPhoneNumber(string input)
+    {
+        if (string.IsNullOrWhiteSpace(input))
+            return false;
+
+        // Matches phone numbers with digits, spaces, dashes, parentheses, and optional + prefix
+        return Regex.IsMatch(input, @"^\+?[\d\s\-\(\)]{7,}$");
+    }
+
+    private bool IsEmail(string input)
+    {
+        if (string.IsNullOrWhiteSpace(input))
+            return false;
+
+        // Simple email pattern
+        return Regex.IsMatch(input, @"^[^@\s]+@[^@\s]+\.[^@\s]+$");
+    }
+
+    // Model classes
+    public class DayHours
+    {
+        public string DayName { get; set; } = "";
+        public string Hours { get; set; } = "";
+        public bool IsToday { get; set; }
+        public bool IsClosed { get; set; }
+    }
+}

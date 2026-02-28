@@ -1,0 +1,37 @@
+﻿@inject NavigationManager NavigationManager
+
+<a href="@Href"
+    class="@CombinedClass"
+    @onclick="HandleClick"
+    @onclick:preventDefault="true">
+    @ChildContent
+</a>
+
+@code {
+    [Parameter] public string? Href { get; set; }
+    [Parameter] public NavLinkMatch Match { get; set; } = NavLinkMatch.All;
+    [Parameter] public string? Class { get; set; }
+    [Parameter] public EventCallback<MouseEventArgs> OnClick { get; set; }
+    [Parameter] public RenderFragment? ChildContent { get; set; }
+
+    private string CombinedClass =>
+        $"{Class} {(IsActive ? "active" : "")}".Trim();
+
+    private bool IsActive
+    {
+        get
+        {
+            var uri = NavigationManager.ToBaseRelativePath(NavigationManager.Uri).TrimEnd('/');
+            // Active for root or any /search path
+            return uri == "" || uri.StartsWith("search", StringComparison.OrdinalIgnoreCase);
+        }
+    }
+
+    private async Task HandleClick(MouseEventArgs e)
+    {
+        if (OnClick.HasDelegate)
+        {
+            await OnClick.InvokeAsync(e);
+        }
+    }
+}

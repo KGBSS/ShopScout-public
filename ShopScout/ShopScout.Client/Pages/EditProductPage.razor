@@ -1,0 +1,2190 @@
+﻿@page "/product/{barcode?}/edit"
+@page "/product/new"
+@attribute [Microsoft.AspNetCore.Authorization.Authorize]
+
+@using ShopScout.SharedLib.Services
+@using ShopScout.SharedLib.Models
+@using System.Text
+@using System.Globalization
+@inject IProductService ProductService
+@inject IStoreService StoreService
+@inject IUserAccessor UserAccessor
+@inject LocationService LocationService
+@inject HttpClient _client
+@inject IJSRuntime JSRuntime
+@inject NavigationManager NavigationManager
+@inject StorageService LocalStorageService
+@inject IAdminService AdminService
+@inject ICategoryService CategoryService
+@rendermode @(new InteractiveServerRenderMode(prerender: false))
+
+<div>@(translation)</div>
+<div class="outer-container">
+    @if (isLoading)
+    {
+        <div class="loading-container">
+            <div class="loading-spinner">
+                <div class="spinner-ring"></div>
+                <div class="spinner-ring"></div>
+                <div class="spinner-ring"></div>
+            </div>
+            <p class="loading-text">Termékadatok betöltése...</p>
+        </div>
+    }
+    else if (!string.IsNullOrEmpty(errorMessage))
+    {
+        <div class="error-card">
+            <div class="error-icon">⚠️</div>
+            <h3>Nem található ilyen termék</h3>
+            <p>@errorMessage</p>
+            <button class="btn-primary" @onclick="ShowSearchForm">Próbálj meg egy másik vonalkódot</button>
+        </div>
+    }
+    else if (product == null)
+    {
+        
+    }
+    else
+    {
+        <div class="product-container">
+            <!-- Header with Search -->
+            <div class="product-header">
+                <button class="back-btn" @onclick="ShowSearchForm">
+                    <span>←</span> Vissza a kereséshez
+                </button>
+                <div class="product-meta align-items-center">
+                    <span class="barcode-chip">𝄃𝄃𝄂 @product.Code</span>
+                    @* @if (product.Countries.Count > 0) *@
+                    @* { *@
+                    @*     <span class="country-chip">🌍 @product.Countries.First().Name</span> *@
+                    @* } *@
+                    <div class="d-flex flex-row align-items-end gap-2">
+                        <AutocompleteMultiSelect TItem="ProductCountry"
+                                                    Items="@availableCountries"
+                                                    SelectedItems="@editProduct.Countries"
+                                                    DisplayProperty="@(item => item.Name)"
+                                                    OnSelectionChanged="@((items) => editProduct.Countries = items.ToList())"
+                                                    CreateNewEntity="@(name => new ProductCountry { Name = name })"
+                                                    OnNewItemCreated="@(async item => await CreateNewItem(item))"
+                                                    Placeholder="Országok keresése..." />
+                        <button class="btn btn-outline-secondary reset-btn" @onclick="() => { editProduct.Countries = product.Countries.ToList(); }">
+                            <i class="bi bi-arrow-counterclockwise"></i>
+                        </button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Hero Section -->
+            <div class="hero-section">
+                <div class="product-image-container">
+                    @{
+                        var primaryImageUrl = product.ProductImages.FirstOrDefault(pi => pi.ImageType == ProductImageType.Primary)?.URL;
+                        if (!string.IsNullOrEmpty(primaryImageUrl))
+                        {
+                            <img src="@primaryImageUrl" class="hero-image" alt="A termék képe" />
+                            <div class="image-overlay"></div>
+                        }
+                        else
+                        {
+                            <div class="placeholder-image">
+                                <div class="placeholder-icon">📦</div>
+                                <span>Nincs elérhető kép</span>
+                            </div>
+                        }
+                    }
+
+                </div>
+
+                <div class="hero-content">
+                    @* <h1 class="product-title"> *@
+                    @*     @product.ProductName *@
+                    @*     <FavouriteButton T="Product" EntryToAlter="product" @bind-Favourited="favourited" NavigationProperty="u => u.FavoriteProducts" /> *@
+                    @* </h1> *@
+                    <div class="d-flex flex-row align-items-center gap-2">
+                        <input type="text" class="form-control title-input" @bind="editProduct.ProductName" @bind:event="oninput" placeholder="Termék neve"/>
+                        <button class="btn btn-outline-secondary reset-btn" @onclick="() => editProduct.ProductName = product.ProductName ?? string.Empty">
+                            <i class="bi bi-arrow-counterclockwise"></i>
+                        </button>
+                    </div>
+                    @if (!string.IsNullOrEmpty(product.Description))
+                    {
+                        @* <p class="product-subtitle"><TranslatedString DisplayString="@product.Description" TranslatedDisplayString="@translatedProduct?.Description" /></p> *@
+                        <div class="d-flex flex-row align-items-center gap-2">
+                            <input type="text" class="form-control edit-description" @bind="editProduct.Description" @bind:event="oninput" placeholder="Termékleírás"/>
+                            <button class="btn btn-outline-secondary reset-btn" @onclick="() => editProduct.Description = product.Description ?? string.Empty">
+                                <i class="bi bi-arrow-counterclockwise"></i>
+                            </button>
+                        </div>
+                    }
+                    @{
+                        ProductBrand pb = product.Brands.FirstOrDefault(x => !string.IsNullOrWhiteSpace(x.Name));
+                        if (pb != null)
+                        {
+                            @* <div class="brand-info"> *@
+                            @*     <span class="brand-label">Márka:</span> *@
+                            @*     <span class="brand-name">@(pb != null ? pb.Name : "Ismeretlen")</span> *@
+                            @* </div> *@
+                        }
+                        <div class="d-flex flex-row align-items-end gap-2">
+                            <AutocompleteMultiSelect TItem="ProductBrand"
+                                                     Items="@availableBrands"
+                                                     SelectedItems="@editProduct.Brands"
+                                                     DisplayProperty="@(item => item.Name)"
+                                                     OnSelectionChanged="@((items) => editProduct.Brands = items.ToList())"
+                                                     CreateNewEntity="@(name => new ProductBrand { Name = name })"
+                                                     OnNewItemCreated="@(async item => await CreateNewItem(item))"
+                                                     Placeholder="Márkák keresése..." />
+                            <button class="btn btn-outline-secondary reset-btn" @onclick="() => { editProduct.Brands = product.Brands.ToList(); }">
+                                <i class="bi bi-arrow-counterclockwise"></i>
+                            </button>
+                        </div>
+                    }
+
+                    @if (!string.IsNullOrEmpty(product.Details?.Quantity))
+                    {
+                        @* <div class="quantity-badge">@product.Details.Quantity</div> *@
+                    }
+                    <div class="d-flex flex-row align-items-center gap-2">
+                        <input type="text" class="form-control" @bind="editProduct.Details.Quantity" @bind:event="oninput" placeholder="Mennyiség"/>
+                        <button class="btn btn-outline-secondary reset-btn" @onclick="() => editProduct.Details.Quantity = product.Details?.Quantity ?? string.Empty">
+                            <i class="bi bi-arrow-counterclockwise"></i>
+                        </button>
+                    </div>
+
+                    @{
+                        if (product.Categories != null)
+                        {
+                            List<ProductCategory> categories = product.Categories.ToList();
+
+                            void GetParentCategories(ProductCategory category)
+                            {
+                                if (category.ParentCategory != null)
+                                {
+                                    categories.Add(category.ParentCategory);
+                                    translatedProduct?.Categories.Add(category.ParentCategory);
+                                    GetParentCategories(category.ParentCategory);
+                                }
+                            }
+                            foreach (var category in categories)
+                            {
+                                GetParentCategories(category);
+                            }
+
+                            if (categories.Count > 0)
+                            {
+                                @* <div class="categories-section"> *@
+                                @*     <h4>Termékkategóriák</h4> *@
+                                @*     <div class="category-tree"> *@
+                                @*         @for (int i = 0; i < Math.Min(categories.Count, 6); i++) *@
+                                @*         { *@
+                                @*             <span class="category-tag"><TranslatedString DisplayString="@categories[i].Name" TranslatedDisplayString="@translatedProduct?.Categories.ElementAtOrDefault(i)?.Name" /></span> *@
+                                @*         } *@
+                                @*     </div> *@
+                                @* </div> *@
+                            }
+                        }
+                        <div class="d-flex flex-row align-items-end gap-2">
+                            <AutocompleteMultiSelect TItem="ProductCategory"
+                                                     Items="@availableCategories"
+                                                     SelectedItems="@editProduct.Categories"
+                                                     DisplayProperty="@(item => item.Name)"
+                                                     CanCreateNew="false"
+                                                     OnSelectionChanged="@((items) => editProduct.Categories = items.ToList())"
+                                                     CreateNewEntity="@(name => new ProductCategory { Name = name })"
+                                                     OnNewItemCreated="@(async item => await CreateNewItem(item))"
+                                                     Placeholder="Kategóriák keresése..." />
+                            <button class="btn btn-outline-secondary reset-btn" @onclick="() => { editProduct.Categories = product.Categories.ToList(); }">
+                                <i class="bi bi-arrow-counterclockwise"></i>
+                            </button>
+                        </div>
+                    }
+
+                    <!-- Quick Scores -->
+                    <div class="quick-scores">
+                        <div class="score-card nutriscore">
+                            <div class="score-header">
+                                <span class="score-label">Nutri-Score</span>
+                                <div class="info-tooltip" title="Tápérték minősége A-tól (legjobb) E-ig (legrosszabb)">ℹ️</div>
+                            </div>
+                            <div class="nutriscore-display">
+                                <div class="nutriscore-letters">
+                                    @foreach (var letter in new[] { "A", "B", "C", "D", "E" })
+                                    {
+                                        <span class="nutriscore-letter @(letter == editProduct.Details.NutriScore.ToString() ? "active" : "") nutriscore-@letter.ToLower()">
+                                            @letter
+                                        </span>
+                                    }
+                                </div>
+                            </div>
+                            <div class="d-flex flex-row align-items-center gap-2">
+                                <select @bind="editProduct.Details.NutriScore" @bind:event="oninput" class="form-select" aria-label="Default select example">
+                                    <option value="" disabled>Válasszon egy Nutri Score-t...</option>
+                                    <option value="@NutriScore.Unknown">UNKNOWN</option>
+                                    <option value="@NutriScore.A">A</option>
+                                    <option value="@NutriScore.B">B</option>
+                                    <option value="@NutriScore.C">C</option>
+                                    <option value="@NutriScore.D">D</option>
+                                    <option value="@NutriScore.E">E</option>
+                                </select>
+                                <button class="btn btn-outline-secondary reset-btn" @onclick="() => editProduct.Details.NutriScore = product.Details.NutriScore">
+                                    <i class="bi bi-arrow-counterclockwise"></i>
+                                </button>
+                            </div>
+                        </div>
+
+                        <div class="score-card nova">
+                            <div class="score-header">
+                                <span class="score-label">Nova besorolás</span>
+                                <div class="info-tooltip" title="Élelmiszer feldolgozottsági szintje 1-től (minimális) 4-ig (ultrafel­dolgozott)">ℹ️</div>
+                            </div>
+                            @* @if (product.Details?.NovaGroup > 0) *@
+                            @* { *@
+                            @*     <div class="nova-display nova-@product.Details.NovaGroup"> *@
+                            @*         <div class="nova-number">@product.Details.NovaGroup</div> *@
+                            @*         <div class="nova-dots"> *@
+                            @*             @for (int i = 1; i <= 4; i++) *@
+                            @*             { *@
+                            @*                 <div class="nova-dot @(i <= product.Details.NovaGroup ? "active" : "")"></div> *@
+                            @*             } *@
+                            @*         </div> *@
+                            @*     </div> *@
+                            @*     <p class="nova-description">@GetNovaGroupDescription(product.Details.NovaGroup)</p> *@
+                            @* } *@
+                            <div class="nova-display">
+                                <div class="d-flex flex-row align-items-center gap-2">
+                                    <select @bind="editProduct.Details.NovaGroup" @bind:event="oninput" class="form-select edit-nova-group" aria-label="Default select example">
+                                        <option value="0" disabled>Válasszon Nova csoportot...</option>
+                                        <option value="1">1 - Minimálisan feldolgozott</option>
+                                        <option value="2">2 - Feldolgozott konyhai alapanyagok</option>
+                                        <option value="3">3 - Feldolgozott élelmiszerek</option>
+                                        <option value="4">4 - Ultrafel­dolgozott élelmiszerek</option>
+                                    </select>
+                                    <button class="btn btn-outline-secondary reset-btn" @onclick="() => editProduct.Details.NovaGroup = product.Details.NovaGroup">
+                                        <i class="bi bi-arrow-counterclockwise"></i>
+                                    </button>
+                                </div>
+                                 <div class="nova-dots">
+                                     @for (int i = 1; i <= 4; i++)
+                                     {
+                                         <div class="nova-dot @(i <= editProduct.Details.NovaGroup ? $"nova-{editProduct.Details.NovaGroup}" : "")"></div>
+                                     }
+                                 </div>
+                            </div>
+                            <p class="nova-description">@GetNovaGroupDescription(editProduct.Details.NovaGroup)</p>
+                        </div>
+                        <div class="score-card calories">
+                            <div class="score-header">
+                                <span class="score-label">Energia</span>
+                                <span class="score-unit">100g</span>
+                            </div>
+                            <div class="calories-display">
+                            @* @if (product.Details?.EnergyKcal.HasValue == true) *@
+                            @* { *@
+                            @*     <span class="calories-number">@product.Details.EnergyKcal</span> *@
+                            @*     <span class="calories-unit">kcal</span> *@
+                            @* } *@
+                                <div class="d-flex flex-row align-items-end gap-2 edit-kcal-div">
+                                    <input class="form-control text-end edit-kcal" type="number" name="cal" @bind="editProduct.Details.EnergyKcal" @bind:event="oninput" placeholder="Adja meg az energiát..."/>
+                                    <span class="calories-unit">kcal</span>
+                                    <button class="btn btn-outline-secondary btn-sm reset-btn" @onclick="() => editProduct.Details.EnergyKcal = product.Details.EnergyKcal">
+                                        <i class="bi bi-arrow-counterclockwise"></i>
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Detailed Information Tabs -->
+            <div class="info-tabs">
+                <div class="tab-nav">
+                    @{
+                        // if (product.Details?.EnergyKcal != null || !string.IsNullOrEmpty(product.Details?.ServingSize) || product.Details?.FatLevel != null)
+                        // {
+                            <button class="tab-btn @(activeTab == "nutrition" ? "active" : "")" @onclick='() => SetActiveTab("nutrition")'>
+                                🥗 Tápérték
+                            </button>
+                        @* } *@
+
+                        // if (product.ProductPerStore.Count > 0)
+                        // {
+                            <button class="tab-btn @(activeTab == "stores" ? "active" : "")" @onclick='() => SetActiveTab("stores")'>
+                                🛒 Boltok
+                            </button>
+                        @* } *@
+
+                        // if (product.ProductIngredients.Count > 0 || product.Additives.Count > 0 || product.Allergens.Count > 0)
+                        // {
+                            <button class="tab-btn @(activeTab == "ingredients" ? "active" : "")" @onclick='() => SetActiveTab("ingredients")'>
+                                🧪 Összetevők
+                            </button>
+                        @* } *@
+
+                        <button class="tab-btn @(activeTab == "processing" ? "active" : "")" @onclick='() => SetActiveTab("processing")'>
+                            ⚙️ Feldolgozottság
+                        </button>
+
+                        <button class="tab-btn @(activeTab == "packaging" ? "active" : "")" @onclick='() => SetActiveTab("packaging")'>
+                            ♻️ Csomagolás
+                        </button>
+
+                        // if (product.ProductImages.Count > 0)
+                        // {
+                            <button class="tab-btn @(activeTab == "images" ? "active" : "")" @onclick='() => SetActiveTab("images")'>
+                                📷 Képek
+                            </button>
+                        @* } *@
+                    }
+
+                </div>
+
+                <div class="tab-content">
+                    @if (activeTab == "nutrition")
+                    {
+                        <div class="nutrition-panel">
+
+                            <div class="nutrition-grid">
+                                <div class="nutrition-main">
+                                    <h3>🥗 Tápérték</h3>
+                                    <table class="nutrition-table">
+                                        <thead>
+                                            <tr>
+                                                <th class="nutrient-header">Tápanyag</th>
+                                                <th class="value-header">Érték</th>
+                                                <th class="percent-header">NRV%</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody>
+                                            @* @if (product.Details.EnergyKcal.HasValue) *@
+                                            @* { *@
+                                            <tr class="nutrition-row main">
+                                                <td class="nutrient-name">Energia</td>
+                                                <td class="nutrient-value d-flex align-items-end gap-2">
+                                                    <input class="form-control form-control-sm text-end" type="number" step="any" min="0" placeholder="Adja meg az energiát..." @bind="editProduct.Details.EnergyKcal" @bind:event="oninput">
+                                                    <span class="unit">kcal</span>
+                                                    <button class="btn btn-outline-secondary btn-sm reset-btn" @onclick="() => editProduct.Details.EnergyKcal = product.Details.EnergyKcal">
+                                                        <i class="bi bi-arrow-counterclockwise"></i>
+                                                    </button>
+                                                </td>
+                                                <td class="percent-dv">@CalculatePercentDV(editProduct.Details.EnergyKcal, 2000)%</td>
+                                            </tr>
+                                            @* } *@
+                                            @* @if (product.Details.Fat.HasValue) *@
+                                            @* { *@
+                                            <tr class="nutrition-row main">
+                                                <td class="nutrient-name">Zsír</td>
+                                                <td class="nutrient-value d-flex align-items-end gap-2">
+                                                    <input class="form-control form-control-sm text-end" type="number" step="any" min="0" placeholder="Adja meg a zsírt..." @bind="editProduct.Details.Fat" @bind:event="oninput">
+                                                    <span class="unit">g</span>
+                                                    <button class="btn btn-outline-secondary btn-sm reset-btn" @onclick="() => editProduct.Details.Fat = product.Details.Fat">
+                                                        <i class="bi bi-arrow-counterclockwise"></i>
+                                                    </button>
+                                                </td>
+                                                <td class="percent-dv">@CalculatePercentDV(editProduct.Details.Fat, 70)%</td>
+                                            </tr>
+                                            @* } *@
+                                            @* @if (product.Details.SaturatedFat.HasValue) *@
+                                            @* { *@
+                                            <tr class="nutrition-row sub">
+                                                <td class="nutrient-name">Amelyből telített zsírsavak</td>
+                                                <td class="nutrient-value d-flex align-items-end gap-2">
+                                                    <input class="form-control form-control-sm text-end" type="number" step="any" min="0" placeholder="Adja meg a telített zsírsavat..." @bind="editProduct.Details.SaturatedFat" @bind:event="oninput">
+                                                    <span class="unit">g</span>
+                                                    <button class="btn btn-outline-secondary btn-sm reset-btn" @onclick="() => editProduct.Details.SaturatedFat = product.Details.SaturatedFat">
+                                                        <i class="bi bi-arrow-counterclockwise"></i>
+                                                    </button>
+                                                </td>
+                                                <td class="percent-dv">@CalculatePercentDV(editProduct.Details.SaturatedFat, 20)%</td>
+                                            </tr>
+                                            @* } *@
+                                            @* @if (product.Details.Carbohydrates.HasValue) *@
+                                            @* { *@
+                                            <tr class="nutrition-row main">
+                                                <td class="nutrient-name">Szénhidrát</td>
+                                                <td class="nutrient-value d-flex align-items-end gap-2">
+                                                    <input class="form-control form-control-sm text-end" type="number" step="any" min="0" placeholder="Adja meg a szénhidrátot..." @bind="editProduct.Details.Carbohydrates" @bind:event="oninput">
+                                                    <span class="unit">g</span>
+                                                    <button class="btn btn-outline-secondary btn-sm reset-btn" @onclick="() => editProduct.Details.Carbohydrates = product.Details.Carbohydrates">
+                                                        <i class="bi bi-arrow-counterclockwise"></i>
+                                                    </button>
+                                                </td>
+                                                <td class="percent-dv">@CalculatePercentDV(editProduct.Details.Carbohydrates, 260)%</td>
+                                            </tr>
+                                            @* } *@
+                                            @* @if (product.Details.Sugars.HasValue) *@
+                                            @* { *@
+                                            <tr class="nutrition-row sub">
+                                                <td class="nutrient-name">Amelyből Cukrok</td>
+                                                <td class="nutrient-value d-flex align-items-end gap-2">
+                                                    <input class="form-control form-control-sm text-end" type="number" step="any" min="0" placeholder="Adja meg a cukrot..." @bind="editProduct.Details.Sugars" @bind:event="oninput">
+                                                    <span class="unit">g</span>
+                                                    <button class="btn btn-outline-secondary btn-sm reset-btn" @onclick="() => editProduct.Details.Sugars = product.Details.Sugars">
+                                                        <i class="bi bi-arrow-counterclockwise"></i>
+                                                    </button>
+                                                </td>
+                                                <td class="percent-dv">@CalculatePercentDV(editProduct.Details.Sugars, 90)%</td>
+                                            </tr>
+                                            @* } *@
+                                            @* @if (product.Details.Proteins.HasValue) *@
+                                            @* { *@
+                                            <tr class="nutrition-row main">
+                                                <td class="nutrient-name">Fehérje</td>
+                                                <td class="nutrient-value d-flex align-items-end gap-2">
+                                                    <input class="form-control form-control-sm text-end" type="number" step="any" min="0" placeholder="Adja meg a fehérjét..." @bind="editProduct.Details.Proteins" @bind:event="oninput">
+                                                    <span class="unit">g</span>
+                                                    <button class="btn btn-outline-secondary btn-sm reset-btn" @onclick="() => editProduct.Details.Proteins = product.Details.Proteins">
+                                                        <i class="bi bi-arrow-counterclockwise"></i>
+                                                    </button>
+                                                </td>
+                                                <td class="percent-dv">@CalculatePercentDV(editProduct.Details.Proteins, 50)%</td>
+                                            </tr>
+                                            @* } *@
+                                            @* @if (product.Details.Salt.HasValue) *@
+                                            @* { *@
+                                            <tr class="nutrition-row main">
+                                                <td class="nutrient-name">Só</td>
+                                                <td class="nutrient-value d-flex align-items-end gap-2">
+                                                    <input class="form-control form-control-sm text-end" type="number" step="any" min="0" placeholder="Adja meg a sót..." @bind="editProduct.Details.Salt" @bind:event="oninput">
+                                                    <span class="unit">g</span>
+                                                    <button class="btn btn-outline-secondary btn-sm reset-btn" @onclick="() => editProduct.Details.Salt = product.Details.Salt">
+                                                        <i class="bi bi-arrow-counterclockwise"></i>
+                                                    </button>
+                                                </td>
+                                                <td class="percent-dv">@CalculatePercentDV(editProduct.Details.Salt, 6)%</td>
+                                            </tr>
+                                            @* } *@
+                                        </tbody>
+                                    </table>
+
+                                    @* @if (product.Details.ServingSize is not null) *@
+                                    @* { *@
+                                        <div class="serving-info-card">
+                                            <h4>Adag információk</h4>
+                                            <div class="d-flex flex-row gap-2 align-items-center">
+                                                <label class="form-check-label fw-bold">Ajánlott adag:</label>
+                                                <input class="form-control w-auto" type="text" placeholder="Adja meg az ajánlott adagot (pl.: 20 g)..." @bind="editProduct.Details.ServingSize" @bind:event="oninput"/>
+                                                <button class="btn btn-outline-secondary bg-white reset-btn" @onclick="() => editProduct.Details.ServingSize = product.Details.ServingSize">
+                                                    <i class="bi bi-arrow-counterclockwise"></i>
+                                                </button>
+                                            </div>
+                                            @{
+                                                var servingQuantity = GetFirstNumber(editProduct.Details.ServingSize);
+                                                if (editProduct.Details.EnergyKcal.HasValue && servingQuantity != 0)
+                                                {
+                                                    var servingCalories = (editProduct.Details.EnergyKcal * servingQuantity / 100).Value;
+                                                    <p><strong>Kalória adagonként:</strong> @servingCalories.ToString("F0") kcal</p>
+                                                }
+                                            }
+
+                                        </div>
+                                    @* } *@
+                                </div>
+                                <div class="nutrient-levels">
+                                    <h4>Tápanyagszintek</h4>
+                                    <div class="levels-grid">
+                                        @foreach (var nutrient in GetNutrientLevels())
+                                        {
+                                            <div class="level-card-edit">
+                                                <div class="level-icon">@GetNutrientIcon(nutrient.PropertyName)</div>
+                                                <div class="level-info">
+                                                    <span class="level-name">@FormatNutrientName(nutrient.PropertyName)</span>
+                                                </div>
+                                                <div class="nutrient-level-selector">
+                                                    <button type="button" 
+                                                            class="level-segment level-low @(nutrient.GetValue() == NutrientLevel.low ? "active" : "")" 
+                                                            @onclick="() => nutrient.SetValue(nutrient.GetValue() == NutrientLevel.low ? null : NutrientLevel.low)"
+                                                            title="Alacsony">
+                                                        <span class="level-label">Alacsony</span>
+                                                    </button>
+                                                    <button type="button" 
+                                                            class="level-segment level-moderate @(nutrient.GetValue() == NutrientLevel.moderate ? "active" : "")" 
+                                                            @onclick="() => nutrient.SetValue(nutrient.GetValue() == NutrientLevel.moderate ? null : NutrientLevel.moderate)"
+                                                            title="Közepes">
+                                                        <span class="level-label">Közepes</span>
+                                                    </button>
+                                                    <button type="button" 
+                                                            class="level-segment level-high @(nutrient.GetValue() == NutrientLevel.high ? "active" : "")" 
+                                                            @onclick="() => nutrient.SetValue(nutrient.GetValue() == NutrientLevel.high ? null : NutrientLevel.high)"
+                                                            title="Magas">
+                                                        <span class="level-label">Magas</span>
+                                                    </button>
+                                                </div>
+                                                <button class="btn btn-outline-secondary btn-sm reset-btn" @onclick="() => { var tempVal = nutrient.OriginalValue; nutrient.SetValue(tempVal); }">
+                                                    <i class="bi bi-arrow-counterclockwise"></i>
+                                                </button>
+                                            </div>
+                                        }
+                                    </div>
+                                </div>
+
+                            </div>
+                        </div>
+                    }
+                    else if (activeTab == "stores")
+                    {
+                        <h3>Elérhető ezekben a boltokban</h3>
+                        <div class="search-bar">
+                            <span class="bi bi-search"></span>
+                            <input @bind="SearchText" @bind:event="oninput" type="text" placeholder="Keress egy terméket vagy boltot..." class="store-search-input" />
+                        </div>
+                        <div class="stores-panel">
+                            @if (storeRoutes.Count > 0)
+                            {
+                                @foreach (var store in storeRoutes)
+                                {
+                                    <StorePreview Store="store.Value.Store" Price="store.Value.Price" DiscountedPrice="store.Value.DiscountedPrice" Route="store.Key"></StorePreview>
+                                }
+                            }
+                            else
+                            {
+                                @foreach (var store in product.ProductPerStore.Take(10))
+                                {
+                                    <StorePreview Store="store.Store" Price="store.Price" DiscountedPrice="store.DiscountedPrice"></StorePreview>
+                                }
+                            }
+                        </div>
+                    }
+                    else if (activeTab == "ingredients")
+                    {
+                        <div class="ingredients-panel">
+                            <div class="ingredients-main">
+                                <h3>🧪 Összetevők</h3>
+                                    <div class="ingredients-text">
+                                        @* @product.Details.IngredientsText *@
+                                        <div class="d-flex flex-row align-items-start gap-2">
+                                            <textarea class="form-control" rows="4" placeholder="Összetevők szövege..." @bind="editProduct.Details.IngredientsText" @bind:event="oninput"></textarea>
+                                            <button class="btn btn-outline-secondary reset-btn" @onclick="() => editProduct.Details.IngredientsText = product.Details?.IngredientsText">
+                                                <i class="bi bi-arrow-counterclockwise"></i>
+                                            </button>
+                                        </div>
+                                    </div>
+
+                                    <div class="ingredients-analysis">
+                                        <div class="d-flex flex-row align-items-center justify-content-between mb-2">
+                                            <h4 class="mb-0">Összetevő elemzés</h4>
+                                            <button class="btn btn-outline-secondary btn-sm reset-btn"
+                                                    @onclick="() => { editProduct.ProductIngredients = originalIngredients.Select(o => new ProductProductIngredient { IngredientId = o.IngredientId, Ingredient = new ProductIngredient { Id = o.IngredientId, Name = o.OriginalName }, PercentEstimate = o.OriginalPercent }).ToList(); StateHasChanged(); }"
+                                                    title="Összetevők visszaállítása">
+                                                <i class="bi bi-arrow-counterclockwise"></i>
+                                            </button>
+                                        </div>
+                                        <div class="ingredients-chart">
+                                            @* @foreach (var ingredient in product.ProductIngredients.Take(8)) *@
+                                            @* { *@
+                                            @*     var percentage = ingredient.PercentEstimate ?? 0; *@
+                                            @*     <div class="ingredient-bar"> *@
+                                            @*         <div class="ingredient-info"> *@
+                                            @*             <span class="ingredient-name">@ingredient.Ingredient.Name</span> *@
+                                            @*             <span class="ingredient-percent">@(percentage > 0 ? $"{percentage:F1}%" : "~")</span> *@
+                                            @*         </div> *@
+                                            @*         <div class="progress-bar"> *@
+                                            @*             <div class="progress-fill" style="width: @(Math.Max(percentage, 2) + "%")"></div> *@
+                                            @*         </div> *@
+                                            @*     </div> *@
+                                            @* } *@
+
+                                            @for (int idx = 0; idx < editProduct.ProductIngredients.Count; idx++)
+                                            {
+                                                var i = idx;
+                                                var ingredient = editProduct.ProductIngredients.ElementAt(i);
+                                                var original = i < originalIngredients.Count ? originalIngredients[i] : (IngredientId: ingredient.IngredientId, OriginalName: ingredient.Ingredient?.Name ?? "", OriginalPercent: ingredient.PercentEstimate);
+                                                <div class="ingredient-bar">
+                                                    <div class="d-flex flex-row align-items-center gap-2 mb-2">
+                                                        <div class="flex-grow-1">
+                                                            <AutocompleteSingleWithCreate TItem="ProductIngredient"
+                                                                Items="@availableIngredients"
+                                                                DisplayProperty="@(item => item.Name)"
+                                                                OnItemSelected="@((item) => { ingredient.IngredientId = item.Id; ingredient.Ingredient = item; StateHasChanged(); })"
+                                                                CanCreateNew="true"
+                                                                CreateNewEntity="@(name => new ProductIngredient { Name = name })"
+                                                                OnNewItemCreated="@(async item => { availableIngredients.Add(item); await CreateNewItem(item); })"
+                                                                Placeholder="@(ingredient.Ingredient?.Name ?? "Összetevő neve...")" />
+                                                        </div>
+                                                        <input class="form-control form-control-sm text-end" type="number" step="0.1" min="0" max="100" 
+                                                               style="max-width: 100px;"
+                                                               placeholder="%" 
+                                                               value="@ingredient.PercentEstimate"
+                                                               @onchange="@(e => { if (double.TryParse(e.Value?.ToString(), out var val)) ingredient.PercentEstimate = Math.Round(Math.Clamp(val, 0, 100), 1); else ingredient.PercentEstimate = null; })" />
+                                                        <span class="text-muted fw-bold">%</span>
+                                                        <button class="btn btn-outline-secondary btn-sm reset-btn" @onclick="() => { ingredient.Ingredient = new ProductIngredient { Name = original.OriginalName }; ingredient.IngredientId = original.IngredientId; ingredient.PercentEstimate = original.OriginalPercent; StateHasChanged(); }">
+                                                            <i class="bi bi-arrow-counterclockwise"></i>
+                                                        </button>
+                                                        <button class="btn btn-danger btn-sm" @onclick="() => { editProduct.ProductIngredients.Remove(ingredient); StateHasChanged(); }" title="Eltávolítás">
+                                                            <span style="color: white;">✕</span>
+                                                        </button>
+                                                    </div>
+                                                    @{
+                                                        var pct = ingredient.PercentEstimate ?? 0;
+                                                    }
+                                                    <input type="range" class="ingredient-slider" min="0" max="100" step="0.1"
+                                                           value="@pct"
+                                                           style="background: linear-gradient(to right, var(--gradient-first) 0%, var(--gradient-second) @(pct)%, #e5e7eb @(pct)%);"
+                                                           @oninput="@(e => { if (double.TryParse(e.Value?.ToString(), out var val)) ingredient.PercentEstimate = Math.Round(val, 1); })" />
+                                                </div>
+                                            }
+
+                                            <!-- Add new ingredient -->
+                                            <div class="ingredient-bar add-ingredient-bar mt-3">
+                                                <div class="d-flex flex-row align-items-center gap-2 mb-2">
+                                                    <div class="flex-grow-1">
+                                                        <AutocompleteSingleWithCreate TItem="ProductIngredient"
+                                                            @ref="newIngredientAutocomplete"
+                                                            Items="@availableIngredients"
+                                                            DisplayProperty="@(item => item.Name)"
+                                                            OnItemSelected="@((item) => { newIngredientItem = item; StateHasChanged(); })"
+                                                            CanCreateNew="true"
+                                                            CreateNewEntity="@(name => new ProductIngredient { Name = name })"
+                                                            OnNewItemCreated="@(async item => { availableIngredients.Add(item); newIngredientItem = item; await CreateNewItem(item); })"
+                                                            Placeholder="Új összetevő neve..." />
+                                                    </div>
+                                                    <input class="form-control form-control-sm text-end" type="number" step="0.1" min="0" max="100"
+                                                           style="max-width: 100px;"
+                                                           placeholder="%"
+                                                           value="@newIngredientPercent"
+                                                           @onchange="@(e => { if (double.TryParse(e.Value?.ToString(), out var val)) newIngredientPercent = Math.Round(Math.Clamp(val, 0, 100), 1); else newIngredientPercent = null; })" />
+                                                    <span class="text-muted fw-bold">%</span>
+                                                    <button class="btn btn-success btn-sm" 
+                                                            @onclick="AddNewIngredient"
+                                                            disabled="@(newIngredientItem == null)"
+                                                            title="Hozzáadás">
+                                                        <i class="bi bi-plus-lg" style="color: white;"></i>
+                                                    </button>
+                                                </div>
+                                                @{
+                                                    var newPct = newIngredientPercent ?? 0;
+                                                }
+                                                <input type="range" class="ingredient-slider" min="0" max="100" step="0.1"
+                                                       value="@newPct"
+                                                       style="background: linear-gradient(to right, var(--gradient-first) 0%, var(--gradient-second) @(newPct)%, #e5e7eb @(newPct)%);"
+                                                       @oninput="@(e => { if (double.TryParse(e.Value?.ToString(), out var val)) newIngredientPercent = Math.Round(val, 1); })" />
+                                            </div>
+                                        </div>
+                                    </div>
+
+                                <!-- Analysis Tags -->
+                                <div class="ingredient-tags">
+                                    @* @{ *@
+                                    @*     IEnumerable<string> attributes = product.Attributes?.Select(x => x.Name); *@
+                                    @*     if (attributes.Contains("palm-oil-free") == true) *@
+                                    @*     { *@
+                                    @*         <span class="analysis-tag positive">🌿 Pálmaolajmentes</span> *@
+                                    @*     } *@
+                                    @*     if (attributes.Contains("vegan") == true) *@
+                                    @*     { *@
+                                    @*         <span class="analysis-tag positive">🌱 Vegán</span> *@
+                                    @*     } *@
+                                    @*     else if (attributes.Contains("maybe-vegan") == true) *@
+                                    @*     { *@
+                                    @*         <span class="analysis-tag warning">🌱? Lehet, hogy Vegán</span> *@
+                                    @*     } *@
+                                    @*     if (attributes.Contains("vegetarian") == true) *@
+                                    @*     { *@
+                                    @*         <span class="analysis-tag positive">🥬 Vegetáriánus</span> *@
+                                    @*     } *@
+                                    @*     else if (attributes.Contains("maybe-vegetarian") == true) *@
+                                    @*     { *@
+                                    @*         <span class="analysis-tag warning">🥬? Lehet, hogy vegetáriánus</span> *@
+                                    @*     } *@
+                                    @* } *@
+                                    
+                                    <h4>🔖 Termékjellemzők</h4>
+                                    <div class="d-flex flex-row align-items-end gap-2 w-100">
+                                        <AutocompleteMultiSelect TItem="ProductAttribute"
+                                                                 Items="@availableAttributes"
+                                                                 SelectedItems="@editProduct.Attributes"
+                                                                 DisplayProperty="@(item => GetAttributeIcon(item.Name) + " " + GetAttributeDisplayName(item.Name))"
+                                                                 CanCreateNew="false"
+                                                                 OnSelectionChanged="@((items) => editProduct.Attributes = items.ToList())"
+                                                                 CreateNewEntity="@(name => new ProductAttribute { Name = name })"
+                                                                 OnNewItemCreated="@(async item => await CreateNewItem(item))"
+                                                                 Placeholder="Jellemzők keresése..." />
+                                        <button class="btn btn-outline-secondary reset-btn" @onclick="() => { editProduct.Attributes = product.Attributes.ToList(); }">
+                                            <i class="bi bi-arrow-counterclockwise"></i>
+                                        </button>
+                                    </div>
+
+                                </div>
+                            </div>
+
+                            <!-- Allergens & Additives -->
+                            <div class="warnings-section">
+                                <div class="warning-card allergens">
+                                    <h4>⚠️ Allergének</h4>
+                                    <div class="d-flex flex-row align-items-end gap-2">
+                                        <AutocompleteMultiSelect TItem="ProductAllergen"
+                                                                 Items="@availableAllergens"
+                                                                 SelectedItems="@editProduct.Allergens"
+                                                                 DisplayProperty="@(item => item.Name)"
+                                                                 OnSelectionChanged="@((items) => editProduct.Allergens = items.ToList())"
+                                                                 CreateNewEntity="@(name => new ProductAllergen { Name = name })"
+                                                                 OnNewItemCreated="@(async item => await CreateNewItem(item))"
+                                                                 Placeholder="Allergének keresése..." />
+                                        <button class="btn btn-outline-secondary reset-btn" @onclick="() => { editProduct.Allergens = product.Allergens.ToList(); }">
+                                            <i class="bi bi-arrow-counterclockwise"></i>
+                                        </button>
+                                    </div>
+                                    <p class="warning-note mt-2">Nyomokban tartalmazhat. Ellenőrizd a csomagolást a teljes információért.</p>
+                                </div>
+
+                                <div class="warning-card additives">
+                                    <h4>🧪 Adalékanyagok</h4>
+                                    <div class="additives-list">
+                                        @foreach (var additive in editProduct.Additives)
+                                        {
+                                            var additiveInfo = GetAdditiveInfo(additive.Name);
+                                            <div class="additive-edit-row">
+                                                <AdditiveInfo Additive="additiveInfo" />
+                                                <button class="btn btn-danger btn-sm additive-remove-btn"
+                                                        @onclick="() => { editProduct.Additives.Remove(additive ); StateHasChanged(); }"
+                                                        title="Eltávolítás">
+                                                    <span style="color: white;">✕</span>
+                                                </button>
+                                            </div>
+                                        }
+                                    </div>
+                                    <div class="d-flex flex-row align-items-end gap-2 mt-3">
+                                        <AutocompleteSingleWithCreate TItem="Additive"
+                                                                      Items="@(AllAdditives
+                                                                                 .Concat(availableAdditives
+                                                                                     .Where(pa => !AllAdditives.Any(a => a.Code.Equals(pa.Name, StringComparison.OrdinalIgnoreCase)))
+                                                                                     .Select(pa => GetAdditiveInfo(pa.Name)))
+                                                                                 .OrderBy(a => {
+                                                                                     int i = 1; while (i < a.Code.Length && !char.IsDigit(a.Code[i])) i++;
+                                                                                     int j = i; while (j < a.Code.Length && char.IsDigit(a.Code[j])) j++;
+                                                                                     return int.TryParse(a.Code[i..j], out var n) ? n : int.MaxValue;
+                                                                                 })
+                                                                                 .ThenBy(a => a.Code)
+                                                                                 .ToList())"
+                                                                      DisplayProperty="@(item => item.Code + " – " + item.Name)"
+                                                                      OnItemSelected="@((item) => { if (!editProduct.Additives.Any(a => a.Name == item.Code)) { editProduct.Additives.Add(new ProductAdditive { Name = item.Code }); StateHasChanged(); } })"
+                                                                      CanCreateNew="true"
+                                                                      Placeholder="Adalékanyag keresése...">
+                                            <DropdownItemTemplate Context="addItem">
+                                                <div class="additive-dropdown-item">
+                                                    <span class="additive-dropdown-code">@addItem.Code</span>
+                                                    <span class="additive-dropdown-name">@addItem.Name</span>
+                                                    @if (!string.IsNullOrEmpty(addItem.Description))
+                                                    {
+                                                        <span class="additive-dropdown-desc">@addItem.Description</span>
+                                                    }
+                                                    <span class="additive-dropdown-risk additive-risk-@addItem.Risk.ToString().ToLower()">@addItem.Risk</span>
+                                                </div>
+                                            </DropdownItemTemplate>
+                                        </AutocompleteSingleWithCreate>
+                                        <button class="btn btn-outline-secondary reset-btn" @onclick="() => { editProduct.Additives = product.Additives.ToList(); StateHasChanged(); }">
+                                            <i class="bi bi-arrow-counterclockwise"></i>
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    }
+                    else if (activeTab == "processing")
+                    {
+                        <div class="processing-panel">
+                            <div class="nova-detailed">
+                                <div class="nova-header">
+                                    <h3>⚙️ Élelmiszer feldolgozottsági szintje</h3>
+                                    <button class="btn btn-outline-secondary reset-btn" @onclick="() => editProduct.Details.NovaGroup = product.Details.NovaGroup">
+                                        <i class="bi bi-arrow-counterclockwise"></i>
+                                    </button>
+                                </div>
+                                <div class="nova-scale">
+                                    @for (int i = 1; i <= 4; i++)
+                                    {
+                                        var novaIndex = i;
+                                        <div class="nova-step @(novaIndex == editProduct.Details.NovaGroup ? "active" : "")" @onclick="() => editProduct.Details.NovaGroup = (byte)novaIndex">
+                                            <div class="nova-number-large">@novaIndex</div>
+                                            <div class="nova-info">
+                                                <h4>@GetNovaGroupTitle(novaIndex)</h4>
+                                                <p>@GetNovaGroupDescription(novaIndex)</p>
+                                                @if (novaIndex == editProduct.Details.NovaGroup)
+                                                {
+                                                    <div class="current-indicator">← Ez a termék</div>
+                                                }
+                                            </div>
+                                        </div>
+                                    }
+                                </div>
+                            </div>
+                        </div>
+                    }
+                    else if (activeTab == "packaging")
+                    {
+                        <div class="packaging-panel">
+                            <div class="d-flex flex-row align-items-center justify-content-between mb-3">
+                                <h3 class="mb-0">♻️ Csomagolás</h3>
+                                <button class="btn btn-outline-secondary btn-sm reset-btn"
+                                        @onclick="() => { editProduct.Packaging = product.Packaging.ToList(); StateHasChanged(); }"
+                                        title="Csomagolás visszaállítása">
+                                    <i class="bi bi-arrow-counterclockwise"></i>
+                                </button>
+                            </div>
+                            <div class="packaging-grid">
+                                @foreach (var packItem in editProduct.Packaging.ToList())
+                                {
+                                    <div class="packaging-card">
+                                        <div class="packaging-icon">@GetPackagingIcon(packItem.Part?.Name)</div>
+                                        <div class="packaging-details">
+                                            <div class="packaging-specs">
+                                                <div class="spec-item">
+                                                    <span class="spec-label">Rész:</span>
+                                                    <div class="flex-grow-1">
+                                                        <AutocompleteSingleWithCreate TItem="PackagingPart"
+                                                            Items="@availablePackagingParts"
+                                                            DisplayProperty="@(item => FormatPackagingName(item.Name))"
+                                                            OnItemSelected="@((item) => { packItem.Part = item; StateHasChanged(); })"
+                                                            CanCreateNew="true"
+                                                            CreateNewEntity="@(name => new PackagingPart { Name = name })"
+                                                            OnNewItemCreated="@(async item => { availablePackagingParts.Add(item); await CreateNewItem(item); })"
+                                                            Placeholder="@(packItem.Part != null ? FormatPackagingName(packItem.Part.Name) : "Rész neve...")" />
+                                                    </div>
+                                                </div>
+                                                <div class="spec-item">
+                                                    <span class="spec-label">Anyag:</span>
+                                                    <div class="flex-grow-1">
+                                                        <AutocompleteSingleWithCreate TItem="PackagingMaterial"
+                                                            Items="@availablePackagingMaterials"
+                                                            DisplayProperty="@(item => FormatPackagingName(item.Name))"
+                                                            OnItemSelected="@((item) => { packItem.Material = item; StateHasChanged(); })"
+                                                            CanCreateNew="true"
+                                                            CreateNewEntity="@(name => new PackagingMaterial { Name = name })"
+                                                            OnNewItemCreated="@(async item => { availablePackagingMaterials.Add(item); await CreateNewItem(item); })"
+                                                            Placeholder="@(packItem.Material != null ? FormatPackagingName(packItem.Material.Name) : "Anyag neve...")" />
+                                                    </div>
+                                                </div>
+                                                <div class="spec-item">
+                                                    <span class="spec-label">Mennyiség:</span>
+                                                    <input class="form-control form-control-sm" type="text"
+                                                           placeholder="pl. 1x"
+                                                           value="@packItem.QuantityPerUnit"
+                                                           @onchange="@(e => { packItem.QuantityPerUnit = e.Value?.ToString(); StateHasChanged(); })" />
+                                                </div>
+                                                <div class="spec-item">
+                                                    <span class="spec-label">Újrahasznosítás:</span>
+                                                    <div class="nutrient-level-selector">
+                                                        <button type="button"
+                                                                class="level-segment level-low @(packItem.Recyclable == true ? "active" : "")"
+                                                                @onclick="() => { packItem.Recyclable = true; StateHasChanged(); }">
+                                                            <span class="level-label">♻️ Igen</span>
+                                                        </button>
+                                                        <button type="button"
+                                                                class="level-segment level-high @(packItem.Recyclable != true ? "active" : "")"
+                                                                @onclick="() => { packItem.Recyclable = false; StateHasChanged(); }">
+                                                            <span class="level-label">🗑️ Nem</span>
+                                                        </button>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </div>
+                                        <button class="btn btn-danger btn-sm align-self-start"
+                                                @onclick="() => { editProduct.Packaging.Remove(packItem); StateHasChanged(); }"
+                                                title="Eltávolítás">
+                                            <span style="color:white;">✕</span>
+                                        </button>
+                                    </div>
+                                }
+                            </div>
+                            <button class="btn btn-outline-success btn-sm mt-2 mb-4"
+                                    @onclick="() => { editProduct.Packaging.Add(new ProductPackaging()); StateHasChanged(); }">
+                                <i class="bi bi-plus-lg"></i> Új csomagolás hozzáadása
+                            </button>
+                            <div class="environmental-impact">
+                                <h4>🌍 Környezeti hatás</h4>
+                                <div class="eco-tips">
+                                    <div class="eco-tip">
+                                        <span class="eco-icon">♻️</span>
+                                        <span>Ne felejtsd el szétválogatni a csomagolóanyagokat a megfelelő újrahasznosításhoz</span>
+                                    </div>
+                                    <div class="eco-tip">
+                                        <span class="eco-icon">🌱</span>
+                                        <span>Fontold meg olyan termékek választását, amelyek minimális vagy újrahasznosítható csomagolásúak</span>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    }
+                    else if (activeTab == "images")
+                    {
+                        <div class="images-panel">
+                            <div class="d-flex flex-row align-items-center justify-content-between mb-3">
+                                <h3 class="mb-0">📷 Termék képek</h3>
+                                <button class="btn btn-outline-secondary btn-sm reset-btn"
+                                        @onclick="ResetAllImages"
+                                        title="Összes kép visszaállítása">
+                                    <i class="bi bi-arrow-counterclockwise"></i>
+                                    <span class="ms-1">Visszaállítás</span>
+                                </button>
+                            </div>
+                            <div class="image-gallery">
+                                @foreach (var imgType in new[] { ProductImageType.Primary, ProductImageType.Nutrition, ProductImageType.Packaging, ProductImageType.Ingredients })
+                                {
+                                    var currentType = imgType;
+                                    var imageEntry = editProduct.ProductImages.FirstOrDefault(pi => pi.ImageType == currentType);
+                                    var currentUrl = imageEntry?.URL ?? string.Empty;
+                                    var isInvalidUrl = !string.IsNullOrEmpty(currentUrl) && failedImageUrls.Contains(currentUrl);
+
+                                    <div class="gallery-item edit-gallery-item">
+                                        <div class="edit-image-preview">
+                                            @if (string.IsNullOrEmpty(currentUrl))
+                                            {
+                                                <div class="image-placeholder-state">
+                                                    <span class="placeholder-icon-large">🖼️</span>
+                                                    <span class="placeholder-hint">Nincs kép kiválasztva</span>
+                                                    <span class="placeholder-sub">Adj meg egy URL-t!</span>
+                                                </div>
+                                            }
+                                            else if (isInvalidUrl)
+                                            {
+                                                <div class="image-invalid-state">
+                                                    <span class="invalid-icon">⚠️</span>
+                                                    <span class="invalid-hint">Érvénytelen link</span>
+                                                    <span class="invalid-sub">A kép nem tölthető be!</span>
+                                                </div>
+                                            }
+                                            else
+                                            {
+                                                <img src="@currentUrl"
+                                                     class="gallery-image"
+                                                     alt="@GetImageTypeText(currentType)"
+                                                     @onerror="@(() => OnImageError(currentUrl))"
+                                                     @onclick="@(() => OpenImageModal(currentUrl))" />
+                                            }
+                                        </div>
+
+                                        <div class="image-label">@GetImageTypeText(currentType)</div>
+
+                                        <div class="edit-image-input-row">
+                                            <input type="text"
+                                                   class="form-control form-control-sm @(isInvalidUrl ? "is-invalid" : "")"
+                                                   placeholder="Kép URL-je..."
+                                                   value="@currentUrl"
+                                                   @oninput="@(e => SetImageUrl(currentType, e.Value?.ToString() ?? string.Empty))" />
+                                            <button class="btn btn-outline-secondary btn-sm"
+                                                    title="Törlés"
+                                                    disabled="@string.IsNullOrEmpty(currentUrl)"
+                                                    @onclick="@(() => SetImageUrl(currentType, string.Empty))">
+                                                <span>✕</span>
+                                            </button>
+                                        </div>
+                                    </div>
+                                }
+                            </div>
+                        </div>
+                    }
+                </div>
+            </div>
+
+            <!-- Labels Section -->
+            <div class="labels-section">
+                <h3>🏷️ Termékcímkék</h3>
+                <div class="d-flex flex-row align-items-end gap-2">
+                    <AutocompleteMultiSelect TItem="ProductLabel"
+                                             Items="@availableLabels"
+                                             SelectedItems="@editProduct.Labels"
+                                             DisplayProperty="@(item => GetLabelIcon(item.Name) + " " + System.Globalization.CultureInfo.CurrentCulture.TextInfo.ToTitleCase(item.Name))"
+                                             CanCreateNew="false"
+                                             OnSelectionChanged="@((items) => editProduct.Labels = items.ToList())"
+                                             CreateNewEntity="@(name => new ProductLabel { Name = name })"
+                                             OnNewItemCreated="@(async item => await CreateNewItem(item))"
+                                             Placeholder="Címkék keresése..." />
+                    <button class="btn btn-outline-secondary reset-btn" @onclick="() => { editProduct.Labels = product.Labels.ToList(); }">
+                        <i class="bi bi-arrow-counterclockwise"></i>
+                    </button>
+                </div>
+            </div>
+
+            <!-- Fixed Action Button Island -->
+            <div class="action-island">
+                <button class="action-btn action-btn-back" @onclick="GoBack" title="Vissza a terméklapra">
+                    <i class="bi bi-arrow-left"></i>
+                    <span>Vissza</span>
+                </button>
+                <div class="action-island-divider"></div>
+                <button class="action-btn action-btn-reset" @onclick="ResetProduct" title="Összes mező visszaállítása">
+                    <i class="bi bi-arrow-counterclockwise"></i>
+                    <span>Visszaállítás</span>
+                </button>
+                <button class="action-btn action-btn-save" @onclick="SaveProduct" disabled="@isSaving" title="Változtatások mentése">
+                    <span class="btn-shine"></span>
+                    @if (isSaving)
+                    {
+                        <span class="action-spinner"></span>
+                    }
+                    else if (saveSuccess)
+                    {
+                        <i class="bi bi-check-lg"></i>
+                    }
+                    else
+                    {
+                        <i class="bi bi-floppy"></i>
+                    }
+                    <span>@(isSaving ? "Mentés..." : saveSuccess ? "Mentve!" : "Mentés")</span>
+                </button>
+            </div>
+        </div>
+    }
+
+    <!-- Image Modal -->
+    @if (showImageModal && !string.IsNullOrEmpty(modalImageUrl))
+    {
+        <div class="image-modal" @onclick="CloseImageModal">
+            <div class="modal-content @modalImageOrientation" @onclick:stopPropagation="true">
+                <img src="@modalImageUrl" alt="Product Image" class="modal-image" @onload="OnModalImageLoaded" />
+                <button class="modal-close" @onclick="CloseImageModal">✕</button>
+            </div>
+        </div>
+    }
+</div>
+
+@code {
+    [Parameter] public string? Barcode { get; set; }
+
+    private Dictionary<int, int> storeRelevanceScores = new Dictionary<int, int>();
+    private Dictionary<RouteToStore, int> routeToStoreId = new Dictionary<RouteToStore, int>();
+    private SortedList<RouteToStore, ProductPerStore> storeRoutes;
+
+    private string searchText = string.Empty;
+
+    public string SearchText
+    {
+        get { return searchText; }
+        set
+        {
+            searchText = value;
+            if (string.IsNullOrEmpty(value))
+            {
+                LoadAllStores();
+            }
+            else
+            {
+                SearchStores();
+            }
+        }
+    }
+
+    private Product? product;
+    private Product? translatedProduct;
+    private bool isLoading = false;
+    private string? errorMessage;
+    private string searchBarcode = "";
+    private string activeTab = "nutrition";
+    private bool showImageModal = false;
+    private string modalImageOrientation = "";
+    private string? modalImageUrl;
+    private bool isFromDatabase = false;
+    private string? translation;
+    private bool favourited { get; set; } = false;
+    private List<(ProductPerStore productPerStore, double distance)> storesWithDistance = new();
+    private LocationResult? userLocation;
+    private List<Additive> AllAdditives = new();
+
+    private Product editProduct = new() { Details = new ProductDetails() };
+    private List<(int IngredientId, string OriginalName, double? OriginalPercent)> originalIngredients = new();
+    private bool isSaving = false;
+    private bool saveSuccess = false;
+
+    private ProductIngredient? newIngredientItem = null;
+    private double? newIngredientPercent = null;
+    private AutocompleteSingleWithCreate<ProductIngredient>? newIngredientAutocomplete;
+    private HashSet<string> failedImageUrls = new();
+
+    private List<ProductAllergen> availableAllergens = new();
+    private List<ProductAdditive> availableAdditives = new();
+    private List<ProductLabel> availableLabels = new();
+    private List<ProductAttribute> availableAttributes = new();
+    private List<ProductBrand> availableBrands = new();
+    private List<ProductCountry> availableCountries = new();
+    private List<ProductCategory> availableCategories = new();
+    private List<ProductPackaging> availablePackaging = new();
+    private List<PackagingPart> availablePackagingParts = new();
+    private List<PackagingMaterial> availablePackagingMaterials = new();
+    private List<ProductIngredient> availableIngredients = new();
+
+    protected override async Task OnInitializedAsync()
+    {
+        if (!string.IsNullOrEmpty(Barcode))
+        {
+
+            searchBarcode = Barcode;
+            await SearchProduct();
+            await LoadAvailableItems();
+            userLocation = await LocationService.GetUserLocationAsync();
+            storeRoutes = new SortedList<RouteToStore, ProductPerStore>(
+                Comparer<RouteToStore>.Create((x, y) =>
+                {
+                    // Get relevance scores using the route-to-storeId mapping
+                    int relevanceX = routeToStoreId.TryGetValue(x, out int storeIdX)
+                        ? storeRelevanceScores.GetValueOrDefault(storeIdX, 0)
+                        : 0;
+                    int relevanceY = routeToStoreId.TryGetValue(y, out int storeIdY)
+                        ? storeRelevanceScores.GetValueOrDefault(storeIdY, 0)
+                        : 0;
+
+                    // Only use relevance sorting if at least one has relevance > 0
+                    bool hasRelevance = relevanceX > 0 || relevanceY > 0;
+
+                    if (hasRelevance)
+                    {
+                        // First compare by relevance (descending - higher is better)
+                        int relevanceCompare = relevanceY.CompareTo(relevanceX);
+                        if (relevanceCompare != 0) return relevanceCompare;
+
+                        // Separate loaded vs unloaded routes
+                        bool xLoaded = x.Duration >= 0;
+                        bool yLoaded = y.Duration >= 0;
+
+                        // Loaded routes come before unloaded routes
+                        if (xLoaded && !yLoaded) return -1;
+                        if (!xLoaded && yLoaded) return 1;
+
+                        // If both unloaded, compare by distance
+                        if (!xLoaded && !yLoaded)
+                        {
+                            return x.Distance.CompareTo(y.Distance);
+                        }
+
+                        // Both loaded - compare by duration (ascending - lower is better)
+                        int durationCompare = x.Duration.CompareTo(y.Duration);
+                        if (durationCompare != 0) return durationCompare;
+                    }
+                    else
+                    {
+                        // No relevance scores - use original sorting (duration first)
+                        int durationCompare = x.Duration.CompareTo(y.Duration);
+                        if (durationCompare != 0) return durationCompare;
+                    }
+
+                    // Then by distance (ascending - lower is better)
+                    int distanceCompare = x.Distance.CompareTo(y.Distance);
+                    if (distanceCompare != 0) return distanceCompare;
+
+                    // Final tiebreaker
+                    return x.GetHashCode().CompareTo(y.GetHashCode());
+                })
+            );
+            // StateHasChanged();
+        }
+    }
+
+    private string RemoveDiacritics(string text)
+    {
+        if (string.IsNullOrWhiteSpace(text))
+            return text;
+
+        var normalizedString = text.Normalize(NormalizationForm.FormD);
+        var stringBuilder = new StringBuilder();
+
+        foreach (var c in normalizedString)
+        {
+            var unicodeCategory = CharUnicodeInfo.GetUnicodeCategory(c);
+            if (unicodeCategory != UnicodeCategory.NonSpacingMark)
+            {
+                stringBuilder.Append(c);
+            }
+        }
+
+        return stringBuilder.ToString().Normalize(NormalizationForm.FormC);
+    }
+
+    private async Task SearchProduct()
+    {
+        if (string.IsNullOrWhiteSpace(searchBarcode)) return;
+
+        DateTime dateTime = DateTime.Now;
+        isLoading = true;
+        errorMessage = null;
+        product = null;
+        isFromDatabase = false;
+        StateHasChanged();
+
+        try
+        {
+            var dbProduct = await ProductService.GetProductAsync(searchBarcode.Trim());
+
+            if (dbProduct != null)
+            {
+                product = dbProduct;
+                translatedProduct = new();
+                Console.WriteLine($"Whole product get: {DateTime.Now - dateTime}");
+
+                _ = Task.Run(async () => await AttachRestToProduct());
+                _ = Task.Run(async () => await LoadAdditivesAsync());
+
+                //_ = Task.Run(async () => await GetTranslations()); // remove comment to enable translations -------------------------------------------------------
+            }
+            else
+            {
+                errorMessage = "A termék nem található az adatbázisban. Kérjük, ellenőrizze a vonalkódot, és próbálja újra.";
+            }
+        }
+        catch (Exception ex)
+        {
+            errorMessage = $"An error occurred while searching for the product: {ex.Message}";
+        }
+        finally
+        {
+            isLoading = false;
+
+            editProduct = new Product
+            {
+                Id = product?.Id ?? 0,
+                Code = product?.Code ?? "",
+                FromArfigyelo = product?.FromArfigyelo ?? false,
+                ProductName = product?.ProductName ?? "",
+                Description = product?.Description ?? "",
+                ProductImages = product?.ProductImages?.Select(i => new ProductImage
+                {
+                    Id = i.Id,
+                    ImageType = i.ImageType,
+                    URL = i.URL
+                }).ToList() ?? new(),
+                ProductPerStore = product?.ProductPerStore ?? null,
+                Details = new ProductDetails
+                {
+                    ProductId = product.Details?.ProductId ?? product.Id,
+                    Quantity = product?.Details?.Quantity ?? "",
+                    NutriScore = product?.Details?.NutriScore ?? NutriScore.Unknown,
+                    NovaGroup = product?.Details?.NovaGroup ?? 0,
+                    EnergyKcal = product?.Details?.EnergyKcal,
+                    Fat = product?.Details?.Fat,
+                    SaturatedFat = product?.Details?.SaturatedFat,
+                    Carbohydrates = product?.Details?.Carbohydrates,
+                    Sugars = product?.Details?.Sugars,
+                    Proteins = product?.Details?.Proteins,
+                    Salt = product?.Details?.Salt,
+                    ServingSize = product?.Details?.ServingSize,
+                    IngredientsText = product?.Details?.IngredientsText,
+                    FatLevel = product?.Details?.FatLevel,
+                    SaturatedFatLevel = product?.Details?.SaturatedFatLevel,
+                    SugarsLevel = product?.Details?.SugarsLevel,
+                    SaltLevel = product?.Details?.SaltLevel,
+                },
+                ProductIngredients = product?.ProductIngredients?.Select(pi => new ProductProductIngredient
+                {
+                    IngredientId = pi.IngredientId,
+                    Ingredient = new ProductIngredient { Name = pi.Ingredient?.Name ?? "" },
+                    PercentEstimate = pi.PercentEstimate,
+                }).ToList() ?? new(),
+                Allergens = product?.Allergens.ToList() ?? new(),
+                Additives = product?.Additives.ToList() ?? new(),
+                Labels = product?.Labels.ToList() ?? new(),
+                Attributes = product?.Attributes.ToList() ?? new(),
+                Brands = product?.Brands.ToList() ?? new(),
+                Countries = product?.Countries.ToList() ?? new(),
+                Categories = product?.Categories.ToList() ?? new(),
+                Packaging = product?.Packaging.ToList() ?? new(),
+            };
+            originalIngredients = product?.ProductIngredients?.Select(pi => (
+                pi.IngredientId,
+                pi.Ingredient?.Name ?? "",
+                pi.PercentEstimate
+            )).ToList() ?? new();
+
+            StateHasChanged();
+        }
+    }
+
+    private async Task AttachRestToProduct()
+    {
+        await ProductService.AttachRestAsync(product);
+
+        editProduct.Allergens = product?.Allergens.ToList() ?? new();
+        editProduct.Additives = product?.Additives.ToList() ?? new();
+        editProduct.Labels = product?.Labels.ToList() ?? new();
+        editProduct.Attributes = product?.Attributes.ToList() ?? new();
+        editProduct.Brands = product?.Brands.ToList() ?? new();
+        editProduct.Countries = product?.Countries.ToList() ?? new();
+        editProduct.Categories = product?.Categories.ToList() ?? new();
+        editProduct.Packaging = product?.Packaging.ToList() ?? new();
+        
+        // Populate ingredients after they are loaded by AttachRestAsync
+        editProduct.ProductIngredients = product?.ProductIngredients?.Select(pi => new ProductProductIngredient
+        {
+            IngredientId = pi.IngredientId,
+            Ingredient = new ProductIngredient { Name = pi.Ingredient?.Name ?? "" },
+            PercentEstimate = pi.PercentEstimate,
+        }).ToList() ?? new();
+        originalIngredients = product?.ProductIngredients?.Select(pi => (
+            pi.IngredientId,
+            pi.Ingredient?.Name ?? "",
+            pi.PercentEstimate
+        )).ToList() ?? new();
+
+        await SortStoresByAirDistance();
+
+        await LoadAllStores();
+
+        await InvokeAsync(StateHasChanged);
+    }
+
+    private async Task SortStoresByAirDistance()
+    {
+        if (userLocation == null) return;
+        storesWithDistance = new List<(ProductPerStore productPerStore, double distance)>();
+
+        foreach (var store in product.ProductPerStore)
+        {
+            if (double.TryParse(store.Store.Latitude, out double lat)
+                && double.TryParse(store.Store.Longitude, out double lon))
+            {
+                double airDistance = LocationService.CalculateDistance(
+                    userLocation.Latitude,
+                    userLocation.Longitude,
+                    lat,
+                    lon
+                );
+                storesWithDistance.Add((store, airDistance));
+            }
+        }
+
+        // Sort by air distance initially (no relevance yet)
+        storesWithDistance = storesWithDistance
+            .OrderBy(x => x.distance)
+            .ToList();
+    }
+
+    private async Task SortStores(List<(ProductPerStore productPerStore, double distance, int relevanceScore)> closestStores)
+    {
+        if (userLocation == null) return;
+
+        // Store relevance scores and route mappings
+        storeRelevanceScores.Clear();
+        routeToStoreId.Clear();
+
+        foreach (var storeData in closestStores)
+        {
+            storeRelevanceScores[storeData.productPerStore.Store.Id] = storeData.relevanceScore;
+        }
+
+        // Step 1: Show air distance results
+        var tempRoutes = new SortedList<RouteToStore, ProductPerStore>(storeRoutes.Comparer);
+
+        foreach (var storeData in closestStores)
+        {
+            var preliminaryRoute = new RouteToStore
+            {
+                Distance = Math.Round(storeData.distance, 1),
+                Duration = -1
+            };
+
+            routeToStoreId[preliminaryRoute] = storeData.productPerStore.Store.Id;
+            tempRoutes.Add(preliminaryRoute, storeData.productPerStore);
+        }
+
+        storeRoutes = tempRoutes;
+        await InvokeAsync(StateHasChanged);
+
+        // Step 2: Get accurate route info - ONLY for stores in closestStores
+        var routeTasks = closestStores.Select(async storeData =>
+        {
+            if (double.TryParse(storeData.productPerStore.Store.Latitude, out double lat)
+                && double.TryParse(storeData.productPerStore.Store.Longitude, out double lon))
+            {
+                var route = await LocationService.GetRouteInfoAsync(
+                    userLocation.Latitude,
+                    userLocation.Longitude,
+                    lat,
+                    lon
+                );
+
+                if (route is null) return;
+                route.Duration = Math.Round(route.Duration);
+                route.Distance = Math.Round(route.Distance, 1);
+
+                await InvokeAsync(() =>
+                {
+                    // Only update if this store is still in our filtered list
+                    if (!storeRelevanceScores.ContainsKey(storeData.productPerStore.Store.Id))
+                        return;
+
+                    var updatedRoutes = new SortedList<RouteToStore, ProductPerStore>(storeRoutes.Comparer);
+
+                    // Copy existing routes except the one we're updating
+                    foreach (var kvp in storeRoutes)
+                    {
+                        if (kvp.Value.Store.Id != storeData.productPerStore.Store.Id)
+                        {
+                            updatedRoutes.Add(kvp.Key, kvp.Value);
+                            if (routeToStoreId.ContainsKey(kvp.Key))
+                                routeToStoreId[kvp.Key] = kvp.Value.Store.Id;
+                        }
+                    }
+
+                    // Add the updated route with mapping
+                    routeToStoreId[route] = storeData.productPerStore.Store.Id;
+                    updatedRoutes.Add(route, storeData.productPerStore);
+
+                    storeRoutes = updatedRoutes;
+                    StateHasChanged();
+                });
+            }
+        }).ToList();
+
+        await Task.WhenAll(routeTasks);
+    }
+
+    class StoreSearchResult
+    {
+        public ProductPerStore ProductPerStore { get; set; }
+        public double Distance { get; set; }
+        public int RelevanceScore { get; set; }
+    }
+
+    private async Task SearchStores()
+    {
+        var searchTokens = RemoveDiacritics(SearchText.ToLower())
+            .Split(new[] { ' ', ',', '-' }, StringSplitOptions.RemoveEmptyEntries)
+            .Where(t => t.Length > 0)
+            .ToArray();
+
+        var closestStoresWithSearch = storesWithDistance
+            .Select(x =>
+            {
+                var store = x.productPerStore.Store;
+                var storeBrand = RemoveDiacritics((store.StoreBrand?.Name ?? "").ToLower());
+                var address = RemoveDiacritics((store.Address ?? "").ToLower());
+
+                // Safer city extraction
+                string city = "";
+                try
+                {
+                    var addressParts = store.Address?.Split(' ');
+                    if (addressParts != null && addressParts.Length > 1)
+                    {
+                        city = RemoveDiacritics(addressParts[1].TrimEnd(',').ToLower());
+                    }
+                }
+                catch
+                {
+                }
+
+                var fullText = $"{storeBrand} {address} {city}";
+
+                int relevanceScore = CalculateRelevanceScore(
+                    storeBrand,
+                    address,
+                    city,
+                    fullText,
+                    searchTokens,
+                    RemoveDiacritics(SearchText.ToLower())
+                );
+
+                return new StoreSearchResult
+                {
+                    ProductPerStore = x.productPerStore,
+                    Distance = x.distance,
+                    RelevanceScore = relevanceScore
+                };
+            })
+            .Where(x => x.RelevanceScore > 0) // Only include matches
+            .OrderByDescending(x => x.RelevanceScore) // Best matches first
+            .ThenBy(x => x.Distance) // Then by air distance
+            .Take(10)
+            .Select(x => (x.ProductPerStore, x.Distance, x.RelevanceScore))
+            .ToList();
+
+        await SortStores(closestStoresWithSearch);
+    }
+
+    private int CalculateRelevanceScore(
+        string storeBrand,
+        string address,
+        string city,
+        string fullText,
+        string[] searchTokens,
+        string originalSearch)
+    {
+        int score = 0;
+
+        // Exact match (highest score)
+        if (storeBrand == originalSearch) score += 1000;
+        if (address == originalSearch) score += 900;
+        if (city == originalSearch) score += 800;
+
+        // Starts with match
+        if (storeBrand.StartsWith(originalSearch)) score += 700;
+        if (address.StartsWith(originalSearch)) score += 600;
+        if (city.StartsWith(originalSearch)) score += 500;
+
+        // Contains match
+        if (storeBrand.Contains(originalSearch)) score += 400;
+        if (address.Contains(originalSearch)) score += 300;
+        if (city.Contains(originalSearch)) score += 200;
+
+        // Token matching (multi-word searches)
+        foreach (var token in searchTokens)
+        {
+            if (storeBrand.StartsWith(token)) score += 100;
+            if (address.StartsWith(token)) score += 80;
+            if (city.StartsWith(token)) score += 60;
+
+            if (storeBrand.Contains(token)) score += 50;
+            if (address.Contains(token)) score += 40;
+            if (city.Contains(token)) score += 30;
+        }
+
+        // Bonus for matching multiple tokens
+        int matchedTokens = searchTokens.Count(token => fullText.Contains(token));
+        score += matchedTokens * 20;
+
+        // Bonus for matching all tokens
+        if (searchTokens.All(token => fullText.Contains(token)))
+            score += 200;
+
+        return score;
+    }
+
+    private async Task LoadAllStores()
+    {
+        var closestStores = storesWithDistance.OrderBy(x => x.distance)
+            .Select(x => (x.productPerStore, x.distance, 0))
+            .Take(10)
+            .ToList();
+        await SortStores(closestStores);
+    }
+
+    private async Task GetTranslations()
+    {
+        translatedProduct.Description = await TranslateAsync(product.Description);
+        //translatedProduct.GenericName = product.GenericName;
+        //translatedProduct.Categories = product.Categories.Select(x => await TranslateAsync(""))
+        translatedProduct.Categories = await Translate4N(product.Categories);
+        await InvokeAsync(StateHasChanged);
+    }
+
+    private async Task<ICollection<T>> Translate4N<T>(ICollection<T> fromCollection) where T : class, INToNTable
+    {
+        List<T> collection = new List<T>();
+        foreach (var i in fromCollection)
+        {
+            var obj = (T)Activator.CreateInstance(typeof(T));
+            obj.Name = await TranslateAsync(i.Name);
+            collection.Add(obj);
+        }
+
+        return collection;
+    }
+
+    private async Task<string?> TranslateAsync(string stringToTranslate)
+    {
+        var url = "https://translate.shopscout.me/translate";
+        var apiKey = Environment.GetEnvironmentVariable("API_KEY");
+        var json = $@"{{
+            ""q"": ""{stringToTranslate}"",
+            ""source"": ""auto"",
+            ""target"": ""hu"",
+            ""format"": ""text"",
+            ""api_key"": ""{apiKey}""
+        }}";
+
+        var content = new StringContent(json, Encoding.UTF8, "application/json");
+        var response = await _client.PostAsync(url, content);
+        if (!response.IsSuccessStatusCode) return null;
+
+        var result = await response.Content.ReadFromJsonAsync<Dictionary<string, object>>();
+        return result["translatedText"] != null ? result["translatedText"].ToString() : null;
+    }
+
+    private void SearchExample(string barcode)
+    {
+        NavigationManager.NavigateTo($"/product/{barcode}");
+    }
+
+    private async Task ShowSearchForm()
+    {
+        string searchTerm = await LocalStorageService.GetValue<string>("prevUrl", "");
+        if (!string.IsNullOrWhiteSpace(searchTerm))
+        {
+            await LocalStorageService.SetValue("prevUrl", "");
+            NavigationManager.NavigateTo($"/search/{searchTerm}", true);
+        }
+        else
+        {
+            NavigationManager.NavigateTo("/");
+        }
+    }
+
+    private void GoBack()
+    {
+        if (product != null && !string.IsNullOrEmpty(product.Code))
+            NavigationManager.NavigateTo($"/product/{product.Code}");
+        else
+            NavigationManager.NavigateTo("/product");
+    }
+
+    private void SetImageUrl(ProductImageType imageType, string url)
+    {
+        var existing = editProduct.ProductImages.FirstOrDefault(pi => pi.ImageType == imageType);
+        if (existing != null)
+        {
+            // Remove old URL from error set when URL changes
+            if (!string.IsNullOrEmpty(existing.URL))
+                failedImageUrls.Remove(existing.URL);
+            existing.URL = url;
+        }
+        else
+        {
+            editProduct.ProductImages.Add(new ProductImage { ImageType = imageType, URL = url });
+        }
+        StateHasChanged();
+    }
+
+    private void ResetAllImages()
+    {
+        editProduct.ProductImages = product?.ProductImages?.Select(i => new ProductImage
+        {
+            Id = i.Id,
+            ImageType = i.ImageType,
+            URL = i.URL
+        }).ToList() ?? new();
+        failedImageUrls.Clear();
+        StateHasChanged();
+    }
+
+    private void OnImageError(string url)
+    {
+        if (!string.IsNullOrEmpty(url))
+        {
+            failedImageUrls.Add(url);
+            StateHasChanged();
+        }
+    }
+
+    private void ResetProduct()
+    {
+        if (product == null) return;
+
+        editProduct.ProductName = product.ProductName ?? string.Empty;
+        editProduct.Description = product.Description ?? string.Empty;
+        editProduct.Details.Quantity = product.Details?.Quantity ?? string.Empty;
+        editProduct.Details.NutriScore = product.Details?.NutriScore ?? NutriScore.Unknown;
+        editProduct.Details.NovaGroup = product.Details?.NovaGroup ?? 0;
+        editProduct.Details.EnergyKcal = product.Details?.EnergyKcal;
+        editProduct.Details.Fat = product.Details?.Fat;
+        editProduct.Details.SaturatedFat = product.Details?.SaturatedFat;
+        editProduct.Details.Carbohydrates = product.Details?.Carbohydrates;
+        editProduct.Details.Sugars = product.Details?.Sugars;
+        editProduct.Details.Proteins = product.Details?.Proteins;
+        editProduct.Details.Salt = product.Details?.Salt;
+        editProduct.Details.ServingSize = product.Details?.ServingSize;
+        editProduct.Details.FatLevel = product.Details?.FatLevel;
+        editProduct.Details.SaturatedFatLevel = product.Details?.SaturatedFatLevel;
+        editProduct.Details.SugarsLevel = product.Details?.SugarsLevel;
+        editProduct.Details.SaltLevel = product.Details?.SaltLevel;
+        editProduct.Allergens = product.Allergens.ToList();
+        editProduct.Additives = product.Additives.ToList();
+        editProduct.Labels = product.Labels.ToList();
+        editProduct.Attributes = product.Attributes.ToList();
+        editProduct.Brands = product.Brands.ToList();
+        editProduct.Countries = product.Countries.ToList();
+        editProduct.Categories = product.Categories.ToList();
+        editProduct.Packaging = product.Packaging.ToList();
+        editProduct.ProductIngredients = product.ProductIngredients.ToList();
+        ResetAllImages();
+
+        saveSuccess = false;
+        StateHasChanged();
+    }
+
+    private async Task SaveProduct()
+    {
+        if (product == null || isSaving) return;
+
+        isSaving = true;
+        saveSuccess = false;
+        StateHasChanged();
+
+        try
+        {
+            await AdminService.SaveProductAsync(editProduct);
+
+            saveSuccess = true;
+            StateHasChanged();
+
+            await Task.Delay(2500);
+            saveSuccess = false;
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"Error saving product: {ex.Message}");
+        }
+        finally
+        {
+            isSaving = false;
+            StateHasChanged();
+        }
+    }
+
+    private void SearchForBarcode()
+    {
+        NavigationManager.NavigateTo($"/product/{searchBarcode}");
+    }
+
+    private void GoToReader()
+    {
+        NavigationManager.NavigateTo("/reader");
+    }
+
+    private async Task OnKeyPress(KeyboardEventArgs e)
+    {
+        if (e.Key == "Enter")
+        {
+            SearchForBarcode();
+        }
+    }
+
+    private void SetActiveTab(string tab)
+    {
+        activeTab = tab;
+    }
+
+    private void OpenImageModal(string imageUrl)
+    {
+        modalImageUrl = imageUrl;
+        modalImageOrientation = "";
+        showImageModal = true;
+    }
+
+    private void CloseImageModal()
+    {
+        showImageModal = false;
+        modalImageUrl = null;
+        modalImageOrientation = "";
+    }
+
+    private async Task OnModalImageLoaded()
+    {
+        var orientation = await JSRuntime.InvokeAsync<string>("eval", @"
+            (function() {
+                var img = document.querySelector('.modal-image');
+                if (!img) return 'landscape';
+                return img.naturalWidth >= img.naturalHeight ? 'landscape' : 'portrait';
+            })()
+        ");
+        modalImageOrientation = orientation;
+        StateHasChanged();
+    }
+
+    private async Task LoadAvailableItems()
+    {
+        try
+        {
+            availableAllergens = await AdminService.GetAllAsync<ProductAllergen>();
+            availableAdditives = await AdminService.GetAllAsync<ProductAdditive>();
+            availableLabels = await AdminService.GetAllAsync<ProductLabel>();
+            availableAttributes = await AdminService.GetAllAsync<ProductAttribute>();
+            availableBrands = await AdminService.GetAllAsync<ProductBrand>();
+            availableCountries = await AdminService.GetAllAsync<ProductCountry>();
+            availableCategories = await CategoryService.GetAllBottomLayer();
+            availablePackaging = await AdminService.GetAllAsync<ProductPackaging>();
+            availablePackagingParts = await AdminService.GetAllAsync<PackagingPart>();
+            availablePackagingMaterials = await AdminService.GetAllAsync<PackagingMaterial>();
+            availableIngredients = await AdminService.GetAllAsync<ProductIngredient>();
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"Error loading available items: {ex.Message}");
+        }
+    }
+
+    private async Task CreateNewItem<T>(T item) where T : class
+    {
+        try
+        {
+            var createdItem = await AdminService.CreateNewAsync(item);
+            Console.WriteLine($"Created new item: {createdItem}");
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"Error creating new item: {ex.Message}");
+        }
+    }
+
+    private void AddNewIngredient()
+    {
+        if (newIngredientItem == null) return;
+
+        editProduct.ProductIngredients.Add(new ProductProductIngredient
+        {
+            IngredientId = newIngredientItem.Id,
+            Ingredient = new ProductIngredient { Id = newIngredientItem.Id, Name = newIngredientItem.Name },
+            PercentEstimate = newIngredientPercent
+        });
+
+        newIngredientItem = null;
+        newIngredientPercent = null;
+        newIngredientAutocomplete?.Clear();
+        StateHasChanged();
+    }
+
+    // Helper methods
+    private string GetNovaGroupTitle(int group)
+    {
+        return group switch
+        {
+            1 => "Feldolgozatlan vagy minimálisan feldolgozott élelmiszerek",
+            2 => "Feldolgozott alapanyagok, konyhai összetevők",
+            3 => "Feldolgozott élelmiszerek",
+            4 => "Ultrafeldolgozott élelmiszerek",
+            _ => "Ismeretlen"
+        };
+    }
+
+    private string GetNovaGroupDescription(int group)
+    {
+        return group switch
+        {
+            1 => "Természetes élelmiszerek minimális feldolgozással, például friss gyümölcsök, zöldségek, magvak, tojás és friss hús.",
+            2 => "Természetes élelmiszerekből kivont alapanyagok, például olajok, vaj, cukor és só.",
+            3 => "Egyszerűen feldolgozott élelmiszerek, amelyeket hozzávalók hozzáadásával készítenek, például konzerv zöldségek, sajt és kenyér.",
+            4 => "Ultrafeldolgozott élelmiszerek sok mesterséges összetevővel, például üdítők, kekszek és instant élelmiszerek.",
+            _ => "A feldolgozottsági szint nem meghatározott"
+        };
+    }
+
+    private string FormatNutrientName(string name)
+    {
+        return name.ToLower().Replace("level", "") switch
+        {
+            "saturatedfat" => "Telített zsírsavak",
+            "salt" => "Só",
+            "sugars" => "Cukor",
+            "fat" => "Zsír",
+            _ => System.Globalization.CultureInfo.CurrentCulture.TextInfo.ToTitleCase(name.Replace("-", " "))
+        };
+    }
+
+    private string GetNutrientIcon(string nutrient)
+    {
+        return nutrient.ToLower().Replace("level", "") switch
+        {
+            "fat" => "🧈",
+            "saturatedfat" => "🥩",
+            "sugars" => "🍯",
+            "salt" => "🧂",
+            _ => "📊"
+        };
+    }
+
+    private string GetTranslatedNutritionLevel(NutrientLevel level)
+    {
+        return level.ToString().ToUpper() switch
+        {
+            "LOW" => "ALACSONY",
+            "MODERATE" => "KÖZEPES",
+            "HIGH" => "MAGAS",
+            _ => "UNKNOWN"
+        };
+    }
+
+    private string GetImageTypeText(ProductImageType type)
+    {
+        return type switch
+        {
+            ProductImageType.Primary => "Termék eleje",
+            ProductImageType.Nutrition => "Tápértékadatok",
+            ProductImageType.Packaging => "Csomagolás",
+            ProductImageType.Ingredients => "Összetevők",
+            _ => "Ismeretlen"
+        };
+    }
+
+    private double GetLevelWidth(NutrientLevel level)
+    {
+        return level.ToString().ToUpper() switch
+        {
+            "LOW" => 33,
+            "MODERATE" => 66,
+            "HIGH" => 100,
+            _ => 0
+        };
+    }
+
+    private List<NutrientLevelInfo> GetNutrientLevels()
+    {
+        return new List<NutrientLevelInfo>
+        {
+            new NutrientLevelInfo("FatLevel", () => editProduct.Details.FatLevel, v => editProduct.Details.FatLevel = v, product.Details.FatLevel),
+            new NutrientLevelInfo("SaturatedFatLevel", () => editProduct.Details.SaturatedFatLevel, v => editProduct.Details.SaturatedFatLevel = v, product.Details.SaturatedFatLevel),
+            new NutrientLevelInfo("SugarsLevel", () => editProduct.Details.SugarsLevel, v => editProduct.Details.SugarsLevel = v, product.Details.SugarsLevel),
+            new NutrientLevelInfo("SaltLevel", () => editProduct.Details.SaltLevel, v => editProduct.Details.SaltLevel = v, product.Details.SaltLevel)
+        };
+    }
+
+    private class NutrientLevelInfo
+    {
+        public string PropertyName { get; }
+        public Func<NutrientLevel?> GetValue { get; }
+        public Action<NutrientLevel?> SetValue { get; }
+        public NutrientLevel? OriginalValue { get; }
+
+        public NutrientLevelInfo(string propertyName, Func<NutrientLevel?> getValue, Action<NutrientLevel?> setValue, NutrientLevel? originalValue)
+        {
+            PropertyName = propertyName;
+            GetValue = getValue;
+            SetValue = setValue;
+            OriginalValue = originalValue;
+        }
+    }
+
+    private string FormatPackagingName(string? name)
+    {
+        if (string.IsNullOrEmpty(name)) return "Unknown";
+        var formatted = name.Replace("en:", "").Replace("-", " ").Replace("_", " ");
+        return System.Globalization.CultureInfo.CurrentCulture.TextInfo.ToTitleCase(formatted);
+    }
+
+    private string GetPackagingIcon(string? shape)
+    {
+        return shape?.ToLower() switch
+        {
+            var s when s?.Contains("bottle") == true => "🍼",
+            var s when s?.Contains("can") == true => "🥫",
+            var s when s?.Contains("box") == true => "📦",
+            var s when s?.Contains("bag") == true => "👜",
+            var s when s?.Contains("jar") == true => "🫙",
+            var s when s?.Contains("cap") == true => "🔘",
+            var s when s?.Contains("lid") == true => "🔴",
+            _ => "📦"
+        };
+    }
+
+    private string GetLabelIcon(string label)
+    {
+        return label.ToLower() switch
+        {
+            var l when l.Contains("organic") => "🌿",
+            var l when l.Contains("fair") => "⚖️",
+            var l when l.Contains("gluten") => "🌾",
+            var l when l.Contains("vegan") => "🌱",
+            var l when l.Contains("vegetarian") => "🥬",
+            var l when l.Contains("halal") => "☪️",
+            var l when l.Contains("kosher") => "✡️",
+            var l when l.Contains("bio") => "🧬",
+            var l when l.Contains("natural") => "🍃",
+            _ => "🏷️"
+        };
+    }
+
+    private string GetAttributeIcon(string attribute)
+    {
+        return attribute.ToLower() switch
+        {
+            var a when a.Contains("palm-oil-free") => "🌿",
+            var a when a.Contains("palm-oil") => "🌴",
+            var a when a.Contains("vegan") && a.Contains("maybe") => "🌱?",
+            var a when a.Contains("vegan") => "🌱",
+            var a when a.Contains("vegetarian") && a.Contains("maybe") => "🥬?",
+            var a when a.Contains("vegetarian") => "🥬",
+            _ => "🔖"
+        };
+    }
+
+    private string GetAttributeDisplayName(string attribute)
+    {
+        return attribute.ToLower() switch
+        {
+            "palm-oil-free" => "Pálmaolajmentes",
+            "palm-oil" => "Pálmaolajat tartalmaz",
+            "vegan" => "Vegán",
+            "maybe-vegan" => "Lehet, hogy Vegán",
+            "vegetarian" => "Vegetáriánus",
+            "maybe-vegetarian" => "Lehet, hogy vegetáriánus",
+            _ => System.Globalization.CultureInfo.CurrentCulture.TextInfo.ToTitleCase(attribute.Replace("-", " "))
+        };
+    }
+
+    private List<NutrientData> GetNutrientData()
+    {
+        var nutrients = new List<NutrientData>();
+
+        if (product?.Details == null) return nutrients;
+
+        if (product.Details.Fat.HasValue)
+        {
+            nutrients.Add(new NutrientData
+            {
+                Name = "Zsír",
+                Value = product.Details.Fat.Value,
+                Unit = "g",
+                IsMain = true,
+                PercentDV = CalculatePercentDV(product.Details.Fat, 70)
+            });
+        }
+
+        if (product.Details.SaturatedFat.HasValue)
+        {
+            nutrients.Add(new NutrientData
+            {
+                Name = "Amelyből telített zsírsavak",
+                Value = product.Details.SaturatedFat.Value,
+                Unit = "g",
+                IsMain = false,
+                PercentDV = CalculatePercentDV(product.Details.SaturatedFat, 20)
+            });
+        }
+
+        if (product.Details.Carbohydrates.HasValue)
+        {
+            nutrients.Add(new NutrientData
+            {
+                Name = "Szénhidrát",
+                Value = product.Details.Carbohydrates.Value,
+                Unit = "g",
+                IsMain = true,
+                PercentDV = CalculatePercentDV(product.Details.Carbohydrates, 260)
+            });
+        }
+
+        if (product.Details.Sugars.HasValue)
+        {
+            nutrients.Add(new NutrientData
+            {
+                Name = "Amelyből Cukrok",
+                Value = product.Details.Sugars.Value,
+                Unit = "g",
+                IsMain = false,
+                PercentDV = CalculatePercentDV(product.Details.Sugars, 90)
+            });
+        }
+
+        if (product.Details.Proteins.HasValue)
+        {
+            nutrients.Add(new NutrientData
+            {
+                Name = "Fehérje",
+                Value = product.Details.Proteins.Value,
+                Unit = "g",
+                IsMain = true,
+                PercentDV = CalculatePercentDV(product.Details.Proteins, 50)
+            });
+        }
+
+        if (product.Details.Salt.HasValue)
+        {
+            nutrients.Add(new NutrientData
+            {
+                Name = "Só",
+                Value = product.Details.Salt.Value,
+                Unit = "g",
+                IsMain = true,
+                PercentDV = CalculatePercentDV(product.Details.Salt, 6)
+            });
+        }
+
+        return nutrients;
+    }
+
+    private int? CalculatePercentDV(double? value, double dailyValue)
+    {
+        return (int)Math.Round(((value ?? 0) / dailyValue) * 100);
+    }
+
+    private async Task LoadAdditivesAsync()
+    {
+        var data = await _client.GetStringAsync("https://app.shopscout.me/additives.json");
+
+        var jsonDoc = JsonDocument.Parse(data);
+
+        var categories = jsonDoc.RootElement.GetProperty("categories");
+
+        foreach (var category in categories.EnumerateArray())
+        {
+            var categoryName = category.GetProperty("name").GetString();
+            var items = category.GetProperty("items");
+
+            foreach (var item in items.EnumerateArray())
+            {
+                AllAdditives.Add(new Additive
+                {
+                    Code = item.GetProperty("code").GetString(),
+                    Name = item.GetProperty("name").GetString(),
+                    Description = item.GetProperty("description").GetString(),
+                    Type = categoryName,
+                    Risk = (AdditiveRiskLevel)item.GetProperty("safety_level").GetInt32()
+                });
+            }
+        }
+
+        await InvokeAsync(StateHasChanged);
+    }
+
+    private Additive GetAdditiveInfo(string additiveCode)
+    {
+        var additive = AllAdditives.FirstOrDefault(a => a.Code.Equals(additiveCode, StringComparison.OrdinalIgnoreCase));
+        if (additive == null)
+        {
+            // Only try stripping a trailing letter if the code ends with a letter after three digits
+            // e.g. E150a => try E150, but keep the original code (E150a) in the returned additive
+            if (additiveCode.Length > 4 && char.IsLetter(additiveCode[^1]) && char.IsLetter(additiveCode[4]))
+            {
+                var strippedCode = additiveCode.Substring(0, 4);
+                var baseAdditive = AllAdditives.FirstOrDefault(a => a.Code.Equals(strippedCode, StringComparison.OrdinalIgnoreCase));
+                if (baseAdditive != null)
+                {
+                    additive = new Additive
+                    {
+                        Code = additiveCode,
+                        Name = baseAdditive.Name,
+                        Type = baseAdditive.Type,
+                        Description = baseAdditive.Description,
+                        Risk = baseAdditive.Risk
+                    };
+                }
+            }
+        }
+
+        if (additive == null)
+        {
+            additive = new()
+            {
+                Code = additiveCode,
+                Name = additiveCode,
+                Type = "Élelmiszer-adalékanyag",
+                Description = "",
+                Risk = AdditiveRiskLevel.Unknown
+            };
+        }
+
+        return additive;
+    }
+
+    public static double GetFirstNumber(string input)
+    {
+        if (string.IsNullOrEmpty(input))
+            return 0;
+
+        int endIndex = 0;
+        for (int i = 0; i < input.Length; i++)
+        {
+            if (char.IsDigit(input[i]) || input[i] == '.')
+                endIndex = i + 1;
+            else
+                break;
+        }
+
+        if (endIndex > 0)
+        {
+            string numberPart = input.Substring(0, endIndex);
+            if (double.TryParse(numberPart, out double result))
+            {
+                return result;
+            }
+        }
+
+        return 0;
+    }
+   
+
+    public class NutrientData
+    {
+        public string Name { get; set; } = "";
+        public double Value { get; set; }
+        public string Unit { get; set; } = "";
+        public bool IsMain { get; set; }
+        public int? PercentDV { get; set; }
+    }
+
+}

@@ -1,0 +1,327 @@
+﻿.scanner-container {
+    position: relative;
+    height: 100vh;
+    width: 100%;
+    display: none;
+}
+
+.scanner-container.show {
+    display: block;
+}
+
+video {
+    position: absolute;
+    top: 0;
+    height: 100vh;
+    width: 100vw;
+    z-index: 1;
+    object-fit: cover;
+}
+
+/* Overlay gradient */
+.overlay-gradient {
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: linear-gradient(to bottom, rgba(0,0,0,0.2), transparent, rgba(0,0,0,0.2));
+    z-index: 2;
+}
+
+/* Top controls */
+.top-controls {
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    padding: 1rem;
+    z-index: 10;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+/* Button base styles */
+._btn {
+    padding: 0.5rem 1rem;
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    border-radius: 0.5rem;
+    background: rgba(0, 0, 0, 0.5);
+    backdrop-filter: blur(12px);
+    color: white;
+    font-size: 0.875rem;
+    font-weight: 500;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    transition: all 0.15s ease;
+    height: 39px
+}
+
+.btn:hover {
+    background: rgba(0, 0, 0, 0.7);
+}
+
+.btn-flashlight {
+    background: rgba(0, 0, 0, 0.5);
+}
+
+.btn-flashlight.active {
+    background: rgba(155, 212, 97, 0.7);
+}
+
+/* Custom Dropdown */
+.dropdown {
+    position: relative;
+    display: inline-block;
+    width: 12rem;
+}
+
+.dropdown-trigger {
+    width: 100%;
+    padding: 0.5rem .75rem;
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    border-radius: 0.5rem;
+    background: rgba(0, 0, 0, 0.5);
+    backdrop-filter: blur(12px);
+    color: white;
+    font-size: 0.875rem;
+    font-weight: 400;
+    cursor: pointer;
+    outline: none;
+    transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    text-align: left;
+}
+
+.dropdown-arrow {
+    width: 1rem;
+    height: 1rem;
+    transition: transform 0.2s ease;
+    flex-shrink: 0;
+}
+
+.dropdown-trigger.open .dropdown-arrow {
+    transform: rotate(180deg);
+}
+
+.dropdown-content {
+    position: absolute;
+    top: 100%;
+    left: 0;
+    right: 0;
+    z-index: 50;
+    margin-top: 0.5rem;
+    background: rgba(20, 20, 20, 0.95);
+    backdrop-filter: blur(20px);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    border-radius: 0.75rem;
+    overflow: hidden;
+    box-shadow: 0 10px 25px rgba(0, 0, 0, 0.5), 0 0 0 1px rgba(255, 255, 255, 0.05);
+    opacity: 0;
+    pointer-events: none;
+    transform: translateY(-10px) scale(0.95);
+    transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.dropdown-text {
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    max-width: 85%;
+}
+
+.dropdown-content.open {
+    opacity: 1;
+    pointer-events: all;
+    transform: translateY(0) scale(1);
+}
+
+::deep .dropdown-content > div {
+    padding: 0.75rem 1rem;
+    color: white;
+    cursor: pointer;
+    font-size: 0.875rem;
+    transition: all 0.15s ease;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+    display: flex;
+    align-items: center;
+    position: relative;
+    overflow: hidden;
+}
+
+::deep .dropdown-content > div:last-child {
+    border-bottom: none;
+}
+
+::deep .dropdown-content > div.selected {
+    background: rgba(255, 255, 255, 0.1);
+    color: #ffffff;
+    padding-right: 2rem;
+}
+
+::deep .dropdown-content > div.selected::after {
+    content: '✓';
+    position: absolute;
+    right: 1rem;
+    color: #4ade80;
+}
+
+/* Backdrop overlay */
+.dropdown-backdrop {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    z-index: 40;
+    background: transparent;
+    opacity: 0;
+    visibility: hidden;
+    transition: all 0.2s ease;
+}
+
+.dropdown-backdrop.open {
+    opacity: 1;
+    visibility: visible;
+}
+
+/* Scanning area */
+.scanning-area {
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    z-index: 5;
+    display: flex;
+    justify-content: center;
+    flex-direction: column;
+    align-items: center;
+}
+
+.frame-border {
+    width: 80%;
+    height: 8rem;
+    position: relative;
+}
+
+/* Corner brackets */
+.corner {
+    position: absolute;
+    width: 2rem;
+    height: 2rem;
+    border: 4px solid white;
+}
+
+.corner.top-left {
+    top: 0;
+    left: 0;
+    border-right: none;
+    border-bottom: none;
+    border-top-left-radius: 0.5rem;
+}
+
+.corner.top-right {
+    top: 0;
+    right: 0;
+    border-left: none;
+    border-bottom: none;
+    border-top-right-radius: 0.5rem;
+}
+
+.corner.bottom-left {
+    bottom: 0;
+    left: 0;
+    border-right: none;
+    border-top: none;
+    border-bottom-left-radius: 0.5rem;
+}
+
+.corner.bottom-right {
+    bottom: 0;
+    right: 0;
+    border-left: none;
+    border-top: none;
+    border-bottom-right-radius: 0.5rem;
+}
+
+/* Scanning line */
+.scanning-line {
+    position: absolute;
+    left: 0;
+    right: 0;
+    top: 50%;
+    height: 2px;
+    background: rgba(255, 255, 255, 0.6);
+    animation: pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+}
+
+/* Instructions */
+.instructions {
+    color: white;
+    text-align: center;
+    margin-top: 3rem;
+    background: rgba(0, 0, 0, 0.5);
+    backdrop-filter: blur(8px);
+    padding: 0.5rem 1rem;
+    border-radius: 0.5rem;
+    font-size: 1rem;
+}
+
+/* Bottom status */
+.bottom-status {
+    position: absolute;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    padding: 1rem;
+    z-index: 10;
+    display: flex;
+    justify-content: center;
+}
+
+.status-bar {
+    background: rgba(0, 0, 0, 0.5);
+    backdrop-filter: blur(12px);
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    border-radius: 0.5rem;
+    padding: 0.5rem 1rem;
+    color: white;
+    font-size: 0.875rem;
+    max-width: 90%;
+}
+
+/* Icons */
+.icon {
+    width: 1rem;
+    height: 1rem;
+    display: inline-block;
+}
+
+/* Animations */
+@keyframes pulse {
+    0%, 100% {
+        opacity: 1;
+    }
+
+    50% {
+        opacity: 0.5;
+    }
+}
+
+@media only screen and (max-width: 375px) {
+    .top-controls {
+        padding: 1rem .4rem
+    }
+}
+
+@media only screen and (max-width: 350px) {
+    ._btn {
+        padding: .5rem;
+    }
+}

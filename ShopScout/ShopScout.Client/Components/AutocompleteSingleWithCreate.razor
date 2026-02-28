@@ -1,0 +1,317 @@
+﻿@typeparam TItem
+@implements IDisposable
+
+<div class="autocomplete-single">
+    <div class="autocomplete-input-wrapper">
+        <input type="text"
+               class="form-control"
+               value="@searchText"
+               @oninput="OnInput"
+               @onfocus="OnFocus"
+               @onblur="OnBlur"
+               placeholder="@Placeholder" />
+
+        @if (showDropdown && (filteredItems.Any() || !string.IsNullOrWhiteSpace(searchText)))
+        {
+        <div class="autocomplete-dropdown">
+            @foreach (var item in filteredItems)
+            {
+            <div class="autocomplete-item" @onmousedown="() => SelectItem(item)" @onmousedown:preventDefault>
+                @if (DropdownItemTemplate != null)
+                {
+                @DropdownItemTemplate(item)
+                }
+                else
+                {
+                @DisplayProperty(item)
+                }
+            </div>
+            }
+
+            @if (!string.IsNullOrWhiteSpace(searchText) && !ItemExists(searchText) && CanCreateNew)
+            {
+            <div class="autocomplete-item create-new" @onmousedown="CreateNewItem" @onmousedown:preventDefault>
+                <strong>+ Új létrehozása:</strong> @searchText
+            </div>
+            }
+            else if (!string.IsNullOrWhiteSpace(searchText) && ItemExists(searchText) && !filteredItems.Any())
+            {
+            <div class="autocomplete-item already-exists">
+                "<strong>@searchText</strong>" már létezik
+            </div>
+            }
+        </div>
+        }
+
+        @if (CanCreateNew)
+        {
+        <button type="button"
+                class="btn-create-new @(isCreating ? "creating" : "")"
+                @onclick="CreateNewItem"
+                disabled="@(string.IsNullOrWhiteSpace(searchText) || isCreating || ItemExists(searchText))">
+            @if (isCreating)
+            {
+            <span>Létrehozás...</span>
+            }
+            else if (justCreated)
+            {
+            <span>✓ Létrehozva</span>
+            }
+            else
+            {
+            <span>+ Új</span>
+            }
+        </button>
+        }
+    </div>
+
+    @if (justCreated && !string.IsNullOrWhiteSpace(lastCreatedName))
+    {
+    <div class="success-message">
+        ✓ "<strong>@lastCreatedName</strong>" Létrehozva
+    </div>
+    }
+</div>
+
+<style>
+    .autocomplete-single {
+        width: 100%;
+    }
+
+    .autocomplete-input-wrapper {
+        position: relative;
+        display: flex;
+        gap: 8px;
+    }
+
+    .autocomplete-input-wrapper input {
+        flex: 1;
+    }
+
+    .btn-create-new {
+        background: #28a745;
+        color: white;
+        border: none;
+        border-radius: 4px;
+        padding: 8px 12px;
+        cursor: pointer;
+        font-size: 14px;
+        white-space: nowrap;
+    }
+
+    .btn-create-new:hover:not(:disabled) {
+        background: #218838;
+    }
+
+    .btn-create-new:disabled {
+        background: #ccc;
+        cursor: not-allowed;
+    }
+
+    .btn-create-new.creating {
+        background: #ffc107;
+        color: #000;
+    }
+
+    .success-message {
+        margin-top: 8px;
+        padding: 8px 12px;
+        background: #d4edda;
+        border: 1px solid #c3e6cb;
+        border-radius: 4px;
+        color: #155724;
+        font-size: 14px;
+        animation: slideDown 0.3s ease-out;
+    }
+
+    @@keyframes slideDown {
+        from {
+            opacity: 0;
+            transform: translateY(-10px);
+        }
+
+        to {
+            opacity: 1;
+            transform: translateY(0);
+        }
+    }
+
+    .autocomplete-dropdown {
+        position: absolute;
+        top: 100%;
+        left: 0;
+        right: 0;
+        background: white;
+        border: 1px solid #ddd;
+        border-radius: 4px;
+        max-height: 300px;
+        overflow-y: auto;
+        z-index: 1000;
+        box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+        margin-top: 4px;
+    }
+
+    .autocomplete-item {
+        padding: 10px;
+        cursor: pointer;
+        border-bottom: 1px solid #f0f0f0;
+    }
+
+    .autocomplete-item:hover {
+        background: #f8f9fa;
+    }
+
+    .autocomplete-item:last-child {
+        border-bottom: none;
+    }
+
+    .autocomplete-item.create-new {
+        background: #e7f5ff;
+        color: #0066cc;
+    }
+
+    .autocomplete-item.create-new:hover {
+        background: #d0ebff;
+    }
+
+    .autocomplete-item.already-exists {
+        background: #fff3cd;
+        color: #856404;
+        cursor: default;
+    }
+</style>
+
+@code {
+    [Parameter] public List<TItem> Items { get; set; } = new();
+
+    [Parameter] public Func<TItem, string> DisplayProperty { get; set; } = item => item?.ToString() ?? "";
+
+    [Parameter] public RenderFragment<TItem>? DropdownItemTemplate { get; set; }
+
+    [Parameter] public EventCallback<TItem> OnItemSelected { get; set; }
+
+    [Parameter] public string Placeholder { get; set; } = "Search...";
+
+    [Parameter] public bool CanCreateNew { get; set; } = true;
+
+    [Parameter] public Func<string, TItem>? CreateNewEntity { get; set; }
+
+    [Parameter] public EventCallback<TItem> OnNewItemCreated { get; set; }
+
+    private string searchText = "";
+    private bool showDropdown = false;
+    private List<TItem> filteredItems = new();
+    private bool isCreating = false;
+    private bool justCreated = false;
+    private string lastCreatedName = "";
+    private System.Threading.Timer? successTimer;
+
+    protected override void OnParametersSet()
+    {
+        FilterItems();
+    }
+
+    private void OnInput(ChangeEventArgs e)
+    {
+        searchText = e.Value?.ToString() ?? "";
+        FilterItems();
+        StateHasChanged();
+    }
+
+    private bool ItemExists(string name)
+    {
+        return Items.Any(item => DisplayProperty(item).Equals(name, StringComparison.OrdinalIgnoreCase));
+    }
+
+    private void FilterItems()
+    {
+        if (string.IsNullOrWhiteSpace(searchText))
+        {
+            filteredItems = Items.ToList();
+        }
+        else
+        {
+            filteredItems = Items.Where(item => DisplayProperty(item).Contains(searchText, StringComparison.OrdinalIgnoreCase))
+                                 .OrderByDescending(item => DisplayProperty(item).Equals(searchText, StringComparison.OrdinalIgnoreCase))
+                                 .ThenBy(item => DisplayProperty(item))
+                                 .ToList();
+        }
+    }
+
+    private void OnFocus()
+    {
+        showDropdown = true;
+        FilterItems();
+    }
+
+    private async Task OnBlur()
+    {
+        await Task.Delay(300);
+        showDropdown = false;
+    }
+
+    private async Task SelectItem(TItem item)
+    {
+        searchText = DisplayProperty(item);
+        showDropdown = false;
+        await OnItemSelected.InvokeAsync(item);
+    }
+
+    private async Task CreateNewItem()
+    {
+        if (string.IsNullOrWhiteSpace(searchText) || CreateNewEntity == null || isCreating)
+            return;
+
+        isCreating = true;
+        lastCreatedName = searchText;
+        StateHasChanged();
+
+        try
+        {
+            var newItem = CreateNewEntity(searchText);
+            await OnNewItemCreated.InvokeAsync(newItem);
+
+            // Add to items list and select it
+            Items.Add(newItem);
+
+            // Show success state
+            isCreating = false;
+            justCreated = true;
+            StateHasChanged();
+
+            // Reset success message after 3 seconds
+            successTimer?.Dispose();
+            successTimer = new System.Threading.Timer(_ =>
+            {
+                InvokeAsync(() =>
+                {
+                    justCreated = false;
+                    StateHasChanged();
+                });
+            }, null, 3000, System.Threading.Timeout.Infinite);
+
+            await SelectItem(newItem);
+        }
+        catch
+        {
+            isCreating = false;
+            justCreated = false;
+            StateHasChanged();
+        }
+    }
+
+    public void Clear()
+    {
+        searchText = "";
+        showDropdown = false;
+        filteredItems = Items.ToList();
+        StateHasChanged();
+    }
+
+    public void Dispose()
+
+    {
+        successTimer?.Dispose();
+    }
+
+}

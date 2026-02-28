@@ -1,0 +1,225 @@
+﻿@page "/Account/Login"
+
+@using System.ComponentModel.DataAnnotations
+@using Microsoft.AspNetCore.Authentication
+@using Microsoft.AspNetCore.Identity
+@using ShopScout.Client.Layout
+@using ShopScout.Data
+@using ShopScout.SharedLib.Models
+
+@inject UserManager<ApplicationUser> UserManager
+@inject SignInManager<ApplicationUser> SignInManager
+@inject ILogger<Login> Logger
+@inject NavigationManager NavigationManager
+@inject IdentityRedirectManager RedirectManager
+
+<PageTitle>Log in</PageTitle>
+<HeadContent>
+    <link href="/css/login-register.css" rel="stylesheet" />
+</HeadContent>
+
+<div class="_container hide">
+    <!-- Left Side - Image -->
+    <div class="image-side">
+        <img src="/img/supermarket.webp" alt="Supermarket aisle">
+        <div class="image-overlay"></div>
+        <div class="image-content">
+            <div class="top-logo">
+                <div class="logo-box">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <circle cx="8" cy="21" r="1" />
+                        <circle cx="19" cy="21" r="1" />
+                        <path d="M2.05 2.05h2l2.66 12.42a2 2 0 0 0 2 1.58h9.78a2 2 0 0 0 1.95-1.57l1.65-7.43H5.12" />
+                    </svg>
+                </div>
+
+                <a href="/">
+                    <h1>ShopScout</h1>
+                </a>
+            </div>
+            <div class="bottom-content">
+                <h2>Vásárolj okosabban, használd a ShopScoutot!</h2>
+                <p>Nincs több céltalan bolyongás, találd meg azonnal, amit keresel!</p>
+            </div>
+        </div>
+    </div>
+
+    <!-- Right Side - Login Form -->
+    <div class="form-side">
+        <div class="form-container">
+            <div class="mobile-logo">
+                <div class="mobile-logo-box">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <circle cx="8" cy="21" r="1" />
+                        <circle cx="19" cy="21" r="1" />
+                        <path d="M2.05 2.05h2l2.66 12.42a2 2 0 0 0 2 1.58h9.78a2 2 0 0 0 1.95-1.57l1.65-7.43H5.12" />
+                    </svg>
+                </div>
+                <h1>ShopScout</h1>
+            </div>
+
+            <button type="button" class="btn-back" onclick="history.back()">
+                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                    <line x1="19" y1="12" x2="5" y2="12"></line>
+                    <polyline points="12 19 5 12 12 5"></polyline>
+                </svg>
+                Vissza
+            </button>
+
+            <div class="welcome">
+                <h2>Üdv újra itt!</h2>
+                <p>Jelentkezz be a gördülékeny vásárláshoz</p>
+            </div>
+
+            <StatusMessage Message="@errorMessage" />
+            <EditForm Model="Input" method="post" OnValidSubmit="LoginUser" FormName="login" class="login-form">
+                <div class="form-group">
+                    <label for="Input.Email">Email</label>
+                    <InputText @bind-Value="Input.Email" class="email-inp" id="Input.Email" autocomplete="username" aria-required="true" placeholder="pelda@email.com" />
+                    <ValidationMessage For="() => Input.Email" class="text-danger" />
+                </div>
+
+                <div class="form-group">
+                    <div class="form-header">
+                        <label for="Input.Password">Jelszó</label>
+                        <a href="Account/ForgotPassword" class="forgot-password">Elfelejtetted a jelszavad?</a>
+                    </div>
+                    <InputText type="password" @bind-Value="Input.Password" id="Input.Password" class="pass-inp" autocomplete="current-password" aria-required="true" placeholder="Írd be a jelszavad" />
+                    <ValidationMessage For="() => Input.Password" class="text-danger" />
+                </div>
+
+                <div class="checkbox-container">
+                    <!-- This is the actual form input (not visible) -->
+                    <InputCheckbox @bind-Value="Input.RememberMe"
+                                   id="rememberMeCheckbox"
+                                   style="position: absolute; opacity: 0; pointer-events: none;" />
+
+                    <!-- Visual checkbox button -->
+                    <button role="checkbox"
+                            type="button"
+                            class="checkbox @(Input.RememberMe ? "checked" : "")"
+                            id="customCheckbox"
+                            onclick="toggleCheckbox(event)">
+                        <svg viewBox="0 0 24 24">
+                            <path d="M20 6 9 17l-5-5"></path>
+                        </svg>
+                    </button>
+
+                    <label onclick="toggleCheckbox(event)" style="cursor: pointer;">
+                        Bejelentkezve maradok
+                    </label>
+                </div>
+
+                <button type="submit" class="btn-primary">Bejelentkezés</button>
+
+                
+            </EditForm>
+
+            <div class="divider">
+                <div class="divider-line">
+                    <div></div>
+                </div>
+                <div class="divider-text">
+                    <span>Vagy folytasd ezzel</span>
+                </div>
+            </div>
+
+            <form class="form-horizontal" action="Account/PerformExternalLogin" method="post">
+                <AntiforgeryToken />
+                <input type="hidden" name="ReturnUrl" value="@ReturnUrl" />
+                <button type="submit" class="btn-outline" value="Google" name="provider">
+                    <svg viewBox="0 0 24 24">
+                        <path d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z" fill="#4285F4" />
+                        <path d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z" fill="#34A853" />
+                        <path d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z" fill="#FBBC05" />
+                        <path d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z" fill="#EA4335" />
+                    </svg>
+                    Google
+                </button>
+            </form>
+
+            <p class="footer">
+                Nincs még fiókod?
+                <a href="/account/register">Regisztrálj most ingyen</a>
+            </p>
+
+            <a href="/impressum" class="terms-link text-center w-100 d-block">Impresszum</a>
+        </div>
+    </div>
+</div>
+
+@code {
+    [SupplyParameterFromQuery]
+    public string? errorMessage { get; set; } = "";
+
+    [CascadingParameter]
+    private HttpContext HttpContext { get; set; } = default!;
+
+    [SupplyParameterFromForm]
+    private InputModel Input { get; set; } = new();
+
+    [SupplyParameterFromQuery]
+    private string? ReturnUrl { get; set; }
+
+    protected override async Task OnInitializedAsync()
+    {
+        if (HttpMethods.IsGet(HttpContext.Request.Method))
+        {
+            // Clear the existing external cookie to ensure a clean login process
+            await HttpContext.SignOutAsync(IdentityConstants.ExternalScheme);
+        }
+    }
+
+    public async Task LoginUser()
+    {
+        var user = await UserManager.FindByEmailAsync(Input.Email);
+        if (user == null)
+        {
+            InvalidLogin();
+        }
+
+        var result = await SignInManager.PasswordSignInAsync(user, Input.Password, Input.RememberMe, lockoutOnFailure: false);
+        if (result.Succeeded)
+        {
+            Logger.LogInformation("User logged in.");
+            user.LastLoginTime = DateTime.Now;
+            await UserManager.UpdateAsync(user);
+            RedirectManager.RedirectTo(ReturnUrl);
+        }
+        else if (result.RequiresTwoFactor)
+        {
+            RedirectManager.RedirectTo(
+                "Account/LoginWith2fa",
+                new() { ["returnUrl"] = ReturnUrl, ["rememberMe"] = Input.RememberMe });
+        }
+        else if (result.IsLockedOut)
+        {
+            Logger.LogWarning("User account locked out.");
+            RedirectManager.RedirectTo("Account/Lockout");
+        }
+        else
+        {
+            InvalidLogin();
+        }
+    }
+
+    private void InvalidLogin()
+    {
+        var error = Uri.EscapeDataString("err: Hibás email vagy jelszó.");
+        NavigationManager.NavigateTo($"/Account/Login?errorMessage={error}", true);
+    }
+
+    private sealed class InputModel
+    {
+        [Required]
+        [EmailAddress]
+        public string Email { get; set; } = "";
+
+        [Required]
+        [DataType(DataType.Password)]
+        public string Password { get; set; } = "";
+
+        [Display(Name = "Remember me?")]
+        public bool RememberMe { get; set; }
+    }
+}

@@ -1,0 +1,42 @@
+﻿@if (!string.IsNullOrEmpty(DisplayMessage))
+{
+    var status = DisplayMessage.StartsWith("err: ");
+    @if (status)
+    {
+        <div class="alert alert-danger m-4 text-break" role="alert">
+            @DisplayMessage.Split("err: ")[1]
+        </div>
+    }
+    else
+    {
+        <div class="alert alert-success m-4 text-break" role="alert">
+            @DisplayMessage
+        </div>
+    }
+
+}
+
+@code {
+    private string? messageFromCookie;
+
+    [Parameter]
+    public string? Message { get; set; }
+
+    [CascadingParameter]
+    private HttpContext? HttpContext { get; set; } = default!;
+
+    private string? DisplayMessage => Message ?? messageFromCookie;
+
+    protected override void OnInitialized()
+    {
+        if (Message is not null) return;
+        if (HttpContext is null) return;
+
+        messageFromCookie = HttpContext.Request.Cookies[IdentityRedirectManager.StatusCookieName];
+
+        if (messageFromCookie is not null)
+        {
+            HttpContext.Response.Cookies.Delete(IdentityRedirectManager.StatusCookieName);
+        }
+    }
+}

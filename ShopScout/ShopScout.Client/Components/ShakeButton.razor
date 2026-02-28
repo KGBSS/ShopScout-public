@@ -1,0 +1,50 @@
+﻿@implements IDisposable
+
+<button class="tool-button @(IsSelected ? "active" : "") @cssClass" style="@Style" @onclick="@(() => OnSelected.InvokeAsync(Value))">
+    @ChildContent
+</button>
+
+@code {
+    [Parameter] public RenderFragment? ChildContent { get; set; }
+
+    [Parameter] public bool IsSelected { get; set; }
+
+    [Parameter] public object Value { get; set; } = default!;
+
+    [Parameter] public EventCallback<object> OnSelected { get; set; }
+
+    [Parameter] public ShakeButtonState? ShakeButtonState { get; set; }
+
+    [Parameter] public String? Style { get; set; }
+
+    private String cssClass = "";
+    private Action<object>? shakeHandler;
+
+    protected override void OnInitialized ()
+    {
+        if (ShakeButtonState != null && shakeHandler == null)
+        {
+            shakeHandler = new Action<object>(async v =>
+            {
+                if (EqualityComparer<object>.Default.Equals(v, Value))
+                {
+                    cssClass = "shake";
+                    StateHasChanged();
+                    await Task.Delay(500);
+                    cssClass = "";
+                    StateHasChanged();
+                }
+            });
+
+            ShakeButtonState.OnReject += shakeHandler;
+        }
+    }
+
+    public void Dispose()
+    {
+        if (shakeHandler != null && ShakeButtonState != null)
+        {
+            ShakeButtonState.OnReject -= shakeHandler;
+        }
+    }
+}

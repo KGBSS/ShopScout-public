@@ -1,0 +1,248 @@
+﻿:root {
+    --green-50: #f0fdf4;
+    --green-100: #dcfce7;
+    --green-200: #bbf7d0;
+    --green-300: #86efac;
+    --green-400: #4ade80;
+    --green-500: #22c55e;
+    --green-600: #16a34a;
+    --green-700: #15803d;
+    --green-800: #166534;
+    --green-900: #14532d;
+    --red-50: #fef2f2;
+    --red-100: #fee2e2;
+    --red-500: #ef4444;
+    --red-600: #dc2626;
+    --red-700: #b91c1c;
+    --red-800: #991b1b;
+    --red-900: #7f1d1d;
+    --yellow-50: #fefce8;
+    --yellow-200: #fef08a;
+    --yellow-800: #854d0e;
+    --yellow-900: #713f12
+}
+
+body {
+    background-color: #f9fafb;
+    min-height: 100vh
+}
+
+.sticky-header {
+    position: sticky;
+    top: 0;
+    background-color: rgba(255,255,255,.8);
+    backdrop-filter: blur(8px);
+    border-bottom: 1px solid var(--green-100);
+    padding: 1rem;
+    z-index: 10
+}
+
+.header-content {
+    margin: 0 auto;
+    display: flex;
+    align-items: center;
+    justify-content: space-between
+}
+
+.back-btn {
+    width: 2.5rem;
+    height: 2.5rem;
+    border: none;
+    background: 0 0;
+    color: var(--green-700);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: .375rem;
+    cursor: pointer
+}
+
+    .back-btn:hover {
+        background-color: var(--green-100)
+    }
+
+.header-title {
+    color: var(--green-900);
+    font-size: 1.125rem;
+    font-weight: 600;
+    margin: 0
+}
+
+.content-wrapper {
+    max-width: 600px;
+    margin: 0 auto;
+    padding: 1rem;
+    padding-bottom: 2rem
+}
+
+.card {
+    background: #fff;
+    border-radius: .5rem;
+    padding: 1.5rem;
+    margin-top: 1rem;
+    box-shadow: 0 0 6px -1px #00000032,0 0 4px -2px #00000032
+}
+
+.card-green {
+    border: 1px solid var(--green-100)
+}
+
+.card-red {
+    border: 1px solid var(--red-100)
+}
+
+.section-header {
+    display: flex;
+    align-items: flex-start;
+    gap: .75rem;
+    margin-bottom: 1rem
+}
+
+.icon-circle {
+    width: 2.5rem;
+    height: 2.5rem;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0
+}
+
+.icon-circle-green {
+    background-color: var(--green-100)
+}
+
+.icon-circle-red {
+    background-color: var(--red-100)
+}
+
+.icon-circle svg {
+    width: 1.25rem;
+    height: 1.25rem
+}
+
+.icon-circle-green svg {
+    color: var(--green-700)
+}
+
+.icon-circle-red svg {
+    color: var(--red-700)
+}
+
+.section-title {
+    color: var(--green-900);
+    font-size: 1.125rem;
+    font-weight: 600;
+    margin: 0 0 .25rem 0
+}
+
+.section-title-red {
+    color: var(--red-900)
+}
+
+.section-description {
+    color: var(--green-600);
+    font-size: .875rem;
+    margin: 0
+}
+
+.section-description-red {
+    color: var(--red-600)
+}
+
+.info-box {
+    background-color: var(--green-50);
+    border-radius: .5rem;
+    padding: 1rem;
+    margin-bottom: 1rem
+}
+
+.info-box-red {
+    background-color: var(--red-50)
+}
+
+.info-box ul {
+    list-style: none;
+    padding: 0;
+    margin: 0
+}
+
+.info-box li {
+    display: flex;
+    align-items: flex-start;
+    gap: .5rem;
+    color: var(--green-700);
+    margin-bottom: .5rem
+}
+
+.info-box li:last-child {
+    margin-bottom: 0
+}
+
+.info-box-red li {
+    color: var(--red-700)
+}
+
+.bullet {
+    color: var(--green-600);
+    font-weight: 700
+}
+
+.bullet-red {
+    color: var(--red-500)
+}
+
+.warning-text {
+    color: var(--red-800);
+    margin-bottom: .75rem
+}
+
+.btn-download {
+    width: 100%;
+    background-color: var(--green-600);
+    color: #fff;
+    border: none;
+    padding: .625rem 1rem;
+    border-radius: .375rem;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: .5rem;
+    cursor: pointer;
+    font-weight: 500
+}
+
+.btn-download:hover {
+    background-color: var(--green-700)
+}
+
+.btn-delete {
+    width: 100%;
+    background-color: var(--red-600);
+    color: #fff;
+    border: none;
+    padding: .625rem 1rem;
+    border-radius: .375rem;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: .5rem;
+    cursor: pointer;
+    font-weight: 500;
+    text-decoration: none
+}
+
+.btn-delete:hover {
+    background-color: var(--red-700)
+}
+
+.warning-card-text {
+    color: var(--yellow-800);
+    font-size: .875rem;
+    margin: 0
+}
+
+.icon-sm {
+    width: 1rem;
+    height: 1rem
+}

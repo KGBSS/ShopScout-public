@@ -1,0 +1,55 @@
+﻿@if (showModal)
+{
+    <div class="modal fade @(fadeIn ? "show" : "") d-block" id="layoutModal" style="background-color: rgba(0, 0, 0, 0.5);" @onclick="() => Close(false)">
+        <div class="modal-dialog modal-dialog-centered" @onclick:stopPropagation="true">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h1 class="modal-title fs-5">@title</h1>
+                    <button type="button" class="btn-close" @onclick="() => Close(false)"></button>
+                </div>
+                <div class="modal-body">
+                    <p>@body</p>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" @onclick="() => Close(false)">@falseText</button>
+                    <button type="button" class="btn btn-primary" @onclick="() => Close(true)">@trueText</button>
+                </div>
+            </div>
+        </div>
+    </div>
+}
+
+@code {
+    private TaskCompletionSource<bool> _tcs;
+    private bool showModal = false;
+    private bool fadeIn = false;
+    private string title = "";
+    private string body = "";
+    private string falseText = "";
+    private string trueText = "";
+
+    public async Task<bool> Show(string title, string body, string falseText, string trueText)
+    {
+        this.title = title;
+        this.body = body;
+        this.falseText = falseText;
+        this.trueText = trueText;
+        _tcs = new TaskCompletionSource<bool>();
+        showModal = true;
+        StateHasChanged();
+        await Task.Delay(100); // Allow time for the modal to render
+        fadeIn = true;
+        StateHasChanged();
+        return await _tcs.Task;
+    }
+
+    private async Task Close(bool result)
+    {
+        fadeIn = false;
+        StateHasChanged();
+        await Task.Delay(300); // Wait for fade-out animation to complete
+        showModal = false;
+        StateHasChanged();
+        if (_tcs != null) _tcs.SetResult(result);
+    }
+}

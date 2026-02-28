@@ -1,0 +1,54 @@
+﻿.content-wrapper {
+    max-width: 800px;
+}
+
+.platform-title {
+    color: var(--green-800);
+    font-size: 1.25rem;
+    font-weight: 600;
+    margin-bottom: 1rem;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+.platform-icon-svg {
+    width: 28px;
+    height: 28px;
+    flex-shrink: 0;
+}
+
+.platform-title-spacing {
+    margin-top: 1rem;
+}
+
+.screenshot {
+    background: var(--green-50);
+    border: 2px dashed var(--green-300);
+    border-radius: 8px;
+    padding: 1rem;
+    margin-top: 1rem;
+}
+
+.screenshot-img {
+    max-width: 100%;
+    height: auto;
+    border-radius: 4px;
+    display: block;
+    margin-bottom: 0.5rem;
+}
+
+.screenshot-hint {
+    font-size: 0.875rem;
+    color: var(--green-800);
+    font-style: italic;
+    margin: 0;
+}
+
+.pwa-alert-spacing {
+    margin-bottom: 1.5rem;
+}
+
+.tip-card-spacing {
+    margin-top: 0;
+}

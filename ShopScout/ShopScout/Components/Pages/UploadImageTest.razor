@@ -1,0 +1,51 @@
+﻿@* @page "/uploadimage"
+@using ShopScout.Services
+@rendermode InteractiveServer
+@inject IImageStorageService ImageStorage
+
+<CascadingAuthenticationState>
+    <AuthorizeView Roles="Admin">
+        <InputFile OnChange="HandleFileSelected" accept="image/*" />
+        <a href="@imageUrl">@imageUrl</a>
+        <img src="@imageUrl" alt="the image will be displayed here" />
+        @code {
+            string imageUrl = "";
+            private async Task HandleFileSelected(InputFileChangeEventArgs e)
+            {
+                var file = e.File;
+
+                if (file != null)
+                {
+                    try
+                    {
+                        var formFile = await ConvertToFormFile(file);
+
+                        imageUrl = await ImageStorage.SaveImageAsync(formFile, "5900247000786");
+                        StateHasChanged();
+                        
+                        // Save imageUrl to your database
+                        // product.ImageUrl = imageUrl;
+                    }
+                    catch (Exception ex)
+                    {
+                        // Show error message
+                    }
+                }
+            }
+
+            private async Task<IFormFile> ConvertToFormFile(IBrowserFile file)
+            {
+                var stream = file.OpenReadStream(maxAllowedSize: 5 * 1024 * 1024);
+                var memoryStream = new MemoryStream();
+                await stream.CopyToAsync(memoryStream);
+                memoryStream.Position = 0;
+
+                return new FormFile(memoryStream, 0, memoryStream.Length, file.Name, file.Name)
+                {
+                    Headers = new HeaderDictionary(),
+                    ContentType = file.ContentType
+                };
+            }
+        }
+    </AuthorizeView>
+</CascadingAuthenticationState> *@

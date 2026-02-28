@@ -1,0 +1,446 @@
+@using ShopScout.SharedLib.Models
+@using ShopScout.SharedLib.Services
+@inject IAdminService AdminService
+
+@if (IsOpen)
+{
+    <div class="filter-backdrop" @onclick="CloseModal">
+        <div class="filter-modal" @onclick:stopPropagation>
+            <div class="filter-header">
+                <h2>Szűrők</h2>
+                <button class="filter-close-btn" @onclick="CloseModal">
+                    <i class="bi bi-x-lg"></i>
+                </button>
+            </div>
+
+            <div class="filter-body">
+                @if (isLoading)
+                {
+                    <div class="filter-loading">
+                        <div class="filter-spinner"></div>
+                        <span>Szűrők betöltése...</span>
+                    </div>
+                }
+                else
+                {
+                    <!-- FromArfigyelo toggle -->
+                    <div class="filter-section">
+                        <label class="filter-label">Forrás</label>
+                        <div class="filter-toggle-group">
+                            <button class="filter-toggle @(draft.FromArfigyelo == null ? "active" : "")"
+                                    @onclick='() => draft.FromArfigyelo = null'>Mindkettő</button>
+                            <button class="filter-toggle @(draft.FromArfigyelo == true ? "active" : "")"
+                                    @onclick='() => draft.FromArfigyelo = true'>Árfigyelő</button>
+                            <button class="filter-toggle @(draft.FromArfigyelo == false ? "active" : "")"
+                                    @onclick='() => draft.FromArfigyelo = false'>Egyéb</button>
+                        </div>
+                    </div>
+
+                    <div class="filter-section">
+                        <label class="filter-label">Allergének</label>
+                        <AutocompleteMultiSelect TItem="ProductAllergen"
+                            Items="allAllergens"
+                            SelectedItems="selectedAllergens"
+                            DisplayProperty="x => x.Name"
+                            Placeholder="Allergén keresése..."
+                            CanCreateNew="false"
+                            OnSelectionChanged="items => selectedAllergens = items.ToList()" />
+                    </div>
+
+                    <div class="filter-section">
+                        <label class="filter-label">Címkék</label>
+                        <AutocompleteMultiSelect TItem="ProductLabel"
+                            Items="allLabels"
+                            SelectedItems="selectedLabels"
+                            DisplayProperty="x => x.Name"
+                            Placeholder="Címke keresése..."
+                            CanCreateNew="false"
+                            OnSelectionChanged="items => selectedLabels = items.ToList()" />
+                    </div>
+
+                    <div class="filter-section">
+                        <label class="filter-label">Attribútumok</label>
+                        <AutocompleteMultiSelect TItem="ProductAttribute"
+                            Items="allAttributes"
+                            SelectedItems="selectedAttributes"
+                            DisplayProperty="x => x.Name"
+                            Placeholder="Attribútum keresése..."
+                            CanCreateNew="false"
+                            OnSelectionChanged="items => selectedAttributes = items.ToList()" />
+                    </div>
+
+                    <div class="filter-section">
+                        <label class="filter-label">Márkák</label>
+                        <AutocompleteMultiSelect TItem="ProductBrand"
+                            Items="allBrands"
+                            SelectedItems="selectedBrands"
+                            DisplayProperty="x => x.Name"
+                            Placeholder="Márka keresése..."
+                            CanCreateNew="false"
+                            OnSelectionChanged="items => selectedBrands = items.ToList()" />
+                    </div>
+
+                    <div class="filter-section">
+                        <label class="filter-label">Országok</label>
+                        <AutocompleteMultiSelect TItem="ProductCountry"
+                            Items="allCountries"
+                            SelectedItems="selectedCountries"
+                            DisplayProperty="x => x.Name"
+                            Placeholder="Ország keresése..."
+                            CanCreateNew="false"
+                            OnSelectionChanged="items => selectedCountries = items.ToList()" />
+                    </div>
+
+                    <div class="filter-section">
+                        <label class="filter-label">Kategóriák</label>
+                        <AutocompleteMultiSelect TItem="ProductCategory"
+                            Items="allCategories"
+                            SelectedItems="selectedCategories"
+                            DisplayProperty="x => x.Name"
+                            Placeholder="Kategória keresése..."
+                            CanCreateNew="false"
+                            OnSelectionChanged="items => selectedCategories = items.ToList()" />
+                    </div>
+
+                    <div class="filter-section">
+                        <label class="filter-label">Bolt láncok</label>
+                        <AutocompleteMultiSelect TItem="StoreBrand"
+                            Items="allStoreBrands"
+                            SelectedItems="selectedStoreBrands"
+                            DisplayProperty="x => x.Name"
+                            Placeholder="Bolt lánc keresése..."
+                            CanCreateNew="false"
+                            OnSelectionChanged="items => selectedStoreBrands = items.ToList()" />
+                    </div>
+                }
+            </div>
+
+            <div class="filter-footer">
+                <button class="filter-reset-btn" @onclick="ResetFilters">
+                    <i class="bi bi-x-circle"></i> Törlés
+                </button>
+                <button class="filter-apply-btn" @onclick="ApplyFilters">
+                    <i class="bi bi-check-lg"></i> Alkalmaz
+                </button>
+            </div>
+        </div>
+    </div>
+}
+
+<style>
+    .filter-backdrop {
+        position: fixed;
+        inset: 0;
+        background: rgba(0,0,0,0.45);
+        backdrop-filter: blur(4px);
+        -webkit-backdrop-filter: blur(4px);
+        z-index: 1000;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        animation: backdropIn 0.2s ease;
+    }
+
+    @@keyframes backdropIn {
+        from { opacity: 0; }
+        to { opacity: 1; }
+    }
+
+    .filter-modal {
+        background: #fff;
+        border-radius: 24px;
+        width: calc(100% - 32px);
+        max-width: 600px;
+        max-height: 85vh;
+        display: flex;
+        flex-direction: column;
+        animation: scaleIn 0.25s cubic-bezier(0.34, 1.56, 0.64, 1);
+        box-shadow: 0 16px 48px rgba(0,0,0,0.22);
+        overflow: hidden;
+    }
+
+    @@keyframes scaleIn {
+        from { transform: scale(0.92); opacity: 0; }
+        to { transform: scale(1); opacity: 1; }
+    }
+
+    .filter-header {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        padding: 20px 24px 16px;
+        border-bottom: 1px solid #f0f0f0;
+    }
+
+    .filter-header h2 {
+        margin: 0;
+        font-size: 1.25rem;
+        font-weight: 700;
+        color: #1a1a2e;
+    }
+
+    .filter-close-btn {
+        background: #f3f4f6;
+        border: none;
+        border-radius: 50%;
+        width: 36px;
+        height: 36px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        cursor: pointer;
+        font-size: 1rem;
+        color: #6b7280;
+        transition: background 0.15s ease;
+    }
+
+    .filter-close-btn:hover { background: #e5e7eb; }
+
+    .filter-body {
+        overflow-y: auto;
+        padding: 16px 24px;
+        flex: 1;
+        display: flex;
+        flex-direction: column;
+        gap: 20px;
+    }
+
+    .filter-section {
+        display: flex;
+        flex-direction: column;
+        gap: 8px;
+    }
+
+    .filter-label {
+        font-size: 0.82rem;
+        font-weight: 600;
+        color: #6b7280;
+        text-transform: uppercase;
+        letter-spacing: 0.04em;
+    }
+
+    .filter-toggle-group {
+        display: flex;
+        gap: 8px;
+        flex-wrap: wrap;
+    }
+
+    .filter-toggle {
+        padding: 6px 16px;
+        border-radius: 50px;
+        border: 1.5px solid #e5e7eb;
+        background: transparent;
+        font-size: 0.85rem;
+        cursor: pointer;
+        color: #374151;
+        transition: all 0.15s ease;
+    }
+
+    .filter-toggle.active {
+        background: var(--gradient, linear-gradient(135deg,#00b09b,#96c93d));
+        border-color: transparent;
+        color: white;
+        font-weight: 600;
+    }
+
+    .filter-toggle:not(.active):hover {
+        background: #f3f4f6;
+    }
+
+    .filter-footer {
+        display: flex;
+        gap: 12px;
+        padding: 16px 24px;
+        border-top: 1px solid #f0f0f0;
+    }
+
+    .filter-reset-btn {
+        flex: 1;
+        padding: 12px;
+        border-radius: 50px;
+        border: 1.5px solid #e5e7eb;
+        background: transparent;
+        font-size: 0.9rem;
+        cursor: pointer;
+        color: #6b7280;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 6px;
+        transition: all 0.15s ease;
+    }
+
+    .filter-reset-btn:hover { background: #f3f4f6; }
+
+    .filter-apply-btn {
+        flex: 2;
+        padding: 12px;
+        border-radius: 50px;
+        border: none;
+        background: var(--gradient, linear-gradient(135deg,#00b09b,#96c93d));
+        color: white;
+        font-size: 0.95rem;
+        font-weight: 600;
+        cursor: pointer;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 6px;
+        transition: filter 0.15s ease, transform 0.15s ease;
+    }
+
+    .filter-apply-btn:hover { filter: brightness(1.08); transform: translateY(-1px); }
+    .filter-apply-btn:active { transform: translateY(0); }
+
+    .filter-loading {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        gap: 14px;
+        padding: 40px 0;
+        color: #6b7280;
+    }
+
+    .filter-spinner {
+        width: 36px;
+        height: 36px;
+        border: 3px solid #e5e7eb;
+        border-top-color: #00b09b;
+        border-radius: 50%;
+        animation: filterSpin 0.7s linear infinite;
+    }
+
+    @@keyframes filterSpin {
+        to { transform: rotate(360deg); }
+    }
+
+    /* Override autocomplete dropdown for modal (higher z-index) */
+    .filter-body .autocomplete-dropdown {
+        z-index: 1100;
+    }
+    .filter-body .selected-tag {
+        background: var(--gradient, linear-gradient(135deg,#00b09b,#96c93d));
+    }
+</style>
+
+@code {
+    [Parameter] public bool IsOpen { get; set; }
+    [Parameter] public EventCallback OnClose { get; set; }
+    [Parameter] public EventCallback<ProductFilterParams> OnApply { get; set; }
+    [Parameter] public EventCallback<Dictionary<string, string>> OnLabelsReady { get; set; }
+    [Parameter] public ProductFilterParams CurrentFilters { get; set; } = new();
+
+    private bool isLoading = true;
+    private bool dataLoaded = false;
+    private ProductFilterDraft draft = new();
+
+    private List<ProductAllergen> allAllergens = new();
+    private List<ProductLabel> allLabels = new();
+    private List<ProductAttribute> allAttributes = new();
+    private List<ProductBrand> allBrands = new();
+    private List<ProductCountry> allCountries = new();
+    private List<ProductCategory> allCategories = new();
+    private List<StoreBrand> allStoreBrands = new();
+
+    private List<ProductAllergen> selectedAllergens = new();
+    private List<ProductLabel> selectedLabels = new();
+    private List<ProductAttribute> selectedAttributes = new();
+    private List<ProductBrand> selectedBrands = new();
+    private List<ProductCountry> selectedCountries = new();
+    private List<ProductCategory> selectedCategories = new();
+    private List<StoreBrand> selectedStoreBrands = new();
+
+    private bool wasOpen = false;
+
+    protected override async Task OnParametersSetAsync()
+    {
+        if (IsOpen && !wasOpen)
+        {
+            // Modal just opened — load data (once) and always sync selections
+            if (!dataLoaded)
+            {
+                isLoading = true;
+                await LoadDataAsync();
+                dataLoaded = true;
+                isLoading = false;
+            }
+            SyncFromCurrentFilters();
+        }
+        wasOpen = IsOpen;
+    }
+
+    private async Task LoadDataAsync()
+    {
+        allAllergens = await AdminService.GetAllAsync<ProductAllergen>();
+        allLabels = await AdminService.GetAllAsync<ProductLabel>();
+        allAttributes = await AdminService.GetAllAsync<ProductAttribute>();
+        allBrands = await AdminService.GetAllAsync<ProductBrand>();
+        allCountries = await AdminService.GetAllAsync<ProductCountry>();
+        allCategories = await AdminService.GetAllAsync<ProductCategory>();
+        allStoreBrands = await AdminService.GetAllAsync<StoreBrand>();
+    }
+
+    private void SyncFromCurrentFilters()
+    {
+        draft.FromArfigyelo = CurrentFilters.FromArfigyelo;
+        selectedAllergens = allAllergens.Where(x => CurrentFilters.AllergenIds.Contains(x.Id)).ToList();
+        selectedLabels = allLabels.Where(x => CurrentFilters.LabelIds.Contains(x.Id)).ToList();
+        selectedAttributes = allAttributes.Where(x => CurrentFilters.AttributeIds.Contains(x.Id)).ToList();
+        selectedBrands = allBrands.Where(x => CurrentFilters.BrandIds.Contains(x.Id)).ToList();
+        selectedCountries = allCountries.Where(x => CurrentFilters.CountryIds.Contains(x.Id)).ToList();
+        selectedCategories = allCategories.Where(x => CurrentFilters.CategoryIds.Contains(x.Id)).ToList();
+        selectedStoreBrands = allStoreBrands.Where(x => CurrentFilters.StoreBrandIds.Contains(x.Id)).ToList();
+    }
+
+    private async Task ApplyFilters()
+    {
+        var result = new ProductFilterParams
+        {
+            FromArfigyelo = draft.FromArfigyelo,
+            AllergenIds = selectedAllergens.Select(x => x.Id).ToList(),
+            LabelIds = selectedLabels.Select(x => x.Id).ToList(),
+            AttributeIds = selectedAttributes.Select(x => x.Id).ToList(),
+            BrandIds = selectedBrands.Select(x => x.Id).ToList(),
+            CountryIds = selectedCountries.Select(x => x.Id).ToList(),
+            CategoryIds = selectedCategories.Select(x => x.Id).ToList(),
+            StoreBrandIds = selectedStoreBrands.Select(x => x.Id).ToList(),
+        };
+
+        // Build labels dictionary from already-loaded data
+        var labels = new Dictionary<string, string>();
+        foreach (var x in selectedAllergens) labels[$"allergen_{x.Id}"] = x.Name;
+        foreach (var x in selectedLabels) labels[$"label_{x.Id}"] = x.Name;
+        foreach (var x in selectedAttributes) labels[$"attr_{x.Id}"] = x.Name;
+        foreach (var x in selectedBrands) labels[$"brand_{x.Id}"] = x.Name;
+        foreach (var x in selectedCountries) labels[$"country_{x.Id}"] = x.Name;
+        foreach (var x in selectedCategories) labels[$"cat_{x.Id}"] = x.Name;
+        foreach (var x in selectedStoreBrands) labels[$"storebrand_{x.Id}"] = x.Name;
+
+        await OnLabelsReady.InvokeAsync(labels);
+        await CloseModal();
+        await OnApply.InvokeAsync(result);
+    }
+
+    private void ResetFilters()
+    {
+        draft = new();
+        selectedAllergens.Clear();
+        selectedLabels.Clear();
+        selectedAttributes.Clear();
+        selectedBrands.Clear();
+        selectedCountries.Clear();
+        selectedCategories.Clear();
+        selectedStoreBrands.Clear();
+    }
+
+    private async Task CloseModal() => await OnClose.InvokeAsync();
+
+    private class ProductFilterDraft
+    {
+        public bool? FromArfigyelo { get; set; }
+    }
+}
+
+
+
+

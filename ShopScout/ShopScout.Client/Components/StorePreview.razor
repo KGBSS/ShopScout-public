@@ -1,0 +1,70 @@
+﻿@namespace ShopScout.Client.Components
+@using ShopScout.SharedLib.Models
+@inject NavigationManager NavigationManager
+
+<a class="store-card" href="/shop/@Store.Id">
+    <div class="store-header">
+        @if (Store.Verified)
+        {
+            <VerifiedBadge WhiteBg="true" />
+        }
+
+        <div class="store-brand-name">@(Store.StoreBrand?.Name ?? "Ismeretlen bolt")</div>
+        @if (!string.IsNullOrWhiteSpace(Store.Address))
+        {
+            <div class="store-address">@Store.Address</div>
+        }
+    </div>
+    @if (Price.HasValue || Route != null)
+    {
+        <div class="store-content @(Price.HasValue ? "" : "no-price")">
+            @if (Route != null)
+            {
+                <div class="store-info-row">
+                    @if (Route.Distance > 0)
+                    {
+                        <div class="store-info-item">
+                            <svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                                <path d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7zm0 9.5c-1.38 0-2.5-1.12-2.5-2.5s1.12-2.5 2.5-2.5 2.5 1.12 2.5 2.5-1.12 2.5-2.5 2.5z" />
+                            </svg>
+                            <span class="store-info-label">@Route.Distance km</span>
+                        </div>
+                    }
+
+                    @if (Route.Duration > 0)
+                    {
+                        <div class="store-info-item">
+                            <svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                                <path d="M11.99 2C6.47 2 2 6.48 2 12s4.47 10 9.99 10C17.52 22 22 17.52 22 12S17.52 2 11.99 2zM12 20c-4.42 0-8-3.58-8-8s3.58-8 8-8 8 3.58 8 8-3.58 8-8 8zm.5-13H11v6l5.25 3.15.75-1.23-4.5-2.67z" />
+                            </svg>
+                            <span class="store-info-label">@Route.Duration perc</span>
+                        </div>
+                    }
+                </div>
+            }
+
+            @if (Price.HasValue)
+            {
+                <div class="store-pricing">
+                    @if (DiscountedPrice.HasValue)
+                    {
+                        <span class="store-price has-discount">@DiscountedPrice.Value Ft</span>
+                        <span class="store-original-price">@Price.Value Ft</span>
+                        <span class="store-discount-badge">-@(Math.Round((decimal)(Price.Value - DiscountedPrice.Value) / Price.Value * 100))%</span>
+                    }
+                    else
+                    {
+                        <span class="store-price">@Price.Value Ft</span>
+                    }
+                </div>
+            }
+        </div>
+    }
+</a>
+
+@code {
+    [Parameter] public Store Store { get; set; } = default!;
+    [Parameter] public RouteToStore? Route { get; set; }
+    [Parameter] public int? Price { get; set; }
+    [Parameter] public int? DiscountedPrice { get; set; }
+}

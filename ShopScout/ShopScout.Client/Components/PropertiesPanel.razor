@@ -1,0 +1,171 @@
+﻿@rendermode InteractiveAuto
+@inject IJSRuntime JS
+@inject IStoreLayoutService StoreLayoutService
+
+<div class="properties-container @show">
+    <div class="snap-spacer" @onclick="ClosePanel"></div>
+    <div class="properties-panel" id="propertiesPanel">
+        @if (!isFadingOut && Shelf == null)
+        {
+            <p class="help-text">Nincs polc kiválasztva</p>
+        }
+        else if (Shelf != null)
+        {
+            <div class="panel-header flex-column gap-4 justify-content-start">
+                <div class="d-flex justify-content-between flex-row w-100">
+                    <button class="close-button" @onclick="ClosePanel">
+                        <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                            <line x1="18" y1="6" x2="6" y2="18"></line>
+                            <line x1="6" y1="6" x2="18" y2="18"></line>
+                        </svg>
+                    </button>
+                    <button class="action-button @(disabled ? "disabled" : "")" @onclick="Save">
+                        <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                            <path d="M17.3 3.3L21 7v13a1 1 0 0 1-1 1H4a1 1 0 0 1-1-1V4a1 1 0 0 1 1-1h12.6a1 1 0 0 1 .7.3z" />
+                            <rect x="7" y="13" width="10" height="8" />
+                            <rect x="8" y="3" width="8" height="5" />
+                        </svg>
+                        Mentés
+                    </button>
+                </div>
+                <div>
+                    <h2>Tulajdonságok</h2>
+                </div>
+            </div>
+
+            <div class="properties-content">
+                <div class="property-group">
+                    <label class="property-label">Típus</label>
+                    <InputSelect @bind-Value="Shelf.Type" class="@($"select-input {(disabled ? "disabled" : "")}")">
+                        @foreach (ShelfType item in Enum.GetValues(typeof(ShelfType)))
+                        {
+                            <option value="@item">@item.GetDisplayName()</option>
+                        }
+                    </InputSelect>
+                </div>
+
+                <div class="separator"></div>
+
+                <div class="property-group">
+                    <label class="property-label">Oldalak</label>
+                    <InputSelect @bind-Value="Shelf.Side" class="@($"select-input {(disabled ? "disabled" : "")}")">
+                        @foreach (ShelfSide item in Enum.GetValues(typeof(ShelfSide)))
+                        {
+                            <option value="@item">@item.GetDisplayName()</option>
+                        }
+                    </InputSelect>
+                </div>
+
+                <div class="separator"></div>
+
+                <div class="property-group">
+                    <div class="group-header d-flex flex-row justify-content-between align-items-center">
+                        <button class="btn border-0 @(isTemporary ? "disabled" : "")" @onclick="OpenSearchPanel">
+                            Termékek kezelése
+                        </button>
+                    </div>
+                </div>
+                
+                @if (openItemPanel)
+                {
+                    <ItemSearchPanel store="store" OnAdd="ModalResult" OnDelete="DeleteProduct" ProductsOnShelf="shelfEf?.Products.OrderBy(s => Math.Abs((float)s.DistanceFromP1!)).ToList() ?? new List<ProductPerStore>()" ShelfId="shelfEf?.Id ?? 0" IsLoading="isItemsLoading" />
+                }
+            </div>
+        }
+    </div>
+</div>
+
+@code {
+    [Parameter] public ShelfDto? Shelf { get; set; }
+    [Parameter] public Shelf? shelfEf { get; set; }
+    [Parameter] public EventCallback<ShelfDto?> ShelfChanged { get; set; }
+    [Parameter] public EventCallback<ShelfDto> onsave { get; set; }
+    [Parameter] public bool disabled { get; set; }
+    [Parameter] public Store store { get; set; }
+
+    [Parameter] public EventCallback<ProductPerStore> OnProductSelected { get; set; }
+    [Parameter] public EventCallback<ProductPerStore> OnProductDeleted { get; set; }
+
+    private bool isFadingOut = false;
+    private bool openItemPanel = false;
+    private IJSObjectReference? module;
+
+
+    private string show => Shelf != null && !isFadingOut ? "show" : string.Empty;
+    private bool isTemporary => !int.TryParse(Shelf?.Id, out _);
+
+    private bool isItemsLoading = false;
+
+    protected async override Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (firstRender)
+        {
+            module = await JS.InvokeAsync<IJSObjectReference>("import", "./Components/PropertiesPanel.razor.js");
+            await module.InvokeVoidAsync("initObserver", "propertiesPanel");
+        }
+    }
+
+    // protected override async Task OnParametersSetAsync()
+    // {
+    //     if (Shelf != null)
+    //     {
+    //         if (!isTemporary)
+    //         {
+    //             shelfEf = await StoreLayoutService.GetShelfAsync(int.Parse(Shelf.Id));
+    //         }
+    //     }
+    // }
+
+    private async Task Save()
+    {
+        if (disabled) return;
+        if (Shelf != null)
+        {
+            await onsave.InvokeAsync(Shelf);
+        }
+    }
+
+    public async Task ClosePanel()
+    {
+        isFadingOut = true;
+        StateHasChanged();
+        if (module != null)
+        {
+            await module.InvokeVoidAsync("clearSelection");
+        }
+        await Task.Delay(300);
+        await ShelfChanged.InvokeAsync(null);
+        isFadingOut = false;
+        StateHasChanged();
+    }
+
+    public void OpenSearchPanel()
+    {
+        if (isTemporary) return;
+        openItemPanel = true;
+    }
+
+    public async Task ModalResult(ProductPerStore? result)
+    {
+        openItemPanel = false;
+        StateHasChanged();
+        if (result != null && Shelf != null)
+        {
+            isItemsLoading = true;
+            StateHasChanged();
+            await OnProductSelected.InvokeAsync(result);
+        }
+    }
+
+    public async Task DeleteProduct(ProductPerStore result)
+    {
+        isItemsLoading = true;
+        StateHasChanged();
+        await OnProductDeleted.InvokeAsync(result);
+    }
+
+    public async Task ItemsLoaded()
+    {
+        isItemsLoading = false;
+    }
+}

@@ -1,0 +1,197 @@
+﻿@page "/Account/Manage/Enable2fa"
+@rendermode InteractiveServer
+@layout AccountLayout
+
+@using System.ComponentModel.DataAnnotations
+@using System.Globalization
+@using System.Text
+@using System.Text.Encodings.Web
+@using Microsoft.AspNetCore.Identity
+@using ShopScout.Components.Account.Shared
+@using ShopScout.Components.Layout
+@using ShopScout.Data
+@using ShopScout.Services
+@using ShopScout.SharedLib.Models
+
+@inject UserManager<ApplicationUser> UserManager
+@inject IdentityUserAccessor UserAccessor
+@inject AuthenticationStateProvider AuthStateProvider
+@inject UrlEncoder UrlEncoder
+@inject IdentityRedirectManager RedirectManager
+@inject ILogger<Enable2fa> Logger
+@inject IJSRuntime JS
+@inject NavigationManager NavigationManager
+@inject AccountNavbarService NavBarService
+
+<PageTitle>Kétlépcsős hitelesítő alkalmazás beállítása</PageTitle>
+
+<div class="content-wrapper">
+    <h3 class="page-title">Kétlépcsős hitelesítő alkalmazás beállítása</h3>
+
+    <p class="intro-text">A hitelesítő alkalmazás használatához kövesd az alábbi lépéseket:</p>
+
+    <ol class="steps-list">
+        <li class="step-item">
+            <div class="step-content">
+                <p>
+                    Tölts le egy kétlépcsős hitelesítő alkalmazást, például a Microsoft Authenticator-t
+                    <a href="https://go.microsoft.com/fwlink/?Linkid=825072" target="_blank">Androidhoz</a> és
+                    <a href="https://go.microsoft.com/fwlink/?Linkid=825073" target="_blank">iOS-hez</a> vagy
+                    Google Authenticator-t
+                    <a href="https://play.google.com/store/apps/details?id=com.google.android.apps.authenticator2&amp;hl=en" target="_blank">Androidhoz</a> és
+                    <a href="https://itunes.apple.com/us/app/google-authenticator/id388497605?mt=8" target="_blank">iOS-hez</a>.
+                </p>
+            </div>
+        </li>
+
+        <li class="step-item">
+            <div class="step-content">
+                <p>Olvasd be a QR-kódot, vagy írd be az alábbi kulcsot a kétlépcsős hitelesítő alkalmazásodba. A szóközök és a kis- és nagybetűk nem számítanak.<kbd class="key-display">@sharedKey</kbd></p>
+                    
+                <div class="qr" @ref="Element">
+                    <span data-action="result"></span>
+                </div>
+            </div>
+        </li>
+
+        @if(message != null)
+        {
+            <StatusMessage Message="@message"></StatusMessage>
+        }
+
+        <li class="step-item">
+            <div class="step-content">
+                <p>
+                    Miután beolvastad a QR-kódot, vagy megadtad a fenti kulcsot, a kétlépcsős hitelesítő alkalmazás egy egyedi kódot fog generálni. Írd be a kódot az alábbi megerősítő mezőbe.
+                </p>
+
+                <div class="verification-section">
+                    <EditForm Model="Input" FormName="send-code" OnValidSubmit="OnValidSubmitAsync" method="post">
+                        <div class="form-floating mb-3">
+                            <InputText @bind-Value="Input.Code" id="Input.Code" class="form-control" autocomplete="off" placeholder="Add meg a kódot" />
+                            <label for="Input.Code" class="control-label form-label">Megerősítő kód</label>
+                            <ValidationMessage For="() => Input.Code" class="text-danger" />
+                        </div>
+                        <button type="submit" class="btn-verify">Ellenőrzés</button>
+                    </EditForm>
+                </div>
+            </div>
+        </li>
+    </ol>
+</div>
+
+@code {
+    private const string AuthenticatorUriFormat = "otpauth://totp/{0}:{1}?secret={2}&issuer={0}&digits=6";
+
+    private ApplicationUser user = default!;
+    private string? sharedKey;
+    private string? authenticatorUri;
+    private string? message;
+    [Parameter]
+    public IEnumerable<string>? RecoveryCodes { get; set; }
+    private IJSObjectReference? Module { get; set; }
+    public ElementReference Element { get; set; }
+
+    [SupplyParameterFromForm]
+    private InputModel Input { get; set; } = new();
+
+    protected override void OnInitialized()
+    {
+        NavBarService.SetNavBar("Kétlépcsős hitelesítés", "/account/manage/accountsecurity");
+    }
+
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (firstRender)
+        {
+            if (Element.Equals(null)) return;
+            var authState = await AuthStateProvider.GetAuthenticationStateAsync();
+            var userByClaim = authState.User;
+
+            if (userByClaim.Identity?.IsAuthenticated == true)
+            {
+                user = await UserManager.GetUserAsync(userByClaim);
+
+                Module = await JS.InvokeAsync<IJSObjectReference>("import", "/BarcodeReader.js");
+
+                await LoadSharedKeyAndQrCodeUriAsync(user);
+
+                await Module.InvokeVoidAsync("QRCodeSvg", null, authenticatorUri, Element, false, 200);
+            }
+        }
+    }
+
+    private async Task OnValidSubmitAsync()
+    {
+        // Strip spaces and hyphens
+        var verificationCode = Input.Code.Replace(" ", string.Empty).Replace("-", string.Empty);
+
+        var is2faTokenValid = await UserManager.VerifyTwoFactorTokenAsync(
+            user, UserManager.Options.Tokens.AuthenticatorTokenProvider, verificationCode);
+
+        if (!is2faTokenValid)
+        {
+            message = "err: Verification code is invalid.";
+            return;
+        }
+
+        await UserManager.SetTwoFactorEnabledAsync(user, true);
+        var userId = await UserManager.GetUserIdAsync(user);
+        Logger.LogInformation("User with ID '{UserId}' has enabled 2FA with an authenticator app.", userId);
+
+        NavigationManager.NavigateTo("/Account/Manage/GenerateRecoveryCodes/true");
+    }
+
+    private async ValueTask LoadSharedKeyAndQrCodeUriAsync(ApplicationUser user)
+    {
+        // Load the authenticator key & QR code URI to display on the form
+        var unformattedKey = await UserManager.GetAuthenticatorKeyAsync(user);
+        if (string.IsNullOrEmpty(unformattedKey))
+        {
+            await UserManager.ResetAuthenticatorKeyAsync(user);
+            unformattedKey = await UserManager.GetAuthenticatorKeyAsync(user);
+        }
+
+        sharedKey = FormatKey(unformattedKey!);
+
+        var email = await UserManager.GetEmailAsync(user);
+        authenticatorUri = GenerateQrCodeUri(email!, unformattedKey!);
+        StateHasChanged();
+    }
+
+    private string FormatKey(string unformattedKey)
+    {
+        var result = new StringBuilder();
+        int currentPosition = 0;
+        while (currentPosition + 4 < unformattedKey.Length)
+        {
+            result.Append(unformattedKey.AsSpan(currentPosition, 4)).Append(' ');
+            currentPosition += 4;
+        }
+        if (currentPosition < unformattedKey.Length)
+        {
+            result.Append(unformattedKey.AsSpan(currentPosition));
+        }
+
+        return result.ToString().ToLowerInvariant();
+    }
+
+    private string GenerateQrCodeUri(string email, string unformattedKey)
+    {
+        return string.Format(
+            CultureInfo.InvariantCulture,
+            AuthenticatorUriFormat,
+            UrlEncoder.Encode("ShopScout"),
+            UrlEncoder.Encode(email),
+            unformattedKey);
+    }
+
+    private sealed class InputModel
+    {
+        [Required]
+        [StringLength(7, ErrorMessage = "The {0} must be at least {2} and at max {1} characters long.", MinimumLength = 6)]
+        [DataType(DataType.Text)]
+        [Display(Name = "Verification Code")]
+        public string Code { get; set; } = "";
+    }
+}

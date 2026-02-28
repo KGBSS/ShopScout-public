@@ -1,0 +1,52 @@
+﻿.toolbar-container {
+    width: 5rem;
+    background-color: white;
+    border-right: 1px solid #e5e7eb;
+    display: flex;
+    flex-direction: column;
+}
+
+.toolbar {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    padding: 1rem 0;
+    gap: 0.5rem;
+}
+
+.toolbar-section {
+    pointer-events: initial;
+    transition: filter .5s ease-in-out;
+}
+
+.toolbar-section.disabled {
+    filter: grayscale();
+    pointer-events: none;
+}
+
+.icon {
+    width: 1.25rem;
+    height: 1.25rem;
+    stroke-width: 2;
+}
+
+.rotated {
+    transform: rotate(90deg);
+}
+
+.separator {
+    width: 2.5rem;
+    height: 1px;
+    background-color: #e5e7eb;
+    margin: 0.5rem 0;
+}
+
+.shelf-label {
+    color: #6b7280;
+    font-size: 0.75rem;
+    margin-bottom: 0.25rem;
+}
+
+.tooltip-wrapper {
+    position: relative;
+}

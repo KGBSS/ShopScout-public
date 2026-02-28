@@ -1,0 +1,71 @@
+﻿@using System.Text
+@using Microsoft.AspNetCore.Identity
+@using Microsoft.AspNetCore.WebUtilities
+@using ShopScout.Data
+@using ShopScout.SharedLib.Models
+
+<HeadContent>
+    <link rel="stylesheet" href="/css/account/confirm-welcome.css" />
+</HeadContent>
+
+<div class="welcome-container">
+    <div class="welcome-card">
+        @if (IsSuccessful)
+        {
+            <div class="welcome-icon-wrapper">
+                <svg class="welcome-checkmark-icon" viewBox="0 0 52 52" xmlns="http://www.w3.org/2000/svg">
+                    <circle class="welcome-checkmark-circle" cx="26" cy="26" r="25" fill="none" />
+                    <path class="welcome-checkmark-check" fill="none" d="M14.1 27.2l7.1 7.2 16.7-16.8" />
+                </svg>
+            </div>
+            <h1 class="welcome-title wt-sm">
+                @Message<span>@Message2</span>
+            </h1>
+            @if(Details != null)
+            {
+                <p class="welcome-message">
+                    @Details
+                </p>
+            }
+            <a class="welcome-btn welcome-btn-secondary" href="/">
+                Vissza a főoldalra
+            </a>
+        }
+        else
+        {
+            <div class="welcome-icon-wrapper">
+                <svg class="welcome-cross-icon" viewBox="0 0 52 52" xmlns="http://www.w3.org/2000/svg">
+                    <circle class="welcome-cross-circle" cx="26" cy="26" r="25" fill="none" />
+                    <path class="welcome-cross-line line-1" fill="none" d="M16 16 L36 36" />
+                    <path class="welcome-cross-line line-2" fill="none" d="M36 16 L16 36" />
+                </svg>
+            </div>
+            <h1 class="welcome-title welcome-title-error wt-sm">
+                @Message<span>@Message2</span>
+            </h1>
+            @if (Details != null)
+            {
+                <p class="welcome-message">
+                    @Details
+                </p>
+            }
+            <a class="welcome-btn welcome-btn-secondary" href="/">
+                Vissza a főoldalra
+            </a>
+        }
+    </div>
+</div>
+
+@code {
+    [Parameter]
+    public bool IsSuccessful { get; set; }
+
+    [Parameter]
+    public string Message { get; set; }
+
+    [Parameter]
+    public string Message2 { get; set; }
+
+    [Parameter]
+    public string Details { get; set; }
+}

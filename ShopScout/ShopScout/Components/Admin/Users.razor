@@ -1,0 +1,418 @@
+﻿@page "/admin/users"
+@layout AdminLayout
+@rendermode InteractiveServer
+
+@using ShopScout.Services
+@using ShopScout.SharedLib.Models
+@using System.Linq.Expressions
+
+@inject UserService UserService
+
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <div>
+        <h1 class="h3 mb-0 text-dark fw-bold">User Management</h1>
+        <p class="text-muted small mb-0">Manage access, roles, and ban status.</p>
+    </div>
+</div>
+
+@* --- Toolbar & Filters --- *@
+<div class="card border-0 shadow-sm mb-4">
+    <div class="card-body p-3">
+        <div class="row g-3 align-items-center">
+            @* Search *@
+            <div class="col-md-5">
+                <input type="text" class="form-control form-control-sm"
+                       placeholder="Search username or email..."
+                       @bind="SearchTerm"
+                       @bind:event="oninput"
+                       @bind:after="ApplyFilters" />
+            </div>
+
+            @* Filter by Role *@
+            <div class="col-md-3">
+                <select class="form-select form-select-sm" @bind="FilterRole" @bind:after="ApplyFilters">
+                    <option value="">All Roles</option>
+                    @foreach (var role in AllRoles)
+                    {
+                        <option value="@role">@role</option>
+                    }
+                </select>
+            </div>
+
+            @* Filter Anonymous *@
+            <div class="col-md-3">
+                <div class="form-check">
+                    <input class="form-check-input" type="checkbox" id="showAnon"
+                           @bind="ShowAnonymousOnly"
+                           @bind:after="ApplyFilters">
+                    <label class="form-check-label small" for="showAnon">
+                        Show Anonymous Only
+                    </label>
+                </div>
+            </div>
+
+            <div class="col-md-1 text-end">
+                <button class="btn btn-outline-secondary btn-sm w-100" @onclick="LoadData">
+                    Reset
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+@* --- Data Table --- *@
+<div class="card border-0 shadow-sm flex-grow-1 overflow-hidden">
+    <div class="table-responsive h-100">
+        <table class="table table-hover align-middle mb-0">
+            <thead class="bg-light sticky-top">
+                <tr class="text-muted small text-uppercase">
+                    <th scope="col" class="ps-4" style="cursor:pointer" @onclick='() => Sort("User")'>
+                        User @SortIndicator("User")
+                    </th>
+                    <th scope="col">Roles</th>
+                    <th scope="col" style="cursor:pointer" @onclick='() => Sort("RegistrationDate")'>
+                        Registered @SortIndicator("RegistrationDate")
+                    </th>
+                    <th scope="col" style="cursor:pointer" @onclick='() => Sort("LastLoginTime")'>
+                        Last Login @SortIndicator("LastLoginTime")
+                    </th>
+                    <th scope="col" class="text-end pe-4">Actions</th>
+                </tr>
+            </thead>
+            <tbody>
+                @if (FilteredUsers == null || !FilteredUsers.Any())
+                {
+                    <tr>
+                        <td colspan="5" class="text-center py-5 text-muted">
+                            @(IsLoading ? "Loading data..." : "No users found matching your criteria.")
+                        </td>
+                    </tr>
+                }
+                else
+                {
+                    @foreach (var user in FilteredUsers)
+                    {
+                        <tr>
+                            <td class="ps-4">
+                                <div class="d-flex flex-column">
+                                    <span class="fw-bold text-dark">@user.UserName</span>
+                                    <span class="small text-muted">@user.Email</span>
+                                    @if (user.IsAnonymous)
+                                    {
+                                        <span class="badge bg-secondary text-white mt-1" style="width:fit-content; font-size: 10px;">ANONYMOUS</span>
+                                    }
+                                </div>
+                            </td>
+                            <td>
+                                @* Display Roles from Map *@
+                                @if (UserRolesMap.ContainsKey(user.Id))
+                                {
+                                    @foreach (var role in UserRolesMap[user.Id])
+                                    {
+                                        <span class="badge bg-light text-dark border me-1 mb-1">@role</span>
+                                    }
+                                }
+                                else
+                                {
+                                    <span class="text-muted small">-</span>
+                                }
+                            </td>
+                            <td>
+                                <span class="d-block text-dark small">@user.RegistrationDate.ToString("yyyy. MM. dd.")</span>
+                            </td>
+                            <td>
+                                <span class="small text-muted">@GetTimeAgo(user.LastLoginTime)</span>
+                            </td>
+                            <td class="text-end pe-4">
+                                <button class="btn btn-sm btn-outline-dark me-1" @onclick="() => OpenEditModal(user)">
+                                    Edit
+                                </button>
+                                <button class="btn btn-sm btn-danger" @onclick="() => OpenBanModal(user)">
+                                    @(user.IsBanned ? "Unban" : "Ban")
+                                </button>
+                            </td>
+                        </tr>
+                    }
+                }
+            </tbody>
+        </table>
+    </div>
+</div>
+
+@* --- EDIT / CREATE USER MODAL --- *@
+@if (IsEditModalOpen)
+{
+    <div class="modal-backdrop fade show"></div>
+    <div class="modal fade show d-block" tabindex="-1">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content border-0 shadow">
+                <div class="modal-header">
+                    <h5 class="modal-title">Edit User</h5>
+                    <button type="button" class="btn-close" @onclick="() => IsEditModalOpen = false"></button>
+                </div>
+                <div class="modal-body">
+                    <form @onsubmit:preventDefault>
+                        <div class="row mb-3">
+                            <div class="col-6">
+                                <label class="form-label small fw-bold">Username</label>
+                                <input type="text" class="form-control" @bind="CurrentUser.UserName" />
+                            </div>
+                            <div class="col-6">
+                                <label class="form-label small fw-bold">Email</label>
+                                <input type="email" class="form-control" @bind="CurrentUser.Email" />
+                            </div>
+                        </div>
+
+                        <div class="mb-3">
+                            <label class="form-label small fw-bold">Language</label>
+                            <input type="text" class="form-control" @bind="CurrentUser.LanguageCode" />
+                        </div>
+
+                        @* Role Management Checkboxes *@
+                        <div class="mb-3 p-3 bg-light rounded border">
+                            <label class="form-label small fw-bold d-block mb-2">Manage Roles</label>
+                            <div class="d-flex flex-wrap gap-3">
+                                @foreach (var role in AllRoles)
+                                {
+                                    <div class="form-check">
+                                        <input class="form-check-input" type="checkbox"
+                                               id="role_@role"
+                                               checked="@(CurrentEditRoles.Contains(role))"
+                                               @onchange="@(e => ToggleRole(role, e.Value))">
+                                        <label class="form-check-label" for="role_@role">
+                                            @role
+                                        </label>
+                                    </div>
+                                }
+                            </div>
+                        </div>
+
+                        <div class="form-check form-switch">
+                            <input class="form-check-input" type="checkbox" id="anonSwitch" @bind="CurrentUser.IsAnonymous">
+                            <label class="form-check-label" for="anonSwitch">Is Anonymous</label>
+                        </div>
+                    </form>
+                </div>
+                <div class="modal-footer bg-light">
+                    <button class="btn btn-link text-muted text-decoration-none" @onclick="() => IsEditModalOpen = false">Cancel</button>
+                    <button class="btn btn-dark px-4" @onclick="SaveUser">Save Changes</button>
+                </div>
+            </div>
+        </div>
+    </div>
+}
+
+@* --- BAN CONFIRMATION MODAL --- *@
+@if (IsBanModalOpen)
+{
+    <div class="modal-backdrop fade show"></div>
+    <div class="modal fade show d-block" tabindex="-1">
+        <div class="modal-dialog modal-dialog-centered">
+            @if (UserToBan?.IsBanned == true)
+            {
+                <div class="modal-content border-0 shadow">
+                    <div class="modal-header bg-danger text-white">
+                        <h5 class="modal-title">Confirm Unban</h5>
+                        <button type="button" class="btn-close btn-close-white" @onclick="() => IsBanModalOpen = false"></button>
+                    </div>
+                    <div class="modal-body">
+                        <p>Are you sure you want to unban <strong class="text-danger">@UserToBan?.UserName</strong>?</p>
+                    </div>
+                    <div class="modal-footer bg-light">
+                        <button class="btn btn-light border" @onclick="() => IsBanModalOpen = false">Cancel</button>
+                        <button class="btn btn-danger px-4" @onclick="ToggleBan">Unban User</button>
+                    </div>
+                </div>
+            }
+            else
+            {
+                <div class="modal-content border-0 shadow">
+                    <div class="modal-header bg-danger text-white">
+                        <h5 class="modal-title">Confirm Ban</h5>
+                        <button type="button" class="btn-close btn-close-white" @onclick="() => IsBanModalOpen = false"></button>
+                    </div>
+                    <div class="modal-body">
+                        <p>Are you sure you want to ban <strong class="text-danger">@UserToBan?.UserName</strong>?</p>
+                    </div>
+                    <div class="modal-footer bg-light">
+                        <button class="btn btn-light border" @onclick="() => IsBanModalOpen = false">Cancel</button>
+                        <button class="btn btn-danger px-4" @onclick="ToggleBan">Ban User</button>
+                    </div>
+                </div>
+            }
+        </div>
+    </div>
+}
+
+@code {
+    // --- Data State ---
+    private List<ApplicationUser> AllUsers = new();
+    private List<ApplicationUser> FilteredUsers = new();
+    private Dictionary<string, IList<string>> UserRolesMap = new();
+    private List<string> AllRoles = new();
+    private bool IsLoading = true;
+
+    // --- Modal State ---
+    private bool IsEditModalOpen = false;
+    private bool IsBanModalOpen = false;
+    private ApplicationUser CurrentUser { get; set; } = new();
+    private HashSet<string> CurrentEditRoles = new(); // Tracks checkboxes
+    private ApplicationUser? UserToBan { get; set; }
+
+    // --- Filter & Sort State ---
+    private string SearchTerm { get; set; } = "";
+    private string FilterRole { get; set; } = "";
+    private bool ShowAnonymousOnly { get; set; } = false;
+    private string SortColumn { get; set; } = "RegistrationDate";
+    private bool IsAscending { get; set; } = false;
+
+    protected override async Task OnInitializedAsync()
+    {
+        await LoadData();
+    }
+
+    private async Task LoadData()
+    {
+        IsLoading = true;
+
+        // 1. Fetch all data via the service
+        AllUsers = await UserService.GetAllUsersAsync();
+        AllRoles = await UserService.GetAllRolesAsync();
+        UserRolesMap = await UserService.GetAllUserRolesAsync(AllUsers);
+
+        // 2. Reset local filters
+        SearchTerm = "";
+        FilterRole = "";
+        ShowAnonymousOnly = false;
+
+        ApplyFilters();
+        IsLoading = false;
+    }
+
+    // --- Filtering Logic ---
+    private void ApplyFilters()
+    {
+        var query = AllUsers.AsQueryable();
+
+        // 1. Search
+        if (!string.IsNullOrWhiteSpace(SearchTerm))
+        {
+            query = query.Where(u =>
+                (u.UserName != null && u.UserName.Contains(SearchTerm, StringComparison.OrdinalIgnoreCase)) ||
+                (u.Email != null && u.Email.Contains(SearchTerm, StringComparison.OrdinalIgnoreCase))
+            );
+        }
+
+        // 2. Role Filter (Using local Map)
+        if (!string.IsNullOrWhiteSpace(FilterRole))
+        {
+            // Find users who have this role
+            var validIds = UserRolesMap
+                .Where(kv => kv.Value.Contains(FilterRole))
+                .Select(kv => kv.Key)
+                .ToHashSet();
+
+            query = query.Where(u => validIds.Contains(u.Id));
+        }
+
+        // 3. Anonymous Filter
+        if (ShowAnonymousOnly)
+        {
+            query = query.Where(u => u.IsAnonymous);
+        }
+
+        // 4. Sorting
+        FilteredUsers = PerformSort(query).ToList();
+    }
+
+    private IQueryable<ApplicationUser> PerformSort(IQueryable<ApplicationUser> query)
+    {
+        return SortColumn switch
+        {
+            "User" => IsAscending ? query.OrderBy(u => u.UserName) : query.OrderByDescending(u => u.UserName),
+            "RegistrationDate" => IsAscending ? query.OrderBy(u => u.RegistrationDate) : query.OrderByDescending(u => u.RegistrationDate),
+            "LastLoginTime" => IsAscending ? query.OrderBy(u => u.LastLoginTime) : query.OrderByDescending(u => u.LastLoginTime),
+            _ => query
+        };
+    }
+
+    private void Sort(string column)
+    {
+        if (SortColumn == column) IsAscending = !IsAscending;
+        else { SortColumn = column; IsAscending = true; }
+        ApplyFilters();
+    }
+
+    private string SortIndicator(string column) => SortColumn == column ? (IsAscending ? "▲" : "▼") : "";
+
+    // --- CRUD Modal Logic ---
+
+    private void OpenEditModal(ApplicationUser user)
+    {
+        CurrentEditRoles.Clear();
+
+        // Edit Mode: Clone data
+        CurrentUser = new ApplicationUser
+        {
+            Id = user.Id,
+            UserName = user.UserName,
+            Email = user.Email,
+            LanguageCode = user.LanguageCode,
+            IsAnonymous = user.IsAnonymous
+        };
+
+        // Load roles into checkbox state
+        if (UserRolesMap.ContainsKey(user.Id))
+        {
+            foreach (var role in UserRolesMap[user.Id])
+                CurrentEditRoles.Add(role);
+        }
+
+        IsEditModalOpen = true;
+    }
+
+    private void ToggleRole(string role, object? isCheckedValue)
+    {
+        if (isCheckedValue is bool isChecked)
+        {
+            if (isChecked) CurrentEditRoles.Add(role);
+            else CurrentEditRoles.Remove(role);
+        }
+    }
+
+    private async Task SaveUser()
+    {
+        var rolesList = CurrentEditRoles.ToList();
+        await UserService.UpdateUserAsync(CurrentUser, rolesList);
+
+        IsEditModalOpen = false;
+        await LoadData();
+    }
+
+    private void OpenBanModal(ApplicationUser user)
+    {
+        UserToBan = user;
+        IsBanModalOpen = true;
+    }
+
+    private async Task ToggleBan()
+    {
+        if (UserToBan != null)
+        {
+            await UserService.ToggleBanUserAsync(UserToBan.Id);
+        }
+        IsBanModalOpen = false;
+        await LoadData();
+    }
+
+    private string GetTimeAgo(DateTime date)
+    {
+        if (date == DateTime.MinValue) return "-";
+        var span = DateTime.Now - date;
+        if (span.TotalDays > 365) return $"{Math.Round(span.TotalDays / 365)}y ago";
+        if (span.TotalDays > 30) return $"{Math.Round(span.TotalDays / 30)}mo ago";
+        if (span.TotalDays > 1) return $"{Math.Round(span.TotalDays)}d ago";
+        if (span.TotalHours > 1) return $"{Math.Round(span.TotalHours)}h ago";
+        return "Just now";
+    }
+}

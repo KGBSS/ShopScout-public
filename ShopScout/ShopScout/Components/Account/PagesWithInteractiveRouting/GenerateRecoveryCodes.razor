@@ -1,0 +1,275 @@
+﻿@page "/Account/Manage/GenerateRecoveryCodes"
+@page "/Account/Manage/GenerateRecoveryCodes/{AutoGen:bool}"
+@rendermode InteractiveServer
+@layout AccountLayout
+
+@using Microsoft.AspNetCore.Identity
+@using ShopScout.Components.Account.Shared
+@using ShopScout.Components.Layout
+@using ShopScout.Data
+@using ShopScout.Services
+@using ShopScout.SharedLib.Models
+
+@inject UserManager<ApplicationUser> UserManager
+@inject IdentityUserAccessor UserAccessor
+@inject AuthenticationStateProvider AuthStateProvider
+@inject IdentityRedirectManager RedirectManager
+@inject ILogger<GenerateRecoveryCodes> Logger
+@inject IJSRuntime JS
+@inject AccountNavbarService NavBarService
+
+<PageTitle>Kétlépcsős hitelesítés</PageTitle>
+
+@if (recoveryCodes is not null)
+{
+    <div class="content-wrapper">
+
+        <StatusMessage Message="Sikeres generálás!"></StatusMessage>
+
+        <h3 class="page-title">Helyreállítási kódok</h3>
+
+        <div class="recovery-card">
+            <div class="recovery-header">
+                <svg class="recovery-icon" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <rect x="3" y="11" width="18" height="11" rx="2" ry="2"></rect>
+                    <path d="M7 11V7a5 5 0 0 1 10 0v4"></path>
+                </svg>
+                <div>
+                    <h4 class="recovery-title">A helyreállítási kódjaid</h4>
+                    <p class="recovery-subtitle">Őrizd meg ezeket a kódokat biztonságosan és könnyen elérhetően.</p>
+                </div>
+            </div>
+
+            <div class="codes-container" id="codesContainer">
+                @foreach (var recoveryCode in recoveryCodes)
+                {
+                    <div class="code-item">@recoveryCode</div>
+                }
+            </div>
+
+            <div class="button-group">
+                <button class="btn-action btn-download" @onclick="DownloadCodes">
+                    <svg class="btn-icon" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
+                        <polyline points="7 10 12 15 17 10"></polyline>
+                        <line x1="12" y1="15" x2="12" y2="3"></line>
+                    </svg>
+                    Kódok letöltése
+                </button>
+                <button class="btn-action btn-copy" @onclick="CopyCodes">
+                    <svg class="btn-icon" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect>
+                        <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path>
+                    </svg>
+                    Másolás a vágólapra
+                </button>
+            </div>
+        </div>
+
+        <div class="info-section">
+            <h3 class="info-title">Hogyan használd a helyreállítási kódokat</h3>
+            <div class="info-card">
+                <div class="info-icon-wrapper">
+                    <svg class="info-icon icon-smm" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"></path>
+                        <polyline points="22 4 12 14.01 9 11.01"></polyline>
+                    </svg>
+                </div>
+                <div class="info-content">
+                    <h5 class="info-card-title">Mikor van szükséged van rájuk?</h5>
+                    <p class="info-card-text">Használd a helyreállítási kódokat, ha nem éred el a hitelesítő alkalmazásodat, vagy elveszítetted az eszközödet.</p>
+                </div>
+            </div>
+
+            <div class="info-card">
+                <div class="info-icon-wrapper">
+                    <svg class="info-icon icon-smm" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"></path>
+                    </svg>
+                </div>
+                <div class="info-content">
+                    <h5 class="info-card-title">Őrizd meg biztonságban</h5>
+                    <p class="info-card-text">Tárold ezeket a kódokat biztonságos helyen. Minden kód csak egyszer használható fel, és ha elvesznek, nem állíthatók vissza.</p>
+                </div>
+            </div>
+
+            <div class="info-card">
+                <div class="info-icon-wrapper">
+                    <svg class="info-icon icon-smm" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <polyline points="22 12 18 12 15 21 9 3 6 12 2 12"></polyline>
+                    </svg>
+                </div>
+                <div class="info-content">
+                    <h5 class="info-card-title">Egyszeri használat</h5>
+                    <p class="info-card-text">Minden kód csak egyszer használható. Egy kód felhasználása után érvényét veszti. Ha elfogynak a kódjaid, generálj újakat.</p>
+                </div>
+            </div>
+        </div>
+
+        <div class="alert-info-custom">
+            <p><strong>Fontos:</strong> Ezek a kódok az egyetlen módjai a fiókod elérésének, ha elveszíted a hitelesítő eszközödet. Győződj meg róla, hogy elmented őket, mielőtt elhagyod ezt az oldalt.</p>
+        </div>
+    </div>
+}
+else
+{
+    @if (!AutoGen)
+    {
+        <div class="content-wrapper">
+
+            <h3 class="page-title">Kétfaktoros hitelesítési (2FA) helyreállítási kódok generálása</h3>
+
+            <div class="alert-warning-custom">
+                <div class="alert-icon-wrapper">
+                    <svg class="alert-icon" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"></path>
+                        <line x1="12" y1="9" x2="12" y2="13"></line>
+                        <line x1="12" y1="17" x2="12.01" y2="17"></line>
+                    </svg>
+                    <strong>Tárolja ezeket a kódokat biztonságos helyen.</strong>
+                </div>
+                <p class="alert-text">
+                    Ha elveszíti eszközét és nem rendelkezik a helyreállítási kódokkal, elveszíti hozzáférését fiókjához.
+                </p>
+                <p class="alert-text">
+                    Az új helyreállítási kódok generálása nem változtatja meg a hitelesítő alkalmazásokban használt kulcsokat. Ha szeretné megváltoztatni a hitelesítő alkalmazásban használt kulcsot, <a href="#" onclick="resetAuthenticator(event)">állítsa vissza hitelesítő kulcsait.</a>
+                </p>
+            </div>
+
+            <div class="action-card">
+                <div class="action-content">
+                    <div class="action-icon-wrapper">
+                        <svg class="action-icon" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                            <path d="M21.5 2v6h-6M2.5 22v-6h6M2 11.5a10 10 0 0 1 18.8-4.3M22 12.5a10 10 0 0 1-18.8 4.2"></path>
+                        </svg>
+                    </div>
+                    <div class="action-text">
+                        <h4 class="action-title">Új helyreállítási kódok generálása</h4>
+                        <p class="action-description">
+                            Ez lecseréli a meglévő helyreállítási kódokat. A fel nem használt kódok többé nem fognak működni.
+                        </p>
+                    </div>
+                </div>
+                <form @formname="generate-recovery-codes" @onsubmit="OnSubmitAsync" method="post">
+                    <AntiforgeryToken />
+                    <button class="btn-generate" onclick="generateCodes()">
+                        <svg class="btn-icon" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                            <path d="M21.5 2v6h-6M2.5 22v-6h6M2 11.5a10 10 0 0 1 18.8-4.3M22 12.5a10 10 0 0 1-18.8 4.2"></path>
+                        </svg>
+                        Helyreállítási kódok generálása
+                    </button>
+                </form>
+            </div>
+
+            <div class="info-cards-section">
+                <h4 class="section-subtitle">Fontos információk</h4>
+
+                <div class="info-card-small">
+                    <div class="info-card-small-icon">
+                        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                            <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"></path>
+                        </svg>
+                    </div>
+                    <div>
+                        <h5 class="info-card-small-title">Biztonságos tárolás</h5>
+                        <p class="info-card-small-text">Tárolja helyreállítási kódjait jelszókezelőben vagy biztonságos helyen.</p>
+                    </div>
+                </div>
+
+                <div class="info-card-small">
+                    <div class="info-card-small-icon">
+                        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                            <circle cx="12" cy="12" r="10"></circle>
+                            <line x1="12" y1="16" x2="12" y2="12"></line>
+                            <line x1="12" y1="8" x2="12.01" y2="8"></line>
+                        </svg>
+                    </div>
+                    <div>
+                        <h5 class="info-card-small-title">Egyszeri használat</h5>
+                        <p class="info-card-small-text">Minden helyreállítási kód csak egyszer használható. Generáljon új kódokat, ha szükséges.</p>
+                    </div>
+                </div>
+
+                <div class="info-card-small">
+                    <div class="info-card-small-icon">
+                        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                            <rect x="5" y="2" width="14" height="20" rx="2" ry="2"></rect>
+                            <line x1="12" y1="18" x2="12.01" y2="18"></line>
+                        </svg>
+                    </div>
+                    <div>
+                        <h5 class="info-card-small-title">Hitelesítő nem érintett</h5>
+                        <p class="info-card-small-text">Hitelesítő alkalmazása az új kódok generálása után is normálisan fog működni.</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    }
+}
+
+@code {
+    private string? message;
+    private ApplicationUser user = default!;
+    private IEnumerable<string>? recoveryCodes;
+
+    [Parameter]
+    public bool AutoGen { get; set; } = false;
+
+    protected override void OnInitialized()
+    {
+        NavBarService.SetNavBar("Kétlépcsős hitelesítés", "/account/manage/accountsecurity");
+    }
+
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (firstRender)
+        {
+            // await JS.InvokeVoidAsync("eval", "window.scrollTo(0, 0)");
+            var authState = await AuthStateProvider.GetAuthenticationStateAsync();
+            var userByClaim = authState.User;
+
+            if (userByClaim.Identity?.IsAuthenticated == true)
+            {
+                user = await UserManager.GetUserAsync(userByClaim);
+
+                var isTwoFactorEnabled = await UserManager.GetTwoFactorEnabledAsync(user);
+                if (!isTwoFactorEnabled)
+                {
+                    throw new InvalidOperationException("Cannot generate recovery codes for user because they do not have 2FA enabled.");
+                }
+
+                if (AutoGen)
+                {
+                    await GenerateCodes();
+                }
+            }
+        }
+
+    }
+
+    private async Task OnSubmitAsync()
+    {
+        await GenerateCodes();
+    }
+
+    private async Task GenerateCodes()
+    {
+        var userId = await UserManager.GetUserIdAsync(user);
+        recoveryCodes = await UserManager.GenerateNewTwoFactorRecoveryCodesAsync(user, 10);
+        message = "You have generated new recovery codes.";
+
+        Logger.LogInformation("User with ID '{UserId}' has generated new 2FA recovery codes.", userId);
+
+        StateHasChanged();
+    }
+
+    private async Task DownloadCodes()
+    {
+        await JS.InvokeVoidAsync("downloadRecoveryCodes", string.Join(", ", recoveryCodes));
+    }
+
+    private async Task CopyCodes(MouseEventArgs args)
+    {
+        await JS.InvokeVoidAsync("eval", $"navigator.clipboard.writeText('{string.Join(", ", recoveryCodes)}')");
+    }
+}

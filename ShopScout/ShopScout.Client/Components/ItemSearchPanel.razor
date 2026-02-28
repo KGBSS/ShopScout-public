@@ -1,0 +1,334 @@
+﻿@using System.Text
+@using System.Globalization
+@using System.Text.RegularExpressions
+@using ShopScout.Client.Pages
+@using System.Timers
+@inject IProductService ProductService
+
+<div class="products-section" @onclick="() => OnAdd.InvokeAsync(null)">
+    <div class="products-container" @onclick:stopPropagation="true">
+        <Loader Visible="IsLoading" />
+        <div class="products-header d-flex flex-row justify-content-between">
+            <h3>Termékek ebben a boltban</h3>
+            <button class="close-button" @onclick="() => OnAdd.InvokeAsync(null)">
+                <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <line x1="18" y1="6" x2="6" y2="18"></line>
+                    <line x1="6" y1="6" x2="18" y2="18"></line>
+                </svg>
+            </button>
+        </div>
+        <div class="search-bar">
+            <span class="bi bi-search"></span>
+            <input @bind="SearchText" @bind:event="oninput" type="text" placeholder="Keress termékeket a bolt kínálatából..." class="product-search-input" />
+            <button class="search-by-label" @onclick="() => openScanner = true">
+                <img src="/svg/scan-icon.svg" alt="Scan" class="scan-icon" />
+            </button>
+        </div>
+        <div class="products-flex">
+            <h3>Boltban:</h3>
+            <div class="d-flex flex-row overflow-x-auto gap-2">
+                @if (noSearchResult)
+                {
+                    <p>Nem található a keresett termék a boltban.</p>
+                }
+                else if (ProductsInStoreWithRelevance.Count > 0)
+                {
+                    @foreach (var ppsWithRelevance in ProductsInStoreWithRelevance.OrderByDescending(x => x.relevance).Take(20))
+                    {
+                        <ProductPreview ProductPerStore="ppsWithRelevance.pps" OnClick="OnAdd" HideDetails="true" StopOpenAction="true" />
+                    }
+                }
+                else
+                {
+                    @foreach (var pps in store.ProductPerStore.Where(x => x.ShelfId != ShelfId).Take(20))
+                    {
+                        <ProductPreview ProductPerStore="pps" OnClick="OnAdd" HideDetails="true" StopOpenAction="true" />
+                    }
+                }
+            </div>
+            <h3>@(searchText != string.Empty ? "Elérhető termékek:" : "Polcon:")</h3>
+            <div class="d-flex flex-row overflow-x-auto gap-2 shelf-products position-relative">
+                <Loader Visible="isSearchingDb" />
+                @if (searchText != string.Empty && ProductsInDb.Count > 0 && !isSearchingDb)
+                {
+                    @foreach (var pps in ProductsInDb)
+                    {
+                        <ProductPreview ProductPerStore="pps" OnClick="OnAdd" HideDetails="true" StopOpenAction="true" />
+                    }
+                }
+                else if (searchText != string.Empty && ProductsInDb.Count == 0 && !isSearchingDb)
+                {
+                    <p>Nem található a keresett termék.</p>
+                }
+                else if (ProductsOnShelf.Count > 0)
+                {
+                    @foreach (var pps in ProductsOnShelf)
+                    {
+                        <ProductPreview ProductPerStore="pps" OnClick="OnDelete" HideDetails="true" Class="on-shelf" StopOpenAction="true" />
+                    }
+                }
+                else
+                {
+                    <p>Még nincs termék hozzáadva a polchoz. Használd a fenti keresőt új termék rögzítéséhez.</p>                    
+                }
+            </div>
+        </div>
+    </div>
+</div>
+
+@if (openScanner)
+{
+    <div class="scanner-wrapper">
+        <Reader OnScan="OnScanned" OnClose="() => openScanner = false" />
+    </div>
+}
+
+@if (errorMessage != null)
+{
+    <Error OnCleared="ClearError">
+        @errorMessage
+    </Error>
+}
+
+@code {
+    [Parameter] public Store store { get; set; }
+    [Parameter] public int ShelfId { get; set; }
+    [Parameter] public EventCallback<ProductPerStore?> OnAdd { get; set; }
+    [Parameter] public EventCallback<ProductPerStore> OnDelete { get; set; }
+    [Parameter] public List<ProductPerStore> ProductsOnShelf { get; set; }
+    [Parameter] public bool IsLoading { get; set; } = false;
+
+    private List<(int relevance, ProductPerStore pps)> ProductsWithRelevance = new();
+    private List<ProductPerStore> ProductsInDb = new();
+
+    private bool noSearchResult = false;
+    private bool noSearchResultInDb = false;
+    private bool isSearchingDb = false;
+
+    private bool noSearchResultOnShelf => ProductsOnShelfWithRelevance.Count() == 0 && SearchText != string.Empty;
+    private List<(int relevance, ProductPerStore pps)> ProductsOnShelfWithRelevance => ProductsWithRelevance.Where(x => x.pps.ShelfId == ShelfId).ToList();
+    private List<(int relevance, ProductPerStore pps)> ProductsInStoreWithRelevance => ProductsWithRelevance.Where(x => x.pps.ShelfId != ShelfId).ToList();
+
+    private bool openScanner = false;
+
+    private string? errorMessage;
+
+    private Timer? debounceTimer;
+
+    private string searchText = string.Empty;
+    public string SearchText
+    {
+        get => searchText;
+        set
+        {
+            if (searchText == value)
+            {
+                return;
+            }
+
+            searchText = value ?? string.Empty;
+            noSearchResult = false;
+
+            DisposeTimer();
+
+            isSearchingDb = true;
+            debounceTimer = new Timer(300);
+            debounceTimer.Elapsed += OnTimerElapsed;
+            debounceTimer.AutoReset = false;
+            debounceTimer.Start();
+        }
+    }
+
+    private async void OnTimerElapsed(object? sender, ElapsedEventArgs e)
+    {
+        await InvokeAsync(async () =>
+        {
+            if (string.IsNullOrWhiteSpace(searchText))
+            {
+                ProductsWithRelevance.Clear();
+                ProductsInDb.Clear();
+            }
+            else
+            {
+                SearchProducts();
+                SearchProductsDb();
+            }
+
+            isSearchingDb = false;
+            StateHasChanged();
+        });
+    }
+
+    private void DisposeTimer()
+    {
+        if (debounceTimer != null)
+        {
+            debounceTimer.Stop();
+            debounceTimer.Elapsed -= OnTimerElapsed;
+            debounceTimer.Dispose();
+            debounceTimer = null;
+        }
+    }
+
+    private void SearchProductsDb()
+    {
+        List<ProductPerStore> productsToAdd = new();
+        noSearchResultInDb = false;
+        StateHasChanged();
+        InvokeAsync(async () =>
+        {
+            var result = await ProductService.GetProductsSearchAsync(SearchText, 1);
+            var productsToAdd = result
+                .Where(p => !p.ProductPerStore.Any(pps => pps.StoreId == store.Id))
+                .Select(p => new ProductPerStore
+                {
+                    ProductId = p.Id,
+                    Product = p,
+                    StoreId = store.Id,
+                    ShelfId = null
+                })
+                .ToList();
+            ProductsInDb = productsToAdd;
+            StateHasChanged();
+        });
+    }
+
+    private void SearchProducts()
+    {
+        ProductsWithRelevance.Clear();
+        var normalizedSearch = RemoveDiacritics(searchText.ToLowerInvariant());
+        var searchTokens = normalizedSearch
+            .Split(new[] { ' ', ',', '-' }, StringSplitOptions.RemoveEmptyEntries)
+            .Where(t => t.Length > 0)
+            .ToArray();
+
+        foreach (var productPerStore in store.ProductPerStore)
+        {
+            var normailizedName = RemoveDiacritics(productPerStore.Product.ProductName.ToLowerInvariant());
+            int score = CalculateProductRelevanceScore(normailizedName, searchTokens, normalizedSearch);
+
+            if (score > 0)
+            {
+                ProductsWithRelevance.Add((score, productPerStore));
+            }
+        }
+
+       if (ProductsInStoreWithRelevance.Count == 0) noSearchResult = true;
+    }
+
+    private string RemoveDiacritics(string text)
+    {
+        if (string.IsNullOrWhiteSpace(text))
+            return text;
+
+        var normalizedString = text.Normalize(NormalizationForm.FormD);
+        var stringBuilder = new StringBuilder();
+
+        foreach (var c in normalizedString)
+        {
+            var unicodeCategory = CharUnicodeInfo.GetUnicodeCategory(c);
+            if (unicodeCategory != UnicodeCategory.NonSpacingMark)
+            {
+                stringBuilder.Append(c);
+            }
+        }
+
+        return stringBuilder.ToString().Normalize(NormalizationForm.FormC);
+    }
+
+    private int CalculateProductRelevanceScore(
+        string productName,
+        string[] searchTokens,
+        string originalSearch)
+    {
+        int score = 0;
+
+        // Exact match - highest priority
+        if (productName == originalSearch)
+        {
+            score += 1000;
+        }
+
+        // Full search phrase matching
+        if (productName.StartsWith(originalSearch))
+        {
+            score += 700;
+        }
+
+        if (productName.Contains(originalSearch))
+        {
+            score += 400;
+        }
+
+        // Individual token matching
+        foreach (var token in searchTokens)
+        {
+            // Token at start of product name
+            if (productName.StartsWith(token))
+            {
+                score += 150;
+            }
+            // Token anywhere in product name
+            else if (productName.Contains(token))
+            {
+                score += 80;
+            }
+
+            // Bonus for word boundary matches (token matches a whole word)
+            if (IsWordBoundaryMatch(productName, token))
+            {
+                score += 50;
+            }
+        }
+
+        // Count how many tokens matched
+        int matchedTokens = searchTokens.Count(token => productName.Contains(token));
+        score += matchedTokens * 25;
+
+        // Bonus if ALL tokens are present (complete match)
+        if (searchTokens.Length > 0 && searchTokens.All(token => productName.Contains(token)))
+        {
+            score += 250;
+        }
+
+        // Penalty for very long product names (diluted relevance)
+        if (productName.Length > originalSearch.Length * 3)
+        {
+            score -= 50;
+        }
+
+        return score;
+    }
+
+    // Helper method to check if token matches a complete word
+    private bool IsWordBoundaryMatch(string text, string token)
+    {
+        // Simple word boundary check using spaces and common delimiters
+        string pattern = $@"\b{Regex.Escape(token)}\b";
+        return Regex.IsMatch(text, pattern, RegexOptions.IgnoreCase);
+    }
+
+    public void Dispose()
+    {
+        DisposeTimer();
+    }
+
+    private async Task OnScanned(string scannedProductCode)
+    {
+        if (scannedProductCode != null)
+        {
+            var scannedProduct = store.ProductPerStore.FirstOrDefault(p => p.Product.Code == scannedProductCode);
+            await OnAdd.InvokeAsync(scannedProduct);
+        }
+        else
+        {
+            errorMessage = "Nem található ilyen termék a boltban!";
+        }
+        openScanner = false;
+    }
+
+    private void ClearError()
+    {
+        // errorMessage = null;
+    }
+}

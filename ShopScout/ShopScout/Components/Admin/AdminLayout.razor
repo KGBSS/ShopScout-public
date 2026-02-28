@@ -1,0 +1,121 @@
+﻿@inherits LayoutComponentBase
+
+<div class="admin-wrapper bg-light">
+    @* 1. The Hidden Checkbox (Tracks if menu is open) *@
+    <input type="checkbox" id="menu-toggle" class="d-none" />
+
+    @* 2. The Mobile Overlay (Closes menu when clicking outside) *@
+    <label for="menu-toggle" class="sidebar-overlay d-lg-none"></label>
+
+    <nav class="admin-sidebar bg-white border-end shadow-sm">
+        <div class="d-flex justify-content-between align-items-center p-4 border-bottom">
+            <span class="fs-4 fw-bold text-dark" style="letter-spacing: -1px;">SHOPSCOUT</span>
+            @* Label acts as the "Close" button *@
+            <label for="menu-toggle" class="btn d-lg-none p-0 border-0">✕</label>
+        </div>
+
+        <div class="flex-grow-1 overflow-auto p-3">
+            <ul class="nav nav-pills flex-column gap-2">
+                <li><NavLink href="admin" class="nav-link py-2 px-3 rounded-3" Match="NavLinkMatch.All">Dashboard</NavLink></li>
+                <li><NavLink href="admin/logs" class="nav-link py-2 px-3 rounded-3">System Logs</NavLink></li>
+                <li><NavLink href="admin/users" class="nav-link py-2 px-3 rounded-3 text-muted">Users</NavLink></li>
+                <li><NavLink href="admin/products" class="nav-link py-2 px-3 rounded-3 text-muted">Products</NavLink></li>
+                <li><NavLink href="admin/stores" class="nav-link py-2 px-3 rounded-3 text-muted">Stores</NavLink></li>
+            </ul>
+        </div>
+
+        <div class="p-4 border-top">
+            <a href="/" class="text-muted small text-decoration-none">← Back to Shop</a>
+        </div>
+    </nav>
+
+    <main class="flex-grow-1 d-flex flex-column min-vw-0">
+        <header class="bg-white border-bottom px-4 py-3 d-flex align-items-center gap-2 flex-wrap">
+            @* Label acts as the "Hamburger" menu button *@
+            <label for="menu-toggle" class="btn btn-outline-dark d-lg-none btn-sm">☰ Menu</label>
+            <span class="small fw-bold text-uppercase text-muted">Management Panel</span>
+        </header>
+
+        <div class="flex-grow-1 overflow-auto p-3 p-md-4">
+            <div class="container-fluid p-0 h-100">
+                @Body
+            </div>
+        </div>
+    </main>
+</div>
+
+<style>
+    :root {
+        --sidebar-width: 260px;
+    }
+
+    .admin-wrapper {
+        display: flex;
+        width: 100vw;
+        height: 100vh;
+        overflow: hidden;
+    }
+
+    .admin-sidebar {
+        width: var(--sidebar-width);
+        display: flex;
+        flex-shrink: 0;
+        flex-direction: column;
+        height: 100%;
+        z-index: 1050;
+        background: white;
+    }
+
+    /* CSS Toggle Logic */
+    @@media (max-width: 1000px) {
+        .admin-sidebar {
+            position: fixed;
+            top: 0;
+            left: 0;
+            transform: translateX(-100%);
+            transition: transform 0.3s ease-in-out;
+        }
+        /* The Magic: When checkbox is checked, move the sidebar into view */
+        #menu-toggle:checked ~ .admin-sidebar {
+            transform: translateX(0);
+        }
+
+        #menu-toggle:checked ~ .sidebar-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0,0,0,0.5);
+            z-index: 1040;
+            display: block;
+        }
+    }
+
+    .nav-link {
+        color: #444;
+    }
+
+    .nav-link.active {
+        background-color: #000 !important;
+        color: #fff !important;
+    }
+
+    .min-vw-0 {
+        min-width: 0;
+    }
+
+    .flex-grow-1 {
+        min-height: 0;
+    }
+
+    * {
+        user-select: text;
+    }
+
+    body, html {
+        overflow: hidden;
+        height: 100%;
+        margin: 0;
+    }
+</style>
